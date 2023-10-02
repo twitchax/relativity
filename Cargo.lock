@@ -2818,6 +2818,7 @@ name = "relativity"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "glam",
  "nalgebra-spacetime",
  "uom",
 ]

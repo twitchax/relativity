@@ -3,7 +3,7 @@ use std::char::MAX;
 use bevy::{input::keyboard, math, prelude::*, render::view::window, transform, window::PrimaryWindow};
 use uom::si::{
     acceleration::meter_per_second_squared,
-    f32::{Acceleration as UomAcceleration, Force as UomForce, Length as UomLength, Mass as UomMass, Time as UomTime, Velocity as UomVelocity},
+    f64::{Acceleration as UomAcceleration, Force as UomForce, Length as UomLength, Mass as UomMass, Time as UomTime, Velocity as UomVelocity},
     force::newton,
     heat_capacity::gram_square_meter_per_second_squared_kelvin,
     length::{kilometer, meter},
@@ -18,9 +18,6 @@ pub struct PlayerBundle {
     pub position: Position,
     pub radius: Radius,
     pub velocity: Velocity,
-    pub clock: Clock,
-    pub velocity_gamma: VelocityGamma,
-    pub gravitational_gamma: GravitationalGamma,
     pub sprite: SpriteBundle,
 }
 
@@ -34,9 +31,19 @@ pub struct PlanetBundle {
 }
 
 #[derive(Bundle, Default)]
-pub struct ObserverBundle {
+pub struct PlayerClockBundle {
+    pub player: Player,
+    pub velocity_gamma: VelocityGamma,
+    pub gravitational_gamma: GravitationalGamma,
+    pub clock: Clock,
+    pub clock_text: TextBundle,
+}
+
+#[derive(Bundle, Default)]
+pub struct ObserverClockBundle {
     pub observer: Observer,
     pub clock: Clock,
+    pub clock_text: TextBundle,
 }
 
 #[derive(Component, Default)]
@@ -70,6 +77,12 @@ pub struct Velocity {
     pub y: UomVelocity,
 }
 
+impl Velocity {
+    pub fn scalar(&self) -> UomVelocity {
+        (self.x * self.x + self.y * self.y).sqrt()
+    }
+}
+
 #[derive(Component, Default)]
 pub struct Clock {
     pub value: UomTime,
@@ -77,10 +90,10 @@ pub struct Clock {
 
 #[derive(Component, Default)]
 pub struct VelocityGamma {
-    pub value: f32,
+    pub value: f64,
 }
 
 #[derive(Component, Default)]
 pub struct GravitationalGamma {
-    pub value: f32,
+    pub value: f64,
 }
