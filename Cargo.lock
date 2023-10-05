@@ -2820,6 +2820,7 @@ dependencies = [
  "bevy",
  "glam",
  "nalgebra-spacetime",
+ "once_cell",
  "uom",
 ]
 
