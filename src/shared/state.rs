@@ -12,5 +12,5 @@ pub enum AppState {
 pub enum GameState {
     #[default]
     Paused,
-    Running
+    Running,
 }

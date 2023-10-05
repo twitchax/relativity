@@ -12,22 +12,23 @@ pub struct ObserverClockBundle {
     pub clock_text: TextBundle,
 }
 
-pub fn spawn_observer(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let clock_text = TextBundle::from_section("t_o = 00.00", TextStyle {
-        font_size: 40.0,
-        font: asset_server.load("fonts/HackNerdFontMono-Regular.ttf"),
-        ..Default::default()
-    }).with_style(Style {
+pub fn spawn_observer_clock(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let clock_text = TextBundle::from_section(
+        "t_o = 00.00",
+        TextStyle {
+            font_size: 40.0,
+            font: asset_server.load("fonts/HackNerdFontMono-Regular.ttf"),
+            ..Default::default()
+        },
+    )
+    .with_style(Style {
         position_type: PositionType::Absolute,
         top: Val::Px(10.0),
         right: Val::Px(10.0),
         ..Default::default()
     });
 
-    commands.spawn(ObserverClockBundle {
-        clock_text,
-        ..Default::default()
-    });
+    commands.spawn(ObserverClockBundle { clock_text, ..Default::default() });
 }
 
 // Clock systems.

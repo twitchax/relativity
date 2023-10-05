@@ -1,6 +1,6 @@
-pub mod shared;
 pub mod game;
 pub mod menu;
+pub mod shared;
 
 use bevy::prelude::*;
 use game::GamePlugin;

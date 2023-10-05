@@ -1,6 +1,9 @@
-use bevy::prelude::*;
-use crate::game::shared::{types::{VelocityGamma, GravitationalGamma, Clock, Position, Velocity, Mass}, constants::{DAYS_PER_SECOND_UOM, C, G}};
 use super::shared::Player;
+use crate::game::shared::{
+    constants::{C, DAYS_PER_SECOND_UOM, G},
+    types::{Clock, GravitationalGamma, Mass, Position, Velocity, VelocityGamma},
+};
+use bevy::prelude::*;
 
 // Components / bundles.
 
@@ -16,26 +19,32 @@ pub struct PlayerClockBundle {
 // Startup systems.
 
 pub fn spawn_player_clock(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let clock_text = TextBundle::from_section("t_p = 00.00 γ_v = 1.00 γ_g = 1.00 v_p = 00.00", TextStyle {
-        font_size: 40.0,
-        font: asset_server.load("fonts/HackNerdFontMono-Regular.ttf"),
-        ..Default::default()
-    }).with_style(Style {
+    let clock_text = TextBundle::from_section(
+        "t_p = 00.00 γ_v = 1.00 γ_g = 1.00 v_p = 00.00",
+        TextStyle {
+            font_size: 40.0,
+            font: asset_server.load("fonts/HackNerdFontMono-Regular.ttf"),
+            ..Default::default()
+        },
+    )
+    .with_style(Style {
         position_type: PositionType::Absolute,
         top: Val::Px(10.0),
         left: Val::Px(10.0),
         ..Default::default()
     });
 
-    commands.spawn(PlayerClockBundle {
-        clock_text,
-        ..Default::default()
-    });
+    commands.spawn(PlayerClockBundle { clock_text, ..Default::default() });
 }
 
 // Systems.
 
-pub fn player_clock_update(mut query: Query<(&mut Clock, &mut VelocityGamma, &mut GravitationalGamma), With<Player>>, player_query: Query<(Entity, &Position, &Velocity), With<Player>>,masses: Query<(Entity, &Position, &Mass)>, time: Res<Time>) {
+pub fn player_clock_update(
+    mut query: Query<(&mut Clock, &mut VelocityGamma, &mut GravitationalGamma), With<Player>>,
+    player_query: Query<(Entity, &Position, &Velocity), With<Player>>,
+    masses: Query<(Entity, &Position, &Mass)>,
+    time: Res<Time>,
+) {
     let time_elapsed = *DAYS_PER_SECOND_UOM * time.delta_seconds() as f64;
 
     let (mut clock, mut velocity_gamma, mut gravitational_gamma) = query.single_mut();
@@ -43,7 +52,8 @@ pub fn player_clock_update(mut query: Query<(&mut Clock, &mut VelocityGamma, &mu
 
     // Compute velocity gamma.
 
-    let v_squared_div_c_squared = (player_velocity.x.value * player_velocity.x.value + player_velocity.y.value * player_velocity.y.value) / (*C * *C);
+    let v_squared_div_c_squared =
+        (player_velocity.x.value * player_velocity.x.value + player_velocity.y.value * player_velocity.y.value) / (*C * *C);
     velocity_gamma.value = 1.0 / (1.0 - v_squared_div_c_squared.value).sqrt();
 
     // Compute gravitational gamma.
@@ -81,5 +91,8 @@ pub fn player_clock_text_update(mut query: Query<(&mut Text, &Clock, &VelocityGa
 
     let days = clock.value.value / 24.0 / 3600.0;
 
-    text.sections[0].value = format!("t_p = {:2.2} γ_v = {:2.2} γ_g = {:2.2}", days, velocity_gamma.value, gravitational_gamma.value);
+    text.sections[0].value = format!(
+        "t_p = {:2.2} γ_v = {:2.2} γ_g = {:2.2}",
+        days, velocity_gamma.value, gravitational_gamma.value
+    );
 }

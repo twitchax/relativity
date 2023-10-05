@@ -34,7 +34,34 @@ pub static C: Lazy<UomVelocity> = Lazy::new(|| UomVelocity::new::<kilometer_per_
 
 // TODO: Fix this insanity, lol.
 #[allow(clippy::type_complexity)]
-pub static G: Lazy<uom::si::Quantity<(dyn uom::si::Dimension<I = uom::typenum::Z0, J = uom::typenum::Z0, Kind = (dyn uom::Kind + 'static), L = uom::typenum::PInt<uom::typenum::UInt<uom::typenum::UInt<uom::typenum::UTerm, uom::typenum::B1>, uom::typenum::B1>>, M = uom::typenum::NInt<uom::typenum::UInt<uom::typenum::UTerm, uom::typenum::B1>>, N = uom::typenum::Z0, T = uom::typenum::NInt<uom::typenum::UInt<uom::typenum::UInt<uom::typenum::UTerm, uom::typenum::B1>, uom::typenum::B0>>, Th = uom::typenum::Z0> + 'static), dyn uom::si::Units<f64, amount_of_substance = uom::si::amount_of_substance::mole, electric_current = uom::si::electric_current::ampere, length = uom::si::length::meter, luminous_intensity = uom::si::luminous_intensity::candela, mass = uom::si::mass::kilogram, thermodynamic_temperature = uom::si::thermodynamic_temperature::kelvin, time = uom::si::time::second>, f64>> = Lazy::new(|| GRAVITATIONAL_CONSTANT * UomForce::new::<newton>(1.0) * UomLength::new::<meter>(1.0) * UomLength::new::<meter>(1.0) / (UomMass::new::<kilogram>(1.0) * UomMass::new::<kilogram>(1.0)));
+pub static G: Lazy<
+    uom::si::Quantity<
+        (dyn uom::si::Dimension<
+            I = uom::typenum::Z0,
+            J = uom::typenum::Z0,
+            Kind = (dyn uom::Kind + 'static),
+            L = uom::typenum::PInt<uom::typenum::UInt<uom::typenum::UInt<uom::typenum::UTerm, uom::typenum::B1>, uom::typenum::B1>>,
+            M = uom::typenum::NInt<uom::typenum::UInt<uom::typenum::UTerm, uom::typenum::B1>>,
+            N = uom::typenum::Z0,
+            T = uom::typenum::NInt<uom::typenum::UInt<uom::typenum::UInt<uom::typenum::UTerm, uom::typenum::B1>, uom::typenum::B0>>,
+            Th = uom::typenum::Z0,
+        > + 'static),
+        dyn uom::si::Units<
+            f64,
+            amount_of_substance = uom::si::amount_of_substance::mole,
+            electric_current = uom::si::electric_current::ampere,
+            length = uom::si::length::meter,
+            luminous_intensity = uom::si::luminous_intensity::candela,
+            mass = uom::si::mass::kilogram,
+            thermodynamic_temperature = uom::si::thermodynamic_temperature::kelvin,
+            time = uom::si::time::second,
+        >,
+        f64,
+    >,
+> = Lazy::new(|| {
+    GRAVITATIONAL_CONSTANT * UomForce::new::<newton>(1.0) * UomLength::new::<meter>(1.0) * UomLength::new::<meter>(1.0)
+        / (UomMass::new::<kilogram>(1.0) * UomMass::new::<kilogram>(1.0))
+});
 
 // TODO: Make this go away, and use some acceleration.
 pub static MAX_PLAYER_LAUNCH_VELOCITY: Lazy<UomVelocity> = Lazy::new(|| UomVelocity::new::<kilometer_per_second>(MAX_PLAYER_VELOCITY_KMS));

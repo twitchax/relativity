@@ -1,19 +1,15 @@
-use bevy::prelude::*;
 use crate::shared::state::AppState;
+use bevy::prelude::*;
 
 pub struct MenuPlugin;
 
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_systems(Update, start.run_if(in_state(AppState::Menu)));
+        app.add_systems(Update, start.run_if(in_state(AppState::Menu)));
     }
 }
 
-pub fn start(
-    mut mouse_input: ResMut<Input<MouseButton>>,
-    mut state: ResMut<NextState<AppState>>
-) {
+pub fn start(mut mouse_input: ResMut<Input<MouseButton>>, mut state: ResMut<NextState<AppState>>) {
     if !mouse_input.pressed(MouseButton::Left) {
         return;
     }

@@ -1,7 +1,10 @@
+use super::{
+    constants::{PLANET_SPRITE_WIDTH_PX, SCREEN_HEIGHT_UOM, SCREEN_WIDTH_UOM},
+    types::Position,
+};
+use crate::shared::{SCREEN_HEIGHT_PX, SCREEN_WIDTH_PX};
 use bevy::prelude::*;
 use uom::si::f64::Length as UomLength;
-use crate::shared::{SCREEN_WIDTH_PX, SCREEN_HEIGHT_PX};
-use super::{types::Position, constants::{SCREEN_WIDTH_UOM, SCREEN_HEIGHT_UOM, PLANET_SPRITE_WIDTH_PX}};
 
 pub fn get_translation_from_position(position: &Position) -> Vec3 {
     let x = (position.x / *SCREEN_WIDTH_UOM).value;
@@ -19,7 +22,7 @@ pub fn get_translation_from_percentage(x: f64, y: f64) -> Vec3 {
 
 pub fn get_position_from_percentage(x: f64, y: f64) -> Position {
     let x = *SCREEN_WIDTH_UOM * x;
-    let y = *SCREEN_WIDTH_UOM * y;
+    let y = *SCREEN_HEIGHT_UOM * y;
 
     Position { x, y }
 }
