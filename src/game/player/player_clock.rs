@@ -1,7 +1,7 @@
 use super::shared::Player;
 use crate::game::shared::{
     constants::{C, DAYS_PER_SECOND_UOM, G},
-    types::{Clock, GravitationalGamma, Mass, Position, Velocity, VelocityGamma},
+    types::{Clock, GravitationalGamma, Mass, Position, Velocity, VelocityGamma, GameItem},
 };
 use bevy::prelude::*;
 
@@ -9,6 +9,7 @@ use bevy::prelude::*;
 
 #[derive(Bundle, Default)]
 pub struct PlayerClockBundle {
+    pub item: GameItem,
     pub player: Player,
     pub velocity_gamma: VelocityGamma,
     pub gravitational_gamma: GravitationalGamma,
@@ -18,7 +19,7 @@ pub struct PlayerClockBundle {
 
 // Startup systems.
 
-pub fn spawn_player_clock(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn spawn_player_clock(commands: &mut Commands, asset_server: &Res<AssetServer>) {
     let clock_text = TextBundle::from_section(
         "t_p = 00.00 γ_v = 1.00 γ_g = 1.00 v_p = 00.00",
         TextStyle {
@@ -72,8 +73,8 @@ pub fn player_clock_update(
 
         let mut gravitational_factor = 1.0 - (2.0 * *G * other_mass.value / (*C * *C * distance)).value;
 
-        if gravitational_factor <= 0.01 {
-            gravitational_factor = 0.01;
+        if gravitational_factor <= 0.0001 {
+            gravitational_factor = 0.0001;
         }
 
         let gravitational_gamma = 1.0 / gravitational_factor.sqrt();

@@ -3,19 +3,19 @@ pub mod object;
 pub mod observer;
 pub mod player;
 pub mod shared;
+pub mod levels;
 
 use bevy::prelude::*;
 
 use crate::shared::state::{AppState, GameState};
 
 use self::{
-    object::spawn_planets,
-    observer::{observer_clock_text_update, observer_clock_update, spawn_observer_clock},
+    observer::{observer_clock_text_update, observer_clock_update},
     player::{
-        player_clock::{player_clock_text_update, player_clock_update, spawn_player_clock},
-        player_sprite::{player_launch, spawn_player_sprite},
+        player_clock::{player_clock_text_update, player_clock_update},
+        player_sprite::player_launch,
     },
-    shared::systems::{position_update, scale_update, spawn_camera, translation_update, velocity_update},
+    shared::systems::{position_update, scale_update, translation_update, velocity_update}, levels::spawn_level,
 };
 
 pub struct GamePlugin;
@@ -23,23 +23,21 @@ pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.add_state::<GameState>()
+            // Spawn things on enter.
             .add_systems(
                 OnEnter(AppState::InGame),
-                (
-                    spawn_camera,
-                    spawn_observer_clock,
-                    spawn_player_sprite,
-                    spawn_player_clock,
-                    spawn_planets,
-                ),
+                spawn_level
             )
+            // Run the scale updates always.
             .add_systems(Update, scale_update.run_if(in_state(AppState::InGame)))
+            // Allow launching if paused.
             .add_systems(
                 Update,
                 (player_launch, translation_update)
                     .run_if(in_state(AppState::InGame))
                     .run_if(in_state(GameState::Paused)),
             )
+            // Run the rest of the updates if running.
             .add_systems(
                 Update,
                 (

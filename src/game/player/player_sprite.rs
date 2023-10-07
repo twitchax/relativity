@@ -1,9 +1,8 @@
 use super::shared::Player;
 use crate::{
     game::shared::{
-        constants::{MAX_PLAYER_LAUNCH_VELOCITY, UNIT_RADIUS},
-        helpers::get_position_from_percentage,
-        types::{Position, Radius, Velocity},
+        constants::MAX_PLAYER_LAUNCH_VELOCITY,
+        types::{Position, Radius, Velocity, GameItem},
     },
     shared::{state::GameState, SCREEN_HEIGHT_PX, SCREEN_WIDTH_PX},
 };
@@ -14,24 +13,12 @@ use glam::DVec2;
 
 #[derive(Bundle, Default)]
 pub struct PlayerSpriteBundle {
+    pub item: GameItem,
     pub player: Player,
     pub position: Position,
     pub radius: Radius,
     pub velocity: Velocity,
     pub sprite: SpriteBundle,
-}
-
-// Startup systems.
-
-pub fn spawn_player_sprite(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let texture = asset_server.load("sprites/planets/sphere2.png");
-
-    commands.spawn(PlayerSpriteBundle {
-        position: get_position_from_percentage(0.3, 0.3),
-        radius: Radius { value: *UNIT_RADIUS },
-        sprite: SpriteBundle { texture, ..Default::default() },
-        ..Default::default()
-    });
 }
 
 // Systems.

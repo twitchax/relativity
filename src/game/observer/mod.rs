@@ -1,18 +1,19 @@
 use bevy::prelude::*;
 
-use super::shared::{constants::DAYS_PER_SECOND_UOM, types::Clock};
+use super::shared::{constants::DAYS_PER_SECOND_UOM, types::{Clock, GameItem}};
 
 #[derive(Component, Default)]
 pub struct Observer;
 
 #[derive(Bundle, Default)]
 pub struct ObserverClockBundle {
+    pub item: GameItem,
     pub observer: Observer,
     pub clock: Clock,
     pub clock_text: TextBundle,
 }
 
-pub fn spawn_observer_clock(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn spawn_observer_clock(commands: &mut Commands, asset_server: &Res<AssetServer>) {
     let clock_text = TextBundle::from_section(
         "t_o = 00.00",
         TextStyle {

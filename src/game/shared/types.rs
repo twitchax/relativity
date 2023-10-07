@@ -2,6 +2,9 @@ use bevy::prelude::*;
 use uom::si::f64::{Length as UomLength, Mass as UomMass, Time as UomTime, Velocity as UomVelocity};
 
 #[derive(Component, Default)]
+pub struct GameItem;
+
+#[derive(Component, Default)]
 pub struct Position {
     pub x: UomLength,
     pub y: UomLength,
