@@ -1,6 +1,9 @@
 use bevy::prelude::*;
 
-use super::shared::{constants::DAYS_PER_SECOND_UOM, types::{Clock, GameItem}};
+use super::shared::{
+    constants::DAYS_PER_SECOND_UOM,
+    types::{Clock, GameItem},
+};
 
 #[derive(Component, Default)]
 pub struct Observer;

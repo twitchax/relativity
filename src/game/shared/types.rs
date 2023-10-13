@@ -5,6 +5,12 @@ use uom::si::f64::{Length as UomLength, Mass as UomMass, Time as UomTime, Veloci
 pub struct GameItem;
 
 #[derive(Component, Default)]
+pub struct PlanetSprite;
+
+#[derive(Component, Default)]
+pub struct RocketSprite;
+
+#[derive(Component, Default)]
 pub struct Position {
     pub x: UomLength,
     pub y: UomLength,

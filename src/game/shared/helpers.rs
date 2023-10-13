@@ -1,10 +1,24 @@
 use super::{
-    constants::{PLANET_SPRITE_WIDTH_PX, SCREEN_HEIGHT_UOM, SCREEN_WIDTH_UOM},
-    types::Position,
+    constants::{PLANET_SPRITE_WIDTH_PX, ROCKET_SPRITE_WIDTH_PX, SCREEN_HEIGHT_UOM, SCREEN_WIDTH_UOM},
+    types::{Position, Radius},
 };
 use crate::shared::{SCREEN_HEIGHT_PX, SCREEN_WIDTH_PX};
 use bevy::prelude::*;
 use uom::si::f64::Length as UomLength;
+
+pub fn has_collided(a: (&Position, &Radius), b: (&Position, &Radius)) -> bool {
+    let a_pos = a.0;
+    let b_pos = b.0;
+    let a_radius = a.1;
+    let b_radius = b.1;
+
+    let dx = a_pos.x - b_pos.x;
+    let dy = a_pos.y - b_pos.y;
+
+    let distance = (dx * dx + dy * dy).sqrt();
+
+    distance <= a_radius.value + b_radius.value
+}
 
 pub fn get_translation_from_position(position: &Position) -> Vec3 {
     let x = (position.x / *SCREEN_WIDTH_UOM).value;
@@ -34,6 +48,10 @@ pub fn length_to_pixel(length: UomLength) -> f64 {
     length_percent.value * SCREEN_WIDTH_PX
 }
 
-pub fn sprite_pixel_radius_to_scale(pixels: f64) -> Vec3 {
+pub fn planet_sprite_pixel_radius_to_scale(pixels: f64) -> Vec3 {
     Vec3::splat((2.0 * pixels / PLANET_SPRITE_WIDTH_PX) as f32)
+}
+
+pub fn rocket_sprite_pixel_radius_to_scale(pixels: f64) -> Vec3 {
+    Vec3::splat((2.0 * pixels / ROCKET_SPRITE_WIDTH_PX) as f32)
 }

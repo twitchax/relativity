@@ -3,7 +3,7 @@ pub mod menu;
 pub mod shared;
 
 use bevy::prelude::*;
-use game::{GamePlugin, levels::CurrentLevel};
+use game::{levels::CurrentLevel, GamePlugin};
 use menu::MenuPlugin;
 use shared::{state::AppState, types::spawn_camera};
 

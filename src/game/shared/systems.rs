@@ -1,18 +1,61 @@
+use crate::{
+    game::{
+        destination::Destination,
+        object::Planet,
+        player::shared::Player,
+    },
+    shared::state::{AppState, GameState},
+};
+
 use super::{
     constants::{C, DAYS_PER_SECOND_UOM, G},
-    helpers::{get_translation_from_position, length_to_pixel, sprite_pixel_radius_to_scale},
-    types::{Mass, Position, Radius, Velocity},
+    helpers::{
+        get_translation_from_position, has_collided, length_to_pixel, planet_sprite_pixel_radius_to_scale,
+        rocket_sprite_pixel_radius_to_scale,
+    },
+    types::{Mass, PlanetSprite, Position, Radius, RocketSprite, Velocity},
 };
 use bevy::prelude::*;
 use glam::DVec2;
 use uom::si::{acceleration::meter_per_second_squared, f64::Acceleration as UomAcceleration};
 
+// Escape button.
+
+pub fn exit_level_check(
+    keyboard_input: ResMut<Input<KeyCode>>,
+    mut app_state: ResMut<NextState<AppState>>,
+    mut game_state: ResMut<NextState<GameState>>,
+) {
+    if keyboard_input.just_pressed(KeyCode::Escape) {
+        app_state.set(AppState::Menu);
+        game_state.set(GameState::Paused);
+    }
+}
+
 // Basic scale / velocity / position.
 
-pub fn scale_update(mut query: Query<(&mut Transform, &Radius)>) {
+pub fn planet_scale_update(mut query: Query<(&mut Transform, &Radius), With<PlanetSprite>>) {
     for (mut transform, radius) in query.iter_mut() {
-        let scale = sprite_pixel_radius_to_scale(length_to_pixel(radius.value));
+        let scale = planet_sprite_pixel_radius_to_scale(length_to_pixel(radius.value));
         transform.scale = scale;
+    }
+}
+
+pub fn rocket_scale_update(mut query: Query<(&mut Transform, &Radius), With<RocketSprite>>) {
+    for (mut transform, radius) in query.iter_mut() {
+        let scale = rocket_sprite_pixel_radius_to_scale(length_to_pixel(radius.value));
+        transform.scale = scale;
+    }
+}
+
+pub fn rocket_rotation_update(mut query: Query<(&mut Transform, &Velocity), With<RocketSprite>>) {
+    for (mut transform, velocity) in query.iter_mut() {
+        let velocity = DVec2::new(velocity.x.value, velocity.y.value);
+        let velocity = velocity.normalize();
+
+        let rotation = velocity.y.atan2(velocity.x) - std::f64::consts::FRAC_PI_2;
+
+        transform.rotation = Quat::from_rotation_z(rotation as f32);
     }
 }
 
@@ -77,6 +120,30 @@ pub fn velocity_update(mut query: Query<(&mut Velocity, Entity, &Position)>, mas
 
         if velocity.scalar() > *C {
             println!("AHHHHHHHHHHHHHH...fuck.");
+        }
+    }
+}
+
+// Collisions.
+
+pub fn collision_check(
+    player_query: Query<(&Position, &Radius), With<Player>>,
+    planet_query: Query<(&Position, &Radius), With<Planet>>,
+    destination_query: Query<(&Position, &Radius), With<Destination>>,
+    mut game_state: ResMut<NextState<GameState>>,
+) {
+    let (player_position, player_radius) = player_query.single();
+    let (destination_position, destination_radius) = destination_query.single();
+
+    if has_collided((player_position, player_radius), (destination_position, destination_radius)) {
+        game_state.set(GameState::Finished);
+        println!("success!");
+    }
+
+    for (planet_position, planet_radius) in planet_query.iter() {
+        if has_collided((player_position, player_radius), (planet_position, planet_radius)) {
+            game_state.set(GameState::Paused);
+            println!("failed!");
         }
     }
 }

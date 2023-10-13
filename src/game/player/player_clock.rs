@@ -1,7 +1,7 @@
 use super::shared::Player;
 use crate::game::shared::{
     constants::{C, DAYS_PER_SECOND_UOM, G},
-    types::{Clock, GravitationalGamma, Mass, Position, Velocity, VelocityGamma, GameItem},
+    types::{Clock, GameItem, GravitationalGamma, Mass, Position, Velocity, VelocityGamma},
 };
 use bevy::prelude::*;
 

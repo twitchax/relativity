@@ -1,4 +1,4 @@
-use super::shared::types::{Mass, Position, Radius, Velocity, GameItem};
+use super::shared::types::{GameItem, Mass, PlanetSprite, Position, Radius, Velocity};
 use bevy::prelude::*;
 
 #[derive(Component, Default)]
@@ -11,6 +11,7 @@ pub struct StaticPlanetBundle {
     pub position: Position,
     pub mass: Mass,
     pub radius: Radius,
+    pub sprite_type: PlanetSprite,
     pub sprite: SpriteBundle,
 }
 
@@ -22,5 +23,6 @@ pub struct DynamicPlanetBundle {
     pub mass: Mass,
     pub radius: Radius,
     pub velocity: Velocity,
+    pub sprite_type: PlanetSprite,
     pub sprite: SpriteBundle,
 }

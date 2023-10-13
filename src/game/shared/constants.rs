@@ -11,6 +11,7 @@ use uom::si::{
 use crate::shared::{SCREEN_HEIGHT_PX, SCREEN_WIDTH_PX};
 
 pub const PLANET_SPRITE_WIDTH_PX: f64 = 1280.0f64;
+pub const ROCKET_SPRITE_WIDTH_PX: f64 = 234.0f64;
 
 const MASS_FACTOR: f64 = 100_000_000.0f64;
 const DAYS_PER_SECOND: f64 = 0.1f64;

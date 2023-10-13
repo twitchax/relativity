@@ -1,6 +1,16 @@
 use bevy::prelude::*;
 
-use super::{object::StaticPlanetBundle, shared::{helpers::get_position_from_percentage, constants::{UNIT_RADIUS, MASS_OF_SUN, MASS_OF_EARTH}, types::{Radius, Mass, GameItem}}, player::{player_clock::spawn_player_clock, player_sprite::PlayerSpriteBundle}, observer::spawn_observer_clock};
+use super::{
+    destination::DestinationBundle,
+    object::StaticPlanetBundle,
+    observer::spawn_observer_clock,
+    player::{player_clock::spawn_player_clock, player_sprite::PlayerSpriteBundle},
+    shared::{
+        constants::{MASS_OF_EARTH, MASS_OF_SUN, UNIT_RADIUS},
+        helpers::get_position_from_percentage,
+        types::{GameItem, Mass, Radius},
+    },
+};
 
 // Components / bundles / resources.
 
@@ -14,7 +24,7 @@ pub enum CurrentLevel {
 
 pub fn spawn_level(commands: Commands, asset_server: Res<AssetServer>, current_level: Res<CurrentLevel>) {
     match current_level.into_inner() {
-        CurrentLevel::One => level1(commands, asset_server)
+        CurrentLevel::One => level1(commands, asset_server),
     }
 }
 
@@ -36,8 +46,11 @@ pub fn level1(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     commands.spawn(PlayerSpriteBundle {
         position: get_position_from_percentage(0.3, 0.3),
-        radius: Radius { value: *UNIT_RADIUS },
-        sprite: SpriteBundle { texture: asset_server.load("sprites/planets/sphere2.png"), ..Default::default() },
+        radius: Radius { value: *UNIT_RADIUS / 4.0 },
+        sprite: SpriteBundle {
+            texture: asset_server.load("sprites/space/Rockets/spaceRockets_003.png"),
+            ..Default::default()
+        },
         ..Default::default()
     });
 
@@ -74,6 +87,19 @@ pub fn level1(mut commands: Commands, asset_server: Res<AssetServer>) {
         mass: Mass { value: *MASS_OF_EARTH },
         sprite: SpriteBundle {
             texture: asset_server.load("sprites/planets/planet03.png"),
+            ..Default::default()
+        },
+        ..Default::default()
+    });
+
+    // Spawn destination.
+
+    commands.spawn(DestinationBundle {
+        position: get_position_from_percentage(0.9, 0.9),
+        radius: Radius { value: 4.0 * *UNIT_RADIUS },
+        mass: Mass { value: 0.6 * *MASS_OF_SUN },
+        sprite: SpriteBundle {
+            texture: asset_server.load("sprites/planets/noise00.png"),
             ..Default::default()
         },
         ..Default::default()

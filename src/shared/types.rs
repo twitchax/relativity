@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use super::{SCREEN_WIDTH_PX, SCREEN_HEIGHT_PX};
+use super::{SCREEN_HEIGHT_PX, SCREEN_WIDTH_PX};
 
 // Camera.
 
