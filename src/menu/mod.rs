@@ -17,7 +17,5 @@ pub fn start(mut mouse_input: ResMut<Input<MouseButton>>, mut state: ResMut<Next
     mouse_input.release_all();
     mouse_input.reset_all();
 
-    println!("here");
-
     state.set(AppState::InGame);
 }

@@ -13,7 +13,7 @@ A [bevy](https://bevyengine.org/) game designed to explore the effects of relati
 
 ### Install
 
-At present, you also need to install the assets.
+At present, you also need to install the assets by downloading the folder next to the binary.
 
 Windows:
 
