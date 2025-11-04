@@ -9,7 +9,7 @@ impl Plugin for MenuPlugin {
     }
 }
 
-pub fn start(mut mouse_input: ResMut<Input<MouseButton>>, mut state: ResMut<NextState<AppState>>) {
+pub fn start(mut mouse_input: ResMut<ButtonInput<MouseButton>>, mut state: ResMut<NextState<AppState>>) {
     if !mouse_input.pressed(MouseButton::Left) {
         return;
     }

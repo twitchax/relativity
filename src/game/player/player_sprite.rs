@@ -19,18 +19,19 @@ pub struct PlayerSpriteBundle {
     pub radius: Radius,
     pub velocity: Velocity,
     pub sprite_type: RocketSprite,
-    pub sprite: SpriteBundle,
+    pub sprite: Sprite,
+    pub transform: Transform,
 }
 
 // Systems.
 
 pub fn player_launch(
-    mouse_input: Res<Input<MouseButton>>,
+    mouse_input: Res<ButtonInput<MouseButton>>,
     mut player_velocity_query: Query<(&Transform, &mut Velocity), With<Player>>,
     window_query: Query<&Window, With<PrimaryWindow>>,
     mut state: ResMut<NextState<GameState>>,
 ) {
-    let Ok((player_transform, mut player_velocity)) = player_velocity_query.get_single_mut() else {
+    let Ok((player_transform, mut player_velocity)) = player_velocity_query.single_mut() else {
         return;
     };
 
@@ -38,8 +39,8 @@ pub fn player_launch(
         return;
     }
 
-    let window = window_query.get_single().unwrap();
-    let cursor_position = window.cursor_position().unwrap();
+    let Ok(window) = window_query.single() else { return };
+    let Some(cursor_position) = window.cursor_position() else { return };
     let cursor_transform = DVec2::new(cursor_position.x as f64, SCREEN_HEIGHT_PX - cursor_position.y as f64);
 
     let launch_vector = DVec2::new(

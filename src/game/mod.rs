@@ -26,7 +26,7 @@ pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        app.add_state::<GameState>()
+        app.init_state::<GameState>()
             // Spawn things on enter.
             .add_systems(OnEnter(AppState::InGame), spawn_level)
             // Destroy things on exit.

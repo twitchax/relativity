@@ -14,28 +14,34 @@ pub struct PlayerClockBundle {
     pub velocity_gamma: VelocityGamma,
     pub gravitational_gamma: GravitationalGamma,
     pub clock: Clock,
-    pub clock_text: TextBundle,
+    pub clock_text: Text,
+    pub node: Node,
 }
 
 // Startup systems.
 
 pub fn spawn_player_clock(commands: &mut Commands, asset_server: &Res<AssetServer>) {
-    let clock_text = TextBundle::from_section(
-        "t_p = 00.00 γ_v = 1.00 γ_g = 1.00 v_p = 00.00",
-        TextStyle {
-            font_size: 40.0,
-            font: asset_server.load("fonts/HackNerdFontMono-Regular.ttf"),
-            ..Default::default()
-        },
-    )
-    .with_style(Style {
+    let clock_text = Text::new("t_p = 00.00 γ_v = 1.00 γ_g = 1.00 v_p = 00.00");
+
+    let node = Node {
         position_type: PositionType::Absolute,
         top: Val::Px(10.0),
         left: Val::Px(10.0),
         ..Default::default()
-    });
+    };
 
-    commands.spawn(PlayerClockBundle { clock_text, ..Default::default() });
+    commands.spawn((
+        PlayerClockBundle {
+            clock_text,
+            node,
+            ..Default::default()
+        },
+        TextFont {
+            font: asset_server.load("fonts/HackNerdFontMono-Regular.ttf"),
+            font_size: 40.0,
+            ..Default::default()
+        },
+    ));
 }
 
 // Systems.
@@ -46,10 +52,10 @@ pub fn player_clock_update(
     masses: Query<(Entity, &Position, &Mass)>,
     time: Res<Time>,
 ) {
-    let time_elapsed = *DAYS_PER_SECOND_UOM * time.delta_seconds() as f64;
+    let time_elapsed = *DAYS_PER_SECOND_UOM * time.delta_secs() as f64;
 
-    let (mut clock, mut velocity_gamma, mut gravitational_gamma) = query.single_mut();
-    let (player_entity, player_position, player_velocity) = player_query.single();
+    let Ok((mut clock, mut velocity_gamma, mut gravitational_gamma)) = query.single_mut() else { return };
+    let Ok((player_entity, player_position, player_velocity)) = player_query.single() else { return };
 
     // Compute velocity gamma.
 
@@ -88,11 +94,11 @@ pub fn player_clock_update(
 }
 
 pub fn player_clock_text_update(mut query: Query<(&mut Text, &Clock, &VelocityGamma, &GravitationalGamma), With<Player>>) {
-    let (mut text, clock, velocity_gamma, gravitational_gamma) = query.single_mut();
+    let Ok((mut text, clock, velocity_gamma, gravitational_gamma)) = query.single_mut() else { return };
 
     let days = clock.value.value / 24.0 / 3600.0;
 
-    text.sections[0].value = format!(
+    **text = format!(
         "t_p = {:2.2} γ_v = {:2.2} γ_g = {:2.2}",
         days, velocity_gamma.value, gravitational_gamma.value
     );

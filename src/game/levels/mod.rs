@@ -30,7 +30,7 @@ pub fn spawn_level(commands: Commands, asset_server: Res<AssetServer>, current_l
 
 pub fn despawn_level(mut commands: Commands, query: Query<Entity, With<GameItem>>) {
     for entity in query.iter() {
-        commands.entity(entity).despawn_recursive();
+        commands.entity(entity).despawn();
     }
 }
 
@@ -47,8 +47,8 @@ pub fn level1(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(PlayerSpriteBundle {
         position: get_position_from_percentage(0.3, 0.3),
         radius: Radius { value: *UNIT_RADIUS / 4.0 },
-        sprite: SpriteBundle {
-            texture: asset_server.load("sprites/space/Rockets/spaceRockets_003.png"),
+        sprite: Sprite {
+            image: asset_server.load("sprites/space/Rockets/spaceRockets_003.png"),
             ..Default::default()
         },
         ..Default::default()
@@ -61,8 +61,8 @@ pub fn level1(mut commands: Commands, asset_server: Res<AssetServer>) {
         position: get_position_from_percentage(0.5, 0.5),
         radius: Radius { value: 3.0 * *UNIT_RADIUS },
         mass: Mass { value: *MASS_OF_SUN },
-        sprite: SpriteBundle {
-            texture: asset_server.load("sprites/planets/planet04.png"),
+        sprite: Sprite {
+            image: asset_server.load("sprites/planets/planet04.png"),
             ..Default::default()
         },
         ..Default::default()
@@ -73,8 +73,8 @@ pub fn level1(mut commands: Commands, asset_server: Res<AssetServer>) {
         position: get_position_from_percentage(0.8, 0.7),
         radius: Radius { value: 2.0 * *UNIT_RADIUS },
         mass: Mass { value: 0.4 * *MASS_OF_SUN },
-        sprite: SpriteBundle {
-            texture: asset_server.load("sprites/planets/planet05.png"),
+        sprite: Sprite {
+            image: asset_server.load("sprites/planets/planet05.png"),
             ..Default::default()
         },
         ..Default::default()
@@ -85,8 +85,8 @@ pub fn level1(mut commands: Commands, asset_server: Res<AssetServer>) {
         position: get_position_from_percentage(0.28, 0.28),
         radius: Radius { value: 2.0 * *UNIT_RADIUS },
         mass: Mass { value: *MASS_OF_EARTH },
-        sprite: SpriteBundle {
-            texture: asset_server.load("sprites/planets/planet03.png"),
+        sprite: Sprite {
+            image: asset_server.load("sprites/planets/planet03.png"),
             ..Default::default()
         },
         ..Default::default()
@@ -98,8 +98,8 @@ pub fn level1(mut commands: Commands, asset_server: Res<AssetServer>) {
         position: get_position_from_percentage(0.9, 0.9),
         radius: Radius { value: 4.0 * *UNIT_RADIUS },
         mass: Mass { value: 0.6 * *MASS_OF_SUN },
-        sprite: SpriteBundle {
-            texture: asset_server.load("sprites/planets/noise00.png"),
+        sprite: Sprite {
+            image: asset_server.load("sprites/planets/noise00.png"),
             ..Default::default()
         },
         ..Default::default()

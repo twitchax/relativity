@@ -9,12 +9,12 @@ use shared::{state::AppState, types::spawn_camera};
 
 fn main() {
     App::new()
-        .insert_resource(ClearColor(Color::rgb(0.0, 0.0, 0.0)))
+        .insert_resource(ClearColor(Color::srgb(0.0, 0.0, 0.0)))
         .init_resource::<CurrentLevel>()
         .add_plugins(DefaultPlugins)
         .add_plugins(MenuPlugin)
         .add_plugins(GamePlugin)
-        .add_state::<AppState>()
+        .init_state::<AppState>()
         .add_systems(Startup, spawn_camera)
         .run();
 }

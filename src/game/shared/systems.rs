@@ -22,7 +22,7 @@ use uom::si::{acceleration::meter_per_second_squared, f64::Acceleration as UomAc
 // Escape button.
 
 pub fn exit_level_check(
-    keyboard_input: ResMut<Input<KeyCode>>,
+    keyboard_input: ResMut<ButtonInput<KeyCode>>,
     mut app_state: ResMut<NextState<AppState>>,
     mut game_state: ResMut<NextState<GameState>>,
 ) {
@@ -61,7 +61,7 @@ pub fn rocket_rotation_update(mut query: Query<(&mut Transform, &Velocity), With
 
 pub fn position_update(mut query: Query<(&mut Position, &Velocity)>, time: Res<Time>) {
     for (mut position, velocity) in query.iter_mut() {
-        let time_elapsed = *DAYS_PER_SECOND_UOM * time.delta_seconds() as f64;
+        let time_elapsed = *DAYS_PER_SECOND_UOM * time.delta_secs() as f64;
 
         position.x += velocity.x * time_elapsed;
         position.y += velocity.y * time_elapsed;
@@ -77,7 +77,7 @@ pub fn translation_update(mut query: Query<(&mut Transform, &Position)>) {
 // Velocity based on gravitation.
 
 pub fn velocity_update(mut query: Query<(&mut Velocity, Entity, &Position)>, masses: Query<(Entity, &Position, &Mass)>, time: Res<Time>) {
-    let time_elapsed = *DAYS_PER_SECOND_UOM * time.delta_seconds() as f64;
+    let time_elapsed = *DAYS_PER_SECOND_UOM * time.delta_secs() as f64;
 
     for (mut velocity, entity, position) in query.iter_mut() {
         if velocity.x.value == 0.0 || velocity.y.value == 0.0 {
@@ -132,8 +132,8 @@ pub fn collision_check(
     destination_query: Query<(&Position, &Radius), With<Destination>>,
     mut game_state: ResMut<NextState<GameState>>,
 ) {
-    let (player_position, player_radius) = player_query.single();
-    let (destination_position, destination_radius) = destination_query.single();
+    let Ok((player_position, player_radius)) = player_query.single() else { return };
+    let Ok((destination_position, destination_radius)) = destination_query.single() else { return };
 
     if has_collided((player_position, player_radius), (destination_position, destination_radius)) {
         game_state.set(GameState::Finished);
