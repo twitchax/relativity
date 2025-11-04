@@ -8,7 +8,7 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     steps:
-      - run: sudo apt-get install -y libasound2-dev portaudio19-dev build-essential libpulse-dev libdbus-1-dev libudev-dev
+      - run: sudo apt-get install -y libasound2-dev portaudio19-dev build-essential libpulse-dev libdbus-1-dev libudev-dev libwayland-dev libxkbcommon-dev
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
@@ -66,7 +66,7 @@ jobs:
     name: Build Linux
     runs-on: ubuntu-latest
     steps:
-      - run: sudo apt-get install -y libasound2-dev portaudio19-dev build-essential libpulse-dev libdbus-1-dev libudev-dev
+      - run: sudo apt-get install -y libasound2-dev portaudio19-dev build-essential libpulse-dev libdbus-1-dev libudev-dev libwayland-dev libxkbcommon-dev
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
