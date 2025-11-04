@@ -56,5 +56,6 @@ pub fn observer_clock_text_update(mut query: Query<(&mut Text, &Clock), With<Obs
 
     let days = clock.value.value / 24.0 / 3600.0;
 
+    // In Bevy 0.17, Text implements Deref<Target = String>, so we use **text to mutate the underlying String.
     **text = format!("t_o = {:2.2}", days);
 }

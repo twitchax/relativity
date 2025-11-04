@@ -30,6 +30,8 @@ pub fn spawn_level(commands: Commands, asset_server: Res<AssetServer>, current_l
 
 pub fn despawn_level(mut commands: Commands, query: Query<Entity, With<GameItem>>) {
     for entity in query.iter() {
+        // Note: Using despawn() instead of despawn_recursive() is appropriate here
+        // because game entities in this codebase do not have children.
         commands.entity(entity).despawn();
     }
 }

@@ -98,6 +98,7 @@ pub fn player_clock_text_update(mut query: Query<(&mut Text, &Clock, &VelocityGa
 
     let days = clock.value.value / 24.0 / 3600.0;
 
+    // In Bevy 0.17, Text implements Deref<Target = String>, so we use **text to mutate the underlying String.
     **text = format!(
         "t_p = {:2.2} γ_v = {:2.2} γ_g = {:2.2}",
         days, velocity_gamma.value, gravitational_gamma.value
