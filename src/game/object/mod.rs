@@ -12,7 +12,8 @@ pub struct StaticPlanetBundle {
     pub mass: Mass,
     pub radius: Radius,
     pub sprite_type: PlanetSprite,
-    pub sprite: SpriteBundle,
+    pub sprite: Sprite,
+    pub transform: Transform,
 }
 
 #[derive(Bundle, Default)]
@@ -24,5 +25,6 @@ pub struct DynamicPlanetBundle {
     pub radius: Radius,
     pub velocity: Velocity,
     pub sprite_type: PlanetSprite,
-    pub sprite: SpriteBundle,
+    pub sprite: Sprite,
+    pub transform: Transform,
 }

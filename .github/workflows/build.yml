@@ -8,7 +8,7 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     steps:
-      - run: sudo apt-get install -y libasound2-dev portaudio19-dev build-essential libpulse-dev libdbus-1-dev libudev-dev
+      - run: sudo apt-get update && sudo apt-get install -y libasound2-dev portaudio19-dev build-essential libpulse-dev libdbus-1-dev libudev-dev libwayland-dev libxkbcommon-dev
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
@@ -42,6 +42,7 @@ jobs:
     needs: test
     name: Build Windows
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v2
       - name: Install mingw-w64
@@ -65,8 +66,9 @@ jobs:
     needs: test
     name: Build Linux
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     steps:
-      - run: sudo apt-get install -y libasound2-dev portaudio19-dev build-essential libpulse-dev libdbus-1-dev libudev-dev
+      - run: sudo apt-get update && sudo apt-get install -y libasound2-dev portaudio19-dev build-essential libpulse-dev libdbus-1-dev libudev-dev libwayland-dev libxkbcommon-dev
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
@@ -88,6 +90,7 @@ jobs:
     name: Build MacOS
     # TODO: Eventually, it would be better to cross-compile with `aarch64-apple-darwin`.
     runs-on: macos-12
+    if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v2
       - uses: Swatinem/rust-cache@v2

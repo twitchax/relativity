@@ -12,5 +12,6 @@ pub struct DestinationBundle {
     pub mass: Mass,
     pub radius: Radius,
     pub sprite_type: PlanetSprite,
-    pub sprite: SpriteBundle,
+    pub sprite: Sprite,
+    pub transform: Transform,
 }
