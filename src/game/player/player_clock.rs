@@ -31,11 +31,7 @@ pub fn spawn_player_clock(commands: &mut Commands, asset_server: &Res<AssetServe
     };
 
     commands.spawn((
-        PlayerClockBundle {
-            clock_text,
-            node,
-            ..Default::default()
-        },
+        PlayerClockBundle { clock_text, node, ..Default::default() },
         TextFont {
             font: asset_server.load("fonts/HackNerdFontMono-Regular.ttf"),
             font_size: 40.0,
@@ -54,13 +50,14 @@ pub fn player_clock_update(
 ) {
     let time_elapsed = *DAYS_PER_SECOND_UOM * time.delta_secs() as f64;
 
-    let Ok((mut clock, mut velocity_gamma, mut gravitational_gamma)) = query.single_mut() else { return };
+    let Ok((mut clock, mut velocity_gamma, mut gravitational_gamma)) = query.single_mut() else {
+        return;
+    };
     let Ok((player_entity, player_position, player_velocity)) = player_query.single() else { return };
 
     // Compute velocity gamma.
 
-    let v_squared_div_c_squared =
-        (player_velocity.x.value * player_velocity.x.value + player_velocity.y.value * player_velocity.y.value) / (*C * *C);
+    let v_squared_div_c_squared = (player_velocity.x.value * player_velocity.x.value + player_velocity.y.value * player_velocity.y.value) / (*C * *C);
     velocity_gamma.value = 1.0 / (1.0 - v_squared_div_c_squared.value).sqrt();
 
     // Compute gravitational gamma.
@@ -99,8 +96,5 @@ pub fn player_clock_text_update(mut query: Query<(&mut Text, &Clock, &VelocityGa
     let days = clock.value.value / 24.0 / 3600.0;
 
     // In Bevy 0.17, Text implements Deref<Target = String>, so we use **text to mutate the underlying String.
-    **text = format!(
-        "t_p = {:2.2} γ_v = {:2.2} γ_g = {:2.2}",
-        days, velocity_gamma.value, gravitational_gamma.value
-    );
+    **text = format!("t_p = {:2.2} γ_v = {:2.2} γ_g = {:2.2}", days, velocity_gamma.value, gravitational_gamma.value);
 }

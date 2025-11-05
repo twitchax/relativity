@@ -16,10 +16,7 @@ use self::{
         player_clock::{player_clock_text_update, player_clock_update},
         player_sprite::player_launch,
     },
-    shared::systems::{
-        exit_level_check, planet_scale_update, position_update, rocket_rotation_update, rocket_scale_update, translation_update,
-        velocity_update, collision_check,
-    },
+    shared::systems::{collision_check, exit_level_check, planet_scale_update, position_update, rocket_rotation_update, rocket_scale_update, translation_update, velocity_update},
 };
 
 pub struct GamePlugin;
@@ -32,17 +29,9 @@ impl Plugin for GamePlugin {
             // Destroy things on exit.
             .add_systems(OnExit(AppState::InGame), despawn_level)
             // Run the scale updates always.
-            .add_systems(
-                Update,
-                (planet_scale_update, rocket_scale_update, exit_level_check).run_if(in_state(AppState::InGame)),
-            )
+            .add_systems(Update, (planet_scale_update, rocket_scale_update, exit_level_check).run_if(in_state(AppState::InGame)))
             // Allow launching if paused.
-            .add_systems(
-                Update,
-                (player_launch, translation_update)
-                    .run_if(in_state(AppState::InGame))
-                    .run_if(in_state(GameState::Paused)),
-            )
+            .add_systems(Update, (player_launch, translation_update).run_if(in_state(AppState::InGame)).run_if(in_state(GameState::Paused)))
             // Run the rest of the updates if running.
             .add_systems(
                 Update,
