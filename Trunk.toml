@@ -9,6 +9,6 @@ dist = "dist"
 ignore = ["dist"]
 
 [serve]
-# Address to serve on during local development
-address = "127.0.0.1"
+# Addresses to serve on during local development
+addresses = ["127.0.0.1"]
 port = 8080

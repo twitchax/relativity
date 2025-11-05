@@ -20,7 +20,8 @@ fn main() {
                 // Configure the canvas selector for WASM
                 #[cfg(target_arch = "wasm32")]
                 canvas: Some("#bevy-canvas".to_string()),
-                // Prevent canvas from requesting pointer lock on desktop
+                // Fit canvas to parent container for better web experience
+                #[cfg(target_arch = "wasm32")]
                 fit_canvas_to_parent: true,
                 ..default()
             }),
