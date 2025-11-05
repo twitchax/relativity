@@ -37,6 +37,14 @@ $ chmod a+x /usr/local/bin/relativity
 
 ## Usage
 
+### Play in Browser
+
+You can play the game directly in your browser at:
+
+**https://twitchax.github.io/relativity/**
+
+The web version is automatically built and deployed from the main branch.
+
 ### Run the Game
 
 After installing the binary and assets, run:
@@ -75,6 +83,27 @@ $ cargo test
 # Format code
 $ cargo fmt
 ```
+
+### Building for Web (WASM)
+
+To build and test the web version locally:
+
+```bash
+# Install trunk (build tool for WASM)
+$ cargo install trunk
+
+# Add the WASM target
+$ rustup target add wasm32-unknown-unknown
+
+# Serve locally (opens at http://127.0.0.1:8080)
+$ trunk serve --release
+
+# Or build for deployment
+$ trunk build --release
+# Output will be in the dist/ directory
+```
+
+The web version is automatically deployed to GitHub Pages when changes are pushed to the main branch.
 
 ## Test
 
