@@ -43,10 +43,7 @@ pub fn player_launch(
     let Some(cursor_position) = window.cursor_position() else { return };
     let cursor_transform = DVec2::new(cursor_position.x as f64, SCREEN_HEIGHT_PX - cursor_position.y as f64);
 
-    let launch_vector = DVec2::new(
-        cursor_transform.x - player_transform.translation.x as f64,
-        cursor_transform.y - player_transform.translation.y as f64,
-    );
+    let launch_vector = DVec2::new(cursor_transform.x - player_transform.translation.x as f64, cursor_transform.y - player_transform.translation.y as f64);
     let launch_direction = launch_vector.normalize();
     let launch_power = f64::min(0.8 * SCREEN_WIDTH_PX, launch_vector.length()) / (0.8 * SCREEN_WIDTH_PX);
 

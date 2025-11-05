@@ -28,11 +28,7 @@ pub fn spawn_observer_clock(commands: &mut Commands, asset_server: &Res<AssetSer
     };
 
     commands.spawn((
-        ObserverClockBundle {
-            clock_text,
-            node,
-            ..Default::default()
-        },
+        ObserverClockBundle { clock_text, node, ..Default::default() },
         TextFont {
             font: asset_server.load("fonts/HackNerdFontMono-Regular.ttf"),
             font_size: 40.0,

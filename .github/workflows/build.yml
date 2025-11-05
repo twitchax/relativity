@@ -9,34 +9,47 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: sudo apt-get update && sudo apt-get install -y libasound2-dev portaudio19-dev build-essential libpulse-dev libdbus-1-dev libudev-dev libwayland-dev libxkbcommon-dev
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly
-          override: true
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
       - uses: Swatinem/rust-cache@v2
-      - uses: actions-rs/cargo@v1
         with:
-          command: test
+          cache-all-crates: "true"
+      - run: cargo test
 
-#   codecov:
-#     needs: test
-#     name: Code Coverage
-#     runs-on: ubuntu-latest
-#     steps:
-#       - uses: actions/checkout@v2
-#       - uses: actions-rs/toolchain@v1
-#         with:
-#           toolchain: nightly
-#           override: true
-#       - uses: Swatinem/rust-cache@v2
-#         with:
-#           cache-all-crates: "true"
-#       - name: Install tarpaulin
-#         run: cargo install cargo-tarpaulin
-#         continue-on-error: true
-#       - run: cargo tarpaulin --skip-clean --out Xml
-#       - uses: codecov/codecov-action@v2
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - run: sudo apt-get update && sudo apt-get install -y libasound2-dev portaudio19-dev build-essential libpulse-dev libdbus-1-dev libudev-dev libwayland-dev libxkbcommon-dev
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-all-crates: "true"
+      - run: cargo clippy --all-targets --all-features -- -D warnings
+
+  codecov:
+    needs: test
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - run: sudo apt-get update && sudo apt-get install -y libasound2-dev portaudio19-dev build-essential libpulse-dev libdbus-1-dev libudev-dev libwayland-dev libxkbcommon-dev
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-all-crates: "true"
+      - name: Install cargo-llvm-cov
+        run: cargo install cargo-llvm-cov
+        continue-on-error: true
+      - run: cargo llvm-cov --all-features --workspace --lcov --output-path coverage.lcov
+      - uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.lcov
+          slug: twitchax/relativity
 
   build_windows:
     needs: test
@@ -44,20 +57,18 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Install mingw-w64
         run: sudo apt-get install mingw-w64
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@nightly
         with:
-          toolchain: nightly-2023-07-04
-          target: x86_64-pc-windows-gnu
-          override: true
+          targets: x86_64-pc-windows-gnu
       - uses: Swatinem/rust-cache@v2
-      - uses: actions-rs/cargo@v1
         with:
-          command: build
-          args: --target x86_64-pc-windows-gnu --release
-      - uses: actions/upload-artifact@v3
+          cache-all-crates: "true"
+      - run: cargo install cross
+      - run: cross build --target x86_64-pc-windows-gnu --release
+      - uses: actions/upload-artifact@v4
         with:
           name: relativity_x86_64-pc-windows-gnu
           path: target/x86_64-pc-windows-gnu/release/relativity.exe
@@ -69,18 +80,13 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - run: sudo apt-get update && sudo apt-get install -y libasound2-dev portaudio19-dev build-essential libpulse-dev libdbus-1-dev libudev-dev libwayland-dev libxkbcommon-dev
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly-2023-07-04
-          target: x86_64-unknown-linux-gnu
-          override: true
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
       - uses: Swatinem/rust-cache@v2
-      - uses: actions-rs/cargo@v1
         with:
-          command: build
-          args: --target x86_64-unknown-linux-gnu --release
-      - uses: actions/upload-artifact@v3
+          cache-all-crates: "true"
+      - run: cargo build --target x86_64-unknown-linux-gnu --release
+      - uses: actions/upload-artifact@v4
         with:
           name: relativity_x86_64-unknown-linux-gnu
           path: target/x86_64-unknown-linux-gnu/release/relativity
@@ -89,21 +95,18 @@ jobs:
     needs: test
     name: Build MacOS
     # TODO: Eventually, it would be better to cross-compile with `aarch64-apple-darwin`.
-    runs-on: macos-12
+    runs-on: macos-15
     if: github.ref == 'refs/heads/main'
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
-      - uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly-2023-07-04
-          target: aarch64-apple-darwin
-          override: true
-      - uses: actions-rs/cargo@v1
+          cache-all-crates: "true"
+      - uses: dtolnay/rust-toolchain@nightly
         with:
-          command: build
-          args: --target aarch64-apple-darwin --release
-      - uses: actions/upload-artifact@v3
+          targets: aarch64-apple-darwin
+      - run: cargo build --target aarch64-apple-darwin --release
+      - uses: actions/upload-artifact@v4
         with:
           name: relativity_aarch64-apple-darwin
           path: target/aarch64-apple-darwin/release/relativity
