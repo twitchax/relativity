@@ -1,0 +1,35 @@
+on:
+  push:
+    branches:
+      - main
+
+name: Build and Deploy to GitHub Pages
+
+jobs:
+  build-wasm:
+    name: Build WASM
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          targets: wasm32-unknown-unknown
+      
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-all-crates: "true"
+      
+      - name: Install Trunk
+        run: cargo install trunk
+      
+      - name: Build with Trunk
+        run: trunk build --release
+      
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages

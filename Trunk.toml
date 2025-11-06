@@ -1,0 +1,14 @@
+[build]
+# Set the public URL for GitHub Pages deployment
+public_url = "/relativity/"
+# Output directory for built files
+dist = "dist"
+
+[watch]
+# Watch for changes to these paths
+ignore = ["dist"]
+
+[serve]
+# Addresses to serve on during local development
+addresses = ["127.0.0.1"]
+port = 8080
