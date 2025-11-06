@@ -121,10 +121,10 @@ pub fn level_time_warp(mut commands: Commands, asset_server: Res<AssetServer>) {
     spawn_observer_clock(&mut commands, &asset_server);
 
     // Spawn player at slingshot starting position.
-    // Position: (100.0, 300.0) in screen percentage coordinates
+    // Position: 0.125 (12.5%) of screen width, 0.5 (50%) of screen height
     // Initial velocity: (260.0, 0.0) km/s - gives the player a horizontal boost
     commands.spawn(PlayerSpriteBundle {
-        position: get_position_from_percentage(0.125, 0.5), // ~100px, 300px on 800x600 screen
+        position: get_position_from_percentage(0.125, 0.5),
         radius: Radius { value: *UNIT_RADIUS / 4.0 },
         velocity: Velocity {
             x: UomVelocity::new::<kilometer_per_second>(260.0), // Strong horizontal velocity for slingshot
@@ -139,12 +139,12 @@ pub fn level_time_warp(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     // Spawn moving gravity well (time_well) that orbits around center.
     // The well creates a strong gravitational field and will be the center of time-dilation.
-    // Center point: (400, 300) in screen percentage = (0.5, 0.5)
-    // Orbital radius: 120 pixels = ~0.15 screen width
+    // Center point: 0.5, 0.5 (center of screen)
+    // Orbital radius: ~0.15 screen width
     // Position offset: placing at (0.5 + 0.15, 0.5) = right side of orbit initially
     // Orbital velocity: tangent to circle, approximately sqrt(G*M/r) but tuned for gameplay
     // Mass: 18000.0 * MASS_OF_EARTH - strong enough to affect player significantly
-    // Physical radius: 40 pixels - small visual size but strong gravitational influence
+    // Physical radius: 0.67 * UNIT_RADIUS - small visual size but strong gravitational influence
     commands.spawn(DynamicPlanetBundle {
         position: get_position_from_percentage(0.65, 0.5), // Start on right side of orbit
         radius: Radius { value: 0.67 * *UNIT_RADIUS },     // Small physical size (~40px)
@@ -162,10 +162,10 @@ pub fn level_time_warp(mut commands: Commands, asset_server: Res<AssetServer>) {
     });
 
     // Spawn destination/exit gate.
-    // Position: (760.0, 300.0) in screen percentage coordinates
+    // Position: 0.95 (95%) of screen width, 0.5 (50%) of screen height
     // Radius: 48 pixels - medium-sized target
     commands.spawn(DestinationBundle {
-        position: get_position_from_percentage(0.95, 0.5), // Far right, centered vertically (~760px, 300px)
+        position: get_position_from_percentage(0.95, 0.5), // Far right, centered vertically
         radius: Radius { value: 0.8 * *UNIT_RADIUS },      // ~48px radius
         mass: Mass { value: 0.1 * *MASS_OF_SUN },          // Weak mass to avoid disrupting trajectory too much
         sprite: Sprite {
