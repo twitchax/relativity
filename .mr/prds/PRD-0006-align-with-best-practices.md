@@ -58,7 +58,7 @@ tasks:
   - id: T-005
     title: "Rewrite build.yml to use cargo-make and match microralph pattern"
     priority: 3
-    status: todo
+    status: done
     notes: "Pin RUST_TOOLCHAIN, use cargo-binstall for tool installs, single ci task, cache-bin false, add rustfmt+clippy components, use cargo make tasks for platform builds"
   - id: T-006
     title: "Update web.yml to use cargo-make and cargo-binstall for Trunk"
@@ -268,4 +268,22 @@ copilot-setup-steps.yml (new)
   - `cargo make uat` passes: fmt-check ✅, clippy ✅, nextest 2/2 tests passed ✅
 - **Constitution Compliance**: No violations. Changes are mechanical lint fixes. `once_cell` removal is a dependency simplification justified by std library replacement.
 - **Opportunistic UAT Verification**: uat-003 ("All clippy denies satisfied with zero warnings") is now verifiable — `cargo clippy --all-targets --all-features -- -D warnings` exits cleanly with zero errors.
+
+## 2026-02-07 — T-005 Completed
+- **Task**: Rewrite build.yml to use cargo-make and match microralph pattern
+- **Status**: ✅ Done
+- **Changes**:
+  - Rewrote `.github/workflows/build.yml` to match microralph/kord CI pattern
+  - Added `RUST_TOOLCHAIN: nightly-2025-12-22` env var for pinned toolchain
+  - Replaced separate `test` and `clippy` jobs with single `test` job running `cargo make ci`
+  - Added `rustfmt, clippy` components to the test job's toolchain setup
+  - Added `cargo-bins/cargo-binstall@main` action and `cargo binstall cargo-make` across all jobs
+  - Set `cache-bin: "false"` on all `Swatinem/rust-cache@v2` steps
+  - Replaced `cargo install cargo-llvm-cov` with `cargo make codecov` in codecov job (uses binstall via Makefile.toml)
+  - Replaced `cargo install cross` + `cross build` in Windows job with `cargo make build-windows`
+  - Replaced raw `cargo build` in Linux and macOS jobs with `cargo make build-linux` / `cargo make build-macos`
+  - Kept Bevy system dependencies (`libasound2-dev`, etc.) for Linux-based jobs
+  - Kept `macos-15` runner (project's existing choice)
+  - `cargo make uat` passes: fmt-check ✅, clippy ✅, nextest 2/2 tests passed ✅
+- **Constitution Compliance**: No violations. Changes are limited to the CI workflow file, matching established patterns from microralph/kord.
 

@@ -2,54 +2,76 @@ on: [push]
 
 name: Build and Test
 
+env:
+  RUST_TOOLCHAIN: nightly-2025-12-22
+
 jobs:
 
   test:
     name: Test
     runs-on: ubuntu-latest
     steps:
-      - run: sudo apt-get update && sudo apt-get install -y libasound2-dev portaudio19-dev build-essential libpulse-dev libdbus-1-dev libudev-dev libwayland-dev libxkbcommon-dev
       - uses: actions/checkout@v4
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev portaudio19-dev build-essential libpulse-dev libdbus-1-dev libudev-dev libwayland-dev libxkbcommon-dev
       - uses: dtolnay/rust-toolchain@nightly
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          components: rustfmt, clippy
+      - uses: cargo-bins/cargo-binstall@main
       - uses: Swatinem/rust-cache@v2
         with:
           cache-all-crates: "true"
-      - run: cargo test
-
-  clippy:
-    name: Clippy
-    runs-on: ubuntu-latest
-    steps:
-      - run: sudo apt-get update && sudo apt-get install -y libasound2-dev portaudio19-dev build-essential libpulse-dev libdbus-1-dev libudev-dev libwayland-dev libxkbcommon-dev
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@nightly
-        with:
-          components: clippy
-      - uses: Swatinem/rust-cache@v2
-        with:
-          cache-all-crates: "true"
-      - run: cargo clippy --all-targets --all-features -- -D warnings
+          cache-bin: "false"
+      - run: cargo binstall cargo-make --no-confirm
+      - run: cargo make ci
 
   codecov:
     needs: test
     name: Code Coverage
     runs-on: ubuntu-latest
     steps:
-      - run: sudo apt-get update && sudo apt-get install -y libasound2-dev portaudio19-dev build-essential libpulse-dev libdbus-1-dev libudev-dev libwayland-dev libxkbcommon-dev
       - uses: actions/checkout@v4
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev portaudio19-dev build-essential libpulse-dev libdbus-1-dev libudev-dev libwayland-dev libxkbcommon-dev
       - uses: dtolnay/rust-toolchain@nightly
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+      - uses: cargo-bins/cargo-binstall@main
       - uses: Swatinem/rust-cache@v2
         with:
           cache-all-crates: "true"
-      - name: Install cargo-llvm-cov
-        run: cargo install cargo-llvm-cov
-        continue-on-error: true
-      - run: cargo llvm-cov --all-features --workspace --lcov --output-path coverage.lcov
+          cache-bin: "false"
+      - run: cargo binstall cargo-make --no-confirm
+      - run: cargo make codecov
       - uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: coverage.lcov
           slug: twitchax/relativity
+
+  build_linux:
+    needs: test
+    name: Build Linux
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev portaudio19-dev build-essential libpulse-dev libdbus-1-dev libudev-dev libwayland-dev libxkbcommon-dev
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+      - uses: cargo-bins/cargo-binstall@main
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-all-crates: "true"
+          cache-bin: "false"
+      - run: cargo binstall cargo-make --no-confirm
+      - run: cargo make build-linux
+      - uses: actions/upload-artifact@v4
+        with:
+          name: relativity_x86_64-unknown-linux-gnu
+          path: target/x86_64-unknown-linux-gnu/release/relativity
 
   build_windows:
     needs: test
@@ -58,54 +80,42 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
-      - name: Install mingw-w64
+      - name: Install windows dependencies
         run: sudo apt-get install mingw-w64
       - uses: dtolnay/rust-toolchain@nightly
         with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
           targets: x86_64-pc-windows-gnu
+      - uses: cargo-bins/cargo-binstall@main
       - uses: Swatinem/rust-cache@v2
         with:
           cache-all-crates: "true"
-      - run: cargo install cross
-      - run: cross build --target x86_64-pc-windows-gnu --release
+          cache-bin: "false"
+      - run: cargo binstall cargo-make --no-confirm
+      - run: cargo make build-windows
       - uses: actions/upload-artifact@v4
         with:
           name: relativity_x86_64-pc-windows-gnu
           path: target/x86_64-pc-windows-gnu/release/relativity.exe
 
-  build_linux:
-    needs: test
-    name: Build Linux
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - run: sudo apt-get update && sudo apt-get install -y libasound2-dev portaudio19-dev build-essential libpulse-dev libdbus-1-dev libudev-dev libwayland-dev libxkbcommon-dev
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@nightly
-      - uses: Swatinem/rust-cache@v2
-        with:
-          cache-all-crates: "true"
-      - run: cargo build --target x86_64-unknown-linux-gnu --release
-      - uses: actions/upload-artifact@v4
-        with:
-          name: relativity_x86_64-unknown-linux-gnu
-          path: target/x86_64-unknown-linux-gnu/release/relativity
-
   build_macos:
     needs: test
     name: Build MacOS
-    # TODO: Eventually, it would be better to cross-compile with `aarch64-apple-darwin`.
     runs-on: macos-15
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          targets: aarch64-apple-darwin
+      - uses: cargo-bins/cargo-binstall@main
       - uses: Swatinem/rust-cache@v2
         with:
           cache-all-crates: "true"
-      - uses: dtolnay/rust-toolchain@nightly
-        with:
-          targets: aarch64-apple-darwin
-      - run: cargo build --target aarch64-apple-darwin --release
+          cache-bin: "false"
+      - run: cargo binstall cargo-make --no-confirm
+      - run: cargo make build-macos
       - uses: actions/upload-artifact@v4
         with:
           name: relativity_aarch64-apple-darwin
