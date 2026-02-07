@@ -15,17 +15,43 @@ This document provides guidance for AI coding agents working in this repository.
 
 ```bash
 # Build
-cargo build
+cargo make build
 
-# Test
+# Test (uses nextest)
 cargo make test
 
-# Full CI (fmt, clippy, test)
+# Full CI (fmt-check, clippy, nextest)
 cargo make ci
 
 # UAT (the one true gate)
 cargo make uat
 ```
+
+## Available `cargo make` Tasks
+
+All dev/CI workflows route through `cargo make`. Key tasks:
+
+| Task | Description |
+|------|-------------|
+| `fmt` | Format code with rustfmt |
+| `fmt-check` | Check formatting without modifying |
+| `clippy` | Run clippy with `-D warnings` |
+| `build` | Debug build |
+| `build-release` | Release build |
+| `test` | Run tests with nextest |
+| `test-cargo` | Fallback: run tests with `cargo test` |
+| `ci` | Full CI pipeline (fmt-check + clippy + test) |
+| `uat` | The one true gate (runs `ci`) |
+| `codecov` | Generate LCOV coverage report |
+| `codecov-html` | Generate HTML coverage report |
+| `build-linux` | Cross-compile for `x86_64-unknown-linux-gnu` |
+| `build-windows` | Cross-compile for `x86_64-pc-windows-gnu` |
+| `build-macos` | Build for `aarch64-apple-darwin` |
+| `build-web` | Build WASM via Trunk |
+| `changelog` | Generate CHANGELOG.md via git-cliff |
+| `release` | Full release pipeline (CI → changelog → bump → push) |
+| `github-release` | Create GitHub release with artifacts |
+| `clean` | Run `cargo clean` |
 
 ## Conventions for Agents
 
@@ -33,7 +59,8 @@ cargo make uat
 - Follow existing style; don't add license headers.
 - Use `anyhow::Result` for fallible functions.
 - Prefer `tracing` over `println!` for diagnostics.
-- All dev commands route through `cargo make`.
+- All dev commands route through `cargo make` (never raw `cargo test`, `cargo clippy`, etc.).
+- Tests run via [nextest](https://nexte.st/); configuration is in `.config/nextest.toml`.
 
 ### Code Style
 
@@ -50,6 +77,14 @@ Strict clippy denies are enforced in `src/main.rs`:
 - Use `#[allow(clippy::cast_possible_truncation)]` on intentional `f64 as f32` conversions (e.g., graphics/pixel coordinates).
 - Use `f64::from(f32_value)` instead of `f32_value as f64` for lossless casts.
 - Use `std::sync::LazyLock` instead of `once_cell::sync::Lazy` for lazy statics.
+
+### CI / Workflow Patterns
+
+- CI workflows (`.github/workflows/build.yml`, `web.yml`) use `cargo-make` tasks, not raw cargo commands.
+- Rust toolchain is pinned via `RUST_TOOLCHAIN` env var (e.g., `nightly-2025-12-22`).
+- Tools are installed via `cargo-binstall` (fast binary installs), not `cargo install`.
+- `.github/workflows/copilot-setup-steps.yml` sets up the environment for GitHub Copilot coding agents.
+- Changelog is generated with [git-cliff](https://git-cliff.org/) using `cliff.toml` config.
 
 ## PRD Format
 

@@ -93,7 +93,7 @@ tasks:
   - id: T-012
     title: "Update AGENTS.md if new patterns or workflows are introduced"
     priority: 5
-    status: todo
+    status: done
     notes: "Document cargo make tasks, deny patterns, and any new conventions"
 ---
 
@@ -361,6 +361,17 @@ copilot-setup-steps.yml (new)
   - Replaced `cargo fmt` with `cargo make fmt` in step 4 of "How to Contribute"
   - Replaced `cargo fmt` with `cargo make fmt` in Coding Guidelines
   - Replaced `cargo clippy` with `cargo make clippy` in Coding Guidelines
+  - `cargo make uat` passes: fmt-check ✅, clippy ✅, nextest 2/2 tests passed ✅
+- **Constitution Compliance**: No violations. Changes are limited to documentation updates.
+
+## 2026-02-07 — T-012 Completed
+- **Task**: Update AGENTS.md if new patterns or workflows are introduced
+- **Status**: ✅ Done
+- **Changes**:
+  - Updated Quick Start section: `cargo build` → `cargo make build`, added nextest note
+  - Added new "Available `cargo make` Tasks" section with full table of all 18 tasks from Makefile.toml
+  - Updated Conventions: clarified "never raw `cargo test`, `cargo clippy`" and added nextest/`.config/nextest.toml` reference
+  - Added new "CI / Workflow Patterns" section documenting: pinned toolchain, cargo-binstall, copilot-setup-steps.yml, git-cliff/cliff.toml
   - `cargo make uat` passes: fmt-check ✅, clippy ✅, nextest 2/2 tests passed ✅
 - **Constitution Compliance**: No violations. Changes are limited to documentation updates.
 
