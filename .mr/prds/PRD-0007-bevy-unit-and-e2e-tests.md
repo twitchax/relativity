@@ -113,7 +113,7 @@ tasks:
   - id: T-015
     title: "E2E headless test: player clock experiences time dilation"
     priority: 3
-    status: todo
+    status: done
     notes: "Spawn player with nonzero velocity, run player_clock_update, verify player clock runs slower than observer clock (time dilation effect)"
   - id: T-016
     title: "Unit tests for shared/state.rs enums (AppState, GameState)"
@@ -504,4 +504,20 @@ This gives CI a meaningful "the game boots and renders" gate without requiring a
   - Mass/distance values chosen to avoid relativistic adjustment clamping (real solar mass at 1M km distance, where 2GM/c²d ≈ 3e-6)
   - Helper functions `spawn_player`, `spawn_mass` for clean entity setup
   - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 141/141 tests passed ✅
+- **Constitution Compliance**: No violations.
+
+## 2026-02-07 — T-015 Completed
+- **Task**: E2E headless test: player clock experiences time dilation
+- **Status**: ✅ Done
+- **Changes**:
+  - Created `tests/e2e_time_dilation.rs` integration test with 5 E2E tests verifying time dilation behavior
+  - Uses `MinimalPlugins` + `TimeUpdateStrategy::ManualDuration` for deterministic time advancement (1/60s per frame)
+  - Test 1: `player_clock_slower_than_observer_with_velocity` — player at ~90% of c has player clock advance slower than observer clock
+  - Test 2: `player_clock_equals_observer_at_rest` — player at rest with no masses has equal clock rates (gamma = 1)
+  - Test 3: `faster_velocity_means_more_dilation` — compares time ratios at ~33% c vs ~90% c; faster velocity produces lower player/observer ratio
+  - Test 4: `gravitational_time_dilation_near_massive_body` — player at rest near a 1.989e38 kg mass has player clock slower than observer
+  - Test 5: `combined_velocity_and_gravity_dilation` — both velocity and gravity dilation compound, producing more dilation than either alone
+  - Spawns separate player sprite entity (Position+Velocity+Player) and player clock entity (PlayerClockBundle) matching the production system architecture
+  - Helper functions `spawn_player_sprite`, `spawn_player_clock`, `spawn_observer_clock`, `spawn_mass`, `read_clock_seconds` for clean test setup
+  - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 146/146 tests passed ✅
 - **Constitution Compliance**: No violations.
