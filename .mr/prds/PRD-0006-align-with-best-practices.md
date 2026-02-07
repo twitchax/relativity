@@ -63,7 +63,7 @@ tasks:
   - id: T-006
     title: "Update web.yml to use cargo-make and cargo-binstall for Trunk"
     priority: 3
-    status: todo
+    status: done
     notes: "Use cargo-binstall for trunk install, add a build-web task to Makefile.toml"
   - id: T-007
     title: "Add copilot-setup-steps.yml workflow"
@@ -286,4 +286,17 @@ copilot-setup-steps.yml (new)
   - Kept `macos-15` runner (project's existing choice)
   - `cargo make uat` passes: fmt-check ✅, clippy ✅, nextest 2/2 tests passed ✅
 - **Constitution Compliance**: No violations. Changes are limited to the CI workflow file, matching established patterns from microralph/kord.
+
+## 2026-02-07 — T-006 Completed
+- **Task**: Update web.yml to use cargo-make and cargo-binstall for Trunk
+- **Status**: ✅ Done
+- **Changes**:
+  - Updated `.github/workflows/web.yml` to match the established CI pattern from build.yml and microralph
+  - Added `RUST_TOOLCHAIN: nightly-2025-12-22` env var for pinned toolchain
+  - Replaced `cargo install trunk` with `cargo-bins/cargo-binstall@main` action + `cargo binstall cargo-make` + `cargo make build-web` (which uses binstall for trunk internally via Makefile.toml)
+  - Added `cache-bin: "false"` to `Swatinem/rust-cache@v2` step
+  - Pinned toolchain via `toolchain: ${{ env.RUST_TOOLCHAIN }}` in `dtolnay/rust-toolchain@nightly`
+  - Makefile.toml already had `install-trunk` (cargo binstall) and `build-web` (trunk build --release) tasks from T-001
+  - `cargo make uat` passes: fmt-check ✅, clippy ✅, nextest 2/2 tests passed ✅
+- **Constitution Compliance**: No violations. Changes are limited to the web CI workflow file, following the same pattern already established in build.yml.
 
