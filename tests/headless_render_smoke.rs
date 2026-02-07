@@ -63,14 +63,7 @@ fn spawn_offscreen_camera(mut commands: Commands, mut images: ResMut<Assets<Imag
 
     let image_handle = images.add(image);
 
-    commands.spawn((
-        Camera2d,
-        Camera {
-            target: RenderTarget::Image(image_handle.into()),
-            ..default()
-        },
-        Transform::from_xyz(640.0, 360.0, 0.0),
-    ));
+    commands.spawn((Camera2d, Camera::default(), RenderTarget::Image(image_handle.into()), Transform::from_xyz(640.0, 360.0, 0.0)));
 }
 
 #[test]

@@ -6,10 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bevy = "0.17"
+bevy = "0.18"
 uom = "0.37"
 nalgebra-spacetime = "0.5"
-glam = "0.30"
+glam = "0.31"
 
 [dev-dependencies]
 approx = "0.5"
@@ -17,7 +17,7 @@ proptest = "1"
 
 # WASM support: webgl2 feature for browser compatibility
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-bevy = { version = "0.17", features = ["webgl2"] }
+bevy = { version = "0.18", features = ["webgl2"] }
 console_error_panic_hook = "0.1"
 # getrandom is a transitive dependency that needs "js" feature for WASM
-getrandom = { version = "0.2", features = ["js"] }
+getrandom = { version = "0.4", features = ["wasm_js"] }

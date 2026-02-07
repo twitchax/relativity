@@ -17,7 +17,6 @@ use super::shared::types::{Mass, Position, Radius, Velocity};
 ///
 /// This provides time, scheduling, and transform propagation — enough
 /// infrastructure to run most game systems without a GPU or window.
-#[must_use]
 pub fn minimal_test_app() -> App {
     let mut app = App::new();
     app.add_plugins(MinimalPlugins).add_plugins(TransformPlugin);
