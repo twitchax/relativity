@@ -30,7 +30,7 @@ acceptance_tests:
   - id: uat-002
     name: "All E2E headless tests pass"
     command: cargo make test
-    uat_status: unverified
+    uat_status: verified
   - id: uat-003
     name: "CI pipeline passes (fmt-check, clippy, test)"
     command: cargo make ci
@@ -556,3 +556,18 @@ This gives CI a meaningful "the game boots and renders" gate without requiring a
   - Ran `cargo make test` which executes all unit and integration tests via nextest
   - Result: 163 tests run, 163 passed (1 slow), 0 skipped
   - All unit tests across helpers, types, constants, physics, player clock, rotation, launch velocity, observer formatting, state enums, and property-based tests pass successfully
+
+## 2026-02-07 — uat-002 Verification
+- **UAT**: All E2E headless tests pass
+- **Status**: ✅ Verified
+- **Method**: Existing tests
+- **Details**:
+  - Ran `cargo make test` which executes all unit and integration tests via nextest
+  - Result: 163 tests run, 163 passed (1 slow), 0 skipped
+  - All E2E headless tests passed:
+    - `e2e_collision` (5 tests): boundary collision, destination/planet transitions, no collision when far apart, destination checked before planet
+    - `e2e_despawn_level` (7 tests): despawn removes all game items, players, planets, destination, observer for Level1 and TimeWarp, plus empty world no-op
+    - `e2e_level_spawning` (5 tests): Level1 spawns correct entity counts, TimeWarp spawns correct entities
+    - `e2e_velocity_update` (3 tests): gravity accelerates player toward planet, velocity direction is correct, relativistic clamping works
+    - `e2e_time_dilation` (2 tests): moving player clock runs slower, faster velocity means more dilation
+    - `headless_render_smoke` (1 test): headless app boots and runs without panic
