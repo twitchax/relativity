@@ -16,6 +16,8 @@ references:
     url: "https://docs.rs/bevy/latest/bevy/struct.MinimalPlugins.html"
   - name: "Bevy headless testing guide"
     url: "https://taintedcoders.com/bevy/how-to/headless-mode"
+  - name: "Bevy headless rendering (offscreen render target)"
+    url: "https://github.com/bevyengine/bevy/issues/3155"
   - name: "approx crate"
     url: "https://docs.rs/approx/latest/approx/"
   - name: "proptest crate"
@@ -34,8 +36,8 @@ acceptance_tests:
     command: cargo make ci
     uat_status: unverified
   - id: uat-004
-    name: "Game still runs correctly after refactoring"
-    command: cargo run
+    name: "Headless render smoke test passes without a window or display"
+    command: cargo make test
     uat_status: unverified
 tasks:
   - id: T-001
@@ -123,11 +125,16 @@ tasks:
     priority: 3
     status: todo
     notes: "Spawn a level, run despawn_level, verify no entities with GameItem component remain"
+  - id: T-018
+    title: "Headless render smoke test: DefaultPlugins without a window"
+    priority: 1
+    status: todo
+    notes: "Add at least one integration test that builds a Bevy App with DefaultPlugins but disables window creation (WindowPlugin { primary_window: None } + disable WinitPlugin) and uses ScheduleRunnerPlugin. This exercises the full render pipeline (asset loading, transforms, cameras) headlessly. The test should spawn a camera rendering to an offscreen Image target, run several app.update() cycles, and assert no panics. This replaces the old manual 'cargo run' UAT with an automated, CI-safe smoke test that proves the game bootstraps and renders without a display server or GPU window."
 ---
 
 # Summary
 
-Add comprehensive unit tests and headless E2E tests to the relativity game. This involves extracting pure logic from Bevy systems into standalone testable functions, adding unit tests for all pure game logic (physics, collision, relativity math), and creating headless integration tests using Bevy's `MinimalPlugins` to verify end-to-end game behavior without a GPU or display.
+Add comprehensive unit tests and headless E2E tests to the relativity game. This involves extracting pure logic from Bevy systems into standalone testable functions, adding unit tests for all pure game logic (physics, collision, relativity math), creating headless integration tests using Bevy's `MinimalPlugins` to verify end-to-end game behavior without a GPU or display, and adding at least one headless render smoke test using `DefaultPlugins` (with window creation disabled) to verify the game bootstraps and the render graph executes — replacing the unsustainable manual `cargo run` UAT.
 
 # Problem
 
@@ -140,14 +147,15 @@ The project currently has only 2 trivial unit tests covering enum existence. All
 3. Add property-based tests (via `proptest`) for physics invariants (e.g., gamma ≥ 1, collision symmetry).
 4. Create a reusable test helper module for headless Bevy app setup using `MinimalPlugins`.
 5. Add E2E headless tests that verify game behavior: level spawning, collision, gravity, time dilation, and cleanup.
-6. All tests must run in CI without a GPU or display server.
-7. Refactoring must not change any observable game behavior.
+6. Add at least one headless render smoke test using `DefaultPlugins` (with window/winit disabled) to replace the manual `cargo run` UAT with an automated, CI-safe check.
+7. All tests must run in CI without a GPU or display server.
+8. Refactoring must not change any observable game behavior.
 
 # Technical Approach
 
-## Phase 1: Foundation (T-001, T-011)
+## Phase 1: Foundation (T-001, T-011, T-018)
 
-Add `approx` and `proptest` as dev-dependencies. Create a test helper module with utilities for building headless Bevy test apps.
+Add `approx` and `proptest` as dev-dependencies. Create a test helper module with utilities for building headless Bevy test apps. Add the headless render smoke test early as it validates the overall approach and replaces the manual `cargo run` gate.
 
 ```
 [dev-dependencies]
@@ -220,18 +228,52 @@ Tests verify:
 - Player clock runs slower than observer clock under time dilation
 - `despawn_level` removes all `GameItem` entities
 
+## Phase 5: Headless Render Smoke Test (T-018)
+
+Add at least one integration test that exercises the full Bevy render pipeline without creating an OS window. This replaces the old `cargo run` manual UAT (which required a human to visually verify the game) with an automated test that proves the app can bootstrap and render in CI.
+
+**Approach**: Use `DefaultPlugins` but disable window creation:
+
+```rust
+App::new()
+    .add_plugins(
+        DefaultPlugins
+            .set(WindowPlugin {
+                primary_window: None,
+                exit_condition: bevy::window::ExitCondition::DontExit,
+                ..default()
+            })
+            .disable::<WinitPlugin>()
+    )
+    .add_plugins(ScheduleRunnerPlugin::run_loop(
+        Duration::from_secs_f64(1.0 / 60.0),
+    ))
+    // ... add game plugins, spawn camera with offscreen RenderTarget::Image
+```
+
+The test should:
+1. Build the app with `DefaultPlugins` minus window/winit, plus `ScheduleRunnerPlugin`.
+2. Add the game's `GamePlugin` (and/or `MenuPlugin`) so the full system graph is exercised.
+3. Spawn a camera rendering to an offscreen `Image` asset (not a window surface).
+4. Call `app.update()` for several frames.
+5. Assert no panics — proving the game initializes, schedules run, and the render graph executes without a display.
+
+This gives CI a meaningful "the game boots and renders" gate without requiring a GPU window or manual verification.
+
 # Assumptions
 
 - Bevy `MinimalPlugins` + `TimePlugin` + `TransformPlugin` provide enough infrastructure for headless ECS tests.
+- Bevy `DefaultPlugins` with `WindowPlugin { primary_window: None }` and `WinitPlugin` disabled can execute the render graph headlessly (confirmed supported in Bevy 0.17 via offscreen render targets and `ScheduleRunnerPlugin`).
 - The game's physics logic can be cleanly extracted into pure functions without changing system behavior.
 - `approx` and `proptest` are compatible with the current nightly Rust toolchain.
-- CI runners (GitHub Actions) can run headless Bevy apps without a GPU.
+- CI runners (GitHub Actions) can run headless Bevy apps without a GPU (the render graph initializes but may use a software/null backend).
 
 # Constraints
 
 - Refactoring must not change observable game behavior — systems must produce identical results after extraction.
 - Extracted functions should be `pub(crate)` to avoid expanding the public API.
-- E2E tests must not require a display server or GPU (no `WindowPlugin`, no `RenderPlugin`).
+- ECS-only E2E tests must not require a display server or GPU (no `WindowPlugin`, no `RenderPlugin`).
+- The headless render smoke test uses `DefaultPlugins` but disables `WinitPlugin` and sets `primary_window: None` — it must not open an OS window.
 - Must work with existing `cargo make test` (nextest) and `cargo make ci` workflows.
 
 # References to Code
@@ -252,7 +294,7 @@ Tests verify:
 - Performance benchmarking (criterion)
 - Fuzzing
 - Testing menu UI interactions
-- Testing asset loading or rendering
+- Full render output validation (pixel-level correctness) — the headless render smoke test only verifies the app boots and the render graph runs without panics
 - 100% test coverage — target is 60–80%
 - Testing audio or input handling
 
