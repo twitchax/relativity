@@ -26,7 +26,7 @@ acceptance_tests:
   - id: uat-001
     name: "All unit tests pass"
     command: cargo make test
-    uat_status: unverified
+    uat_status: verified
   - id: uat-002
     name: "All E2E headless tests pass"
     command: cargo make test
@@ -547,3 +547,12 @@ This gives CI a meaningful "the game boots and renders" gate without requiring a
   - Edge case test (1): verifies `despawn_level` on an empty world is a no-op (no panic)
   - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 163/163 tests passed ✅
 - **Constitution Compliance**: No violations.
+
+## 2026-02-07 — uat-001 Verification
+- **UAT**: All unit tests pass
+- **Status**: ✅ Verified
+- **Method**: Existing tests
+- **Details**:
+  - Ran `cargo make test` which executes all unit and integration tests via nextest
+  - Result: 163 tests run, 163 passed (1 slow), 0 skipped
+  - All unit tests across helpers, types, constants, physics, player clock, rotation, launch velocity, observer formatting, state enums, and property-based tests pass successfully
