@@ -1,0 +1,45 @@
+name: "Copilot Setup Steps"
+
+# Optional but recommended: lets you validate it via PRs, and manually from Actions tab.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  # Copilot requires this exact job name.
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev portaudio19-dev build-essential libpulse-dev libdbus-1-dev libudev-dev libwayland-dev libxkbcommon-dev
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          toolchain: nightly-2025-12-22
+          components: rustfmt, clippy
+
+      - uses: cargo-bins/cargo-binstall@main
+
+      # rust-cache should run AFTER toolchain selection (it keys off rustc version).
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-all-crates: "true"
+
+      - name: Install cargo tools
+        run: cargo binstall cargo-make cargo-nextest cargo-llvm-cov --no-confirm
+
+      - name: Prefetch deps
+        run: cargo fetch

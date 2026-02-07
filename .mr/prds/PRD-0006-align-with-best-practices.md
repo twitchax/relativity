@@ -68,7 +68,7 @@ tasks:
   - id: T-007
     title: "Add copilot-setup-steps.yml workflow"
     priority: 3
-    status: todo
+    status: done
     notes: "Model after kord: checkout, install system deps (Bevy audio/graphics libs), rust toolchain, cargo-binstall, rust-cache, install cargo tools, cargo fetch"
   - id: T-008
     title: "Add codecov job to build.yml"
@@ -299,4 +299,15 @@ copilot-setup-steps.yml (new)
   - Makefile.toml already had `install-trunk` (cargo binstall) and `build-web` (trunk build --release) tasks from T-001
   - `cargo make uat` passes: fmt-check ✅, clippy ✅, nextest 2/2 tests passed ✅
 - **Constitution Compliance**: No violations. Changes are limited to the web CI workflow file, following the same pattern already established in build.yml.
+
+## 2026-02-07 — T-007 Completed
+- **Task**: Add copilot-setup-steps.yml workflow
+- **Status**: ✅ Done
+- **Changes**:
+  - Created `.github/workflows/copilot-setup-steps.yml` modeled after kord's pattern
+  - Includes: checkout, Bevy system dependencies (libasound2-dev, portaudio19-dev, build-essential, libpulse-dev, libdbus-1-dev, libudev-dev, libwayland-dev, libxkbcommon-dev), pinned nightly toolchain (nightly-2025-12-22) with rustfmt+clippy components, cargo-binstall, rust-cache with cache-all-crates, cargo tool installs (cargo-make, cargo-nextest, cargo-llvm-cov), and cargo fetch
+  - Adapted from kord by: using actions/checkout@v4 (matching existing workflows), including full Bevy system deps (kord only needs libasound2-dev), installing relativity-relevant cargo tools instead of kord-specific ones (cargo-leptos, wasm-pack, etc.)
+  - Workflow triggers on push/PR changes to itself, plus manual dispatch
+  - `cargo make uat` passes: fmt-check ✅, clippy ✅, nextest 2/2 tests passed ✅
+- **Constitution Compliance**: No violations. New workflow file only, following established patterns.
 
