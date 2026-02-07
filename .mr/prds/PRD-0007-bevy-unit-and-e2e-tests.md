@@ -73,7 +73,7 @@ tasks:
   - id: T-007
     title: "Extract and test rocket rotation calculation from game/shared/systems.rs"
     priority: 2
-    status: todo
+    status: done
     notes: "Extract rotation angle calculation from rocket_rotation_update() into a pure function. Test: angle correct for cardinal and diagonal velocities"
   - id: T-008
     title: "Extract and test launch velocity calculation from player_sprite.rs"
@@ -383,4 +383,19 @@ This gives CI a meaningful "the game boots and renders" gate without requiring a
   - Physical constant validation: `MASS_OF_SUN > MASS_OF_EARTH`, `MAX_PLAYER_LAUNCH_VELOCITY < C`, max velocity is exactly 99% of C, `SCREEN_HEIGHT < SCREEN_WIDTH` (landscape), `G` matches known gravitational constant value, `C` matches known speed of light
   - Compile-time const assertions for `PLANET_SPRITE_WIDTH_PX > 0`, `ROCKET_SPRITE_WIDTH_PX > 0`, `PLANET_SPRITE_WIDTH_PX > ROCKET_SPRITE_WIDTH_PX`
   - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 82/82 tests passed ✅
+- **Constitution Compliance**: No violations.
+
+## 2026-02-07 — T-007 Completed
+- **Task**: Extract and test rocket rotation calculation from game/shared/systems.rs
+- **Status**: ✅ Done
+- **Changes**:
+  - Extracted pure `pub(crate)` function `calculate_rocket_rotation(vx, vy) -> f32` from `rocket_rotation_update` in `src/game/shared/systems.rs`
+  - The function normalizes the velocity vector and computes the rotation angle as `atan2(vy, vx) - π/2`, suitable for `Quat::from_rotation_z`
+  - Refactored `rocket_rotation_update` system to call the extracted function (thin wrapper pattern)
+  - Added 10 unit tests covering:
+    - Cardinal directions: up (0°), right (-π/2), left (+π/2), down (±π)
+    - Diagonal directions: up-right (-π/4), up-left (+π/4), down-right (-3π/4), down-left (-5π/4)
+    - Magnitude invariance: scaling velocity does not change angle
+    - Asymmetric velocity: non-unit vector (3, 4) produces correct angle
+  - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 92/92 tests passed ✅
 - **Constitution Compliance**: No violations.

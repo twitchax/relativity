@@ -41,15 +41,25 @@ pub fn rocket_scale_update(mut query: Query<(&mut Transform, &Radius), With<Rock
     }
 }
 
+// Pure functions.
+
+/// Compute the rotation angle (radians) for a rocket sprite given its velocity components.
+///
+/// The angle is measured from the positive-y axis (sprite "up") clockwise,
+/// returned as a value suitable for `Quat::from_rotation_z`.
+#[must_use]
+pub(crate) fn calculate_rocket_rotation(vx: f64, vy: f64) -> f32 {
+    let velocity = DVec2::new(vx, vy).normalize();
+    let rotation = velocity.y.atan2(velocity.x) - std::f64::consts::FRAC_PI_2;
+
+    #[allow(clippy::cast_possible_truncation)]
+    let rotation = rotation as f32;
+    rotation
+}
+
 pub fn rocket_rotation_update(mut query: Query<(&mut Transform, &Velocity), With<RocketSprite>>) {
     for (mut transform, velocity) in &mut query {
-        let velocity = DVec2::new(velocity.x.value, velocity.y.value);
-        let velocity = velocity.normalize();
-
-        let rotation = velocity.y.atan2(velocity.x) - std::f64::consts::FRAC_PI_2;
-
-        #[allow(clippy::cast_possible_truncation)]
-        let rotation = rotation as f32;
+        let rotation = calculate_rocket_rotation(velocity.x.value, velocity.y.value);
         transform.rotation = Quat::from_rotation_z(rotation);
     }
 }
@@ -302,5 +312,82 @@ mod tests {
         let (ax, ay) = calculate_gravitational_acceleration(km(0.0), km(0.0), km(1.0), km(0.0), kg(1.0e60));
         assert_relative_eq!(ax.get::<meter_per_second_squared>(), 0.0);
         assert_relative_eq!(ay.get::<meter_per_second_squared>(), 0.0);
+    }
+
+    // --- calculate_rocket_rotation ---
+
+    #[test]
+    fn rocket_rotation_moving_up_is_zero() {
+        // Moving straight up (+y) → rotation should be 0 (sprite "up" aligned with velocity).
+        let rot = calculate_rocket_rotation(0.0, 1.0);
+        assert_relative_eq!(rot, 0.0, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn rocket_rotation_moving_right() {
+        // Moving right (+x) → should rotate -π/2 (90° clockwise).
+        let rot = calculate_rocket_rotation(1.0, 0.0);
+        assert_relative_eq!(rot, -std::f32::consts::FRAC_PI_2, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn rocket_rotation_moving_left() {
+        // Moving left (-x) → should rotate +π/2 (90° counter-clockwise).
+        let rot = calculate_rocket_rotation(-1.0, 0.0);
+        assert_relative_eq!(rot, std::f32::consts::FRAC_PI_2, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn rocket_rotation_moving_down() {
+        // Moving down (-y) → should rotate ±π (180°).
+        let rot = calculate_rocket_rotation(0.0, -1.0);
+        assert_relative_eq!(rot.abs(), std::f32::consts::PI, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn rocket_rotation_diagonal_up_right() {
+        // Moving up-right at 45° → should rotate -π/4.
+        let rot = calculate_rocket_rotation(1.0, 1.0);
+        assert_relative_eq!(rot, -std::f32::consts::FRAC_PI_4, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn rocket_rotation_diagonal_up_left() {
+        // Moving up-left at 45° → should rotate +π/4.
+        let rot = calculate_rocket_rotation(-1.0, 1.0);
+        assert_relative_eq!(rot, std::f32::consts::FRAC_PI_4, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn rocket_rotation_diagonal_down_right() {
+        // Moving down-right at 45° → should rotate -3π/4.
+        let rot = calculate_rocket_rotation(1.0, -1.0);
+        assert_relative_eq!(rot, -3.0 * std::f32::consts::FRAC_PI_4, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn rocket_rotation_diagonal_down_left() {
+        // Moving down-left at 45° → atan2(-1, -1) - π/2 = -3π/4 - π/2 = -5π/4.
+        let rot = calculate_rocket_rotation(-1.0, -1.0);
+        #[allow(clippy::cast_possible_truncation)]
+        let expected = (-std::f64::consts::FRAC_PI_4 * 3.0 - std::f64::consts::FRAC_PI_2) as f32;
+        assert_relative_eq!(rot, expected, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn rocket_rotation_magnitude_does_not_affect_angle() {
+        // Scaling velocity should not change the rotation angle.
+        let rot_small = calculate_rocket_rotation(1.0, 1.0);
+        let rot_large = calculate_rocket_rotation(100.0, 100.0);
+        assert_relative_eq!(rot_small, rot_large, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn rocket_rotation_asymmetric_velocity() {
+        // Non-unit, non-diagonal velocity: (3, 4) → angle = atan2(4, 3) - π/2.
+        let rot = calculate_rocket_rotation(3.0, 4.0);
+        #[allow(clippy::cast_possible_truncation)]
+        let expected = (4.0_f64.atan2(3.0) - std::f64::consts::FRAC_PI_2) as f32;
+        assert_relative_eq!(rot, expected, epsilon = 1e-6);
     }
 }
