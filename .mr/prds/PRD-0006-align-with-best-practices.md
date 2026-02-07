@@ -25,7 +25,7 @@ acceptance_tests:
   - id: uat-001
     name: "cargo make ci passes cleanly (fmt-check, clippy with denies, nextest)"
     command: cargo make ci
-    uat_status: unverified
+    uat_status: verified
   - id: uat-002
     name: "cargo make uat passes cleanly"
     command: cargo make uat
@@ -374,4 +374,15 @@ copilot-setup-steps.yml (new)
   - Added new "CI / Workflow Patterns" section documenting: pinned toolchain, cargo-binstall, copilot-setup-steps.yml, git-cliff/cliff.toml
   - `cargo make uat` passes: fmt-check ✅, clippy ✅, nextest 2/2 tests passed ✅
 - **Constitution Compliance**: No violations. Changes are limited to documentation updates.
+
+## 2026-02-07 — uat-001 Verification
+- **UAT**: cargo make ci passes cleanly (fmt-check, clippy with denies, nextest)
+- **Status**: ✅ Verified
+- **Method**: Existing test
+- **Details**:
+  - Ran `cargo make ci` which executes fmt-check, clippy with `-D warnings`, and nextest
+  - fmt-check: ✅ passed
+  - clippy: ✅ passed (zero warnings, all denies satisfied)
+  - nextest: ✅ 2/2 tests passed (test_time_warp_level_enum_exists, test_spawn_level_handles_time_warp)
+  - Exit code: 0 (clean pass)
 
