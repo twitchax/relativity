@@ -6,15 +6,15 @@ Thank you for your interest in contributing to relativity!
 
 1. **Fork the repository** and create your branch from `main`.
 2. **Make your changes** following the coding style and guidelines below.
-3. **Test your changes** by running `cargo test` and `cargo clippy`.
-4. **Format your code** with `cargo fmt`.
+3. **Test your changes** by running `cargo make ci` (format check + clippy + tests).
+4. **Format your code** with `cargo make fmt`.
 5. **Submit a pull request** with a clear description of your changes.
 
 ## Coding Guidelines
 
 - Follow the existing code style and conventions.
-- Use `cargo fmt` to format your code before committing.
-- Ensure `cargo clippy` passes with no warnings.
+- Use `cargo make fmt` to format your code before committing.
+- Ensure `cargo make clippy` passes with no warnings.
 - Write clear, descriptive commit messages.
 - Add tests for new functionality where applicable.
 - Keep changes focused and avoid mixing unrelated changes in a single PR.

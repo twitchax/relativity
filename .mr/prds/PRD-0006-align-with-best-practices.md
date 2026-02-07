@@ -88,7 +88,7 @@ tasks:
   - id: T-011
     title: "Update CONTRIBUTING.md to reference cargo make commands"
     priority: 5
-    status: todo
+    status: done
     notes: "Replace cargo test / cargo clippy / cargo fmt with cargo make ci"
   - id: T-012
     title: "Update AGENTS.md if new patterns or workflows are introduced"
@@ -350,6 +350,17 @@ copilot-setup-steps.yml (new)
   - Added prerequisites for `cargo-make` and `cargo-binstall` in the Local Setup section
   - Updated Web Build section to use `cargo make build-web` instead of manual `cargo install trunk` + `trunk build`
   - Removed obsolete "Publishing to crates.io" section (project is a binary game, not a crate)
+  - `cargo make uat` passes: fmt-check ✅, clippy ✅, nextest 2/2 tests passed ✅
+- **Constitution Compliance**: No violations. Changes are limited to documentation updates.
+
+## 2026-02-07 — T-011 Completed
+- **Task**: Update CONTRIBUTING.md to reference cargo make commands
+- **Status**: ✅ Done
+- **Changes**:
+  - Replaced `cargo test` and `cargo clippy` with `cargo make ci` in step 3 of "How to Contribute"
+  - Replaced `cargo fmt` with `cargo make fmt` in step 4 of "How to Contribute"
+  - Replaced `cargo fmt` with `cargo make fmt` in Coding Guidelines
+  - Replaced `cargo clippy` with `cargo make clippy` in Coding Guidelines
   - `cargo make uat` passes: fmt-check ✅, clippy ✅, nextest 2/2 tests passed ✅
 - **Constitution Compliance**: No violations. Changes are limited to documentation updates.
 
