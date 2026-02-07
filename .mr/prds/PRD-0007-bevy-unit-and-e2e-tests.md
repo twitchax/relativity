@@ -103,7 +103,7 @@ tasks:
   - id: T-013
     title: "E2E headless test: collision triggers level completion"
     priority: 3
-    status: todo
+    status: done
     notes: "Spawn player and destination at overlapping positions, run collision_check system, verify GameState transitions to Finished"
   - id: T-014
     title: "E2E headless test: velocity_update applies gravity correctly"
@@ -473,4 +473,19 @@ This gives CI a meaningful "the game boots and renders" gate without requiring a
     - Negative value (-1 day)
     - Prefix format verification ("t_o = " prefix present)
   - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 131/131 tests passed ✅
+- **Constitution Compliance**: No violations.
+
+## 2026-02-07 — T-013 Completed
+- **Task**: E2E headless test: collision triggers level completion
+- **Status**: ✅ Done
+- **Changes**:
+  - Created `tests/e2e_collision.rs` integration test with 5 E2E tests verifying collision behavior
+  - Uses `MinimalPlugins` + `StatesPlugin` — the minimum headless setup needed by `collision_check` which requires `GameState` and `NextState<GameState>`
+  - Test 1: `collision_with_destination_transitions_to_finished` — player and destination at same position triggers `GameState::Finished`
+  - Test 2: `no_collision_when_far_apart` — distant player and destination leaves state as `Running`
+  - Test 3: `collision_with_planet_transitions_to_paused` — player overlapping planet triggers `GameState::Paused`
+  - Test 4: `destination_collision_checked_before_planet` — when player overlaps both destination and planet, planet collision (Paused) overwrites destination (Finished) due to last-write-wins semantics
+  - Test 5: `boundary_collision_touching_edges` — player and destination exactly touching (distance == r1 + r2) triggers collision per `has_collided` `<=` check
+  - Helper functions `spawn_player`, `spawn_destination`, `spawn_planet` for clean entity setup
+  - `cargo make ci` passed: fmt-check ✅, clippy ✅, nextest 136/136 tests passed ✅
 - **Constitution Compliance**: No violations.
