@@ -88,7 +88,7 @@ tasks:
   - id: T-010
     title: "Add proptest property-based tests for physics invariants"
     priority: 2
-    status: todo
+    status: done
     notes: "Property tests: velocity gamma >= 1 for all velocities < C, gravitational gamma >= 1 for all positive masses/distances, has_collided is symmetric, scalar() >= 0 for all inputs"
   - id: T-011
     title: "Create test helper module for shared Bevy test setup"
@@ -412,4 +412,19 @@ This gives CI a meaningful "the game boots and renders" gate without requiring a
     - Power scaling: scales with distance, clamps at max, at exactly 80% threshold
     - Constraints: respects max velocity, very short distance produces small velocity, different max velocity values, horizontal symmetry
   - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 104/104 tests passed ✅
+- **Constitution Compliance**: No violations.
+
+## 2026-02-07 — T-010 Completed
+- **Task**: Add proptest property-based tests for physics invariants
+- **Status**: ✅ Done
+- **Changes**:
+  - Added proptest property-based tests to `src/game/player/player_clock.rs` (nested `proptests` module inside existing `#[cfg(test)]`):
+    - `velocity_gamma_ge_one_for_all_sub_c`: verifies γ_v ≥ 1 for arbitrary velocities below c
+    - `gravitational_gamma_ge_one_for_positive_mass_and_distance`: verifies γ_g ≥ 1 for arbitrary positive masses and distances
+  - Added proptest property-based tests to `src/game/shared/helpers.rs` (nested `proptests` module):
+    - `has_collided_is_symmetric_for_all_inputs`: verifies has_collided(a,b) == has_collided(b,a) for arbitrary positions and radii
+  - Added proptest property-based tests to `src/game/shared/types.rs` (nested `proptests` module):
+    - `scalar_is_non_negative_for_all_inputs`: verifies Velocity::scalar() ≥ 0 for arbitrary velocity components
+  - Tests placed inside existing `#[cfg(test)]` modules to access `pub(crate)` functions without changing visibility
+  - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 108/108 tests passed ✅
 - **Constitution Compliance**: No violations.

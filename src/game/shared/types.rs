@@ -117,4 +117,24 @@ mod tests {
         let v = make_velocity(-100.0, -200.0);
         assert!(v.scalar().get::<meter_per_second>() >= 0.0);
     }
+
+    // --- proptest property-based tests ---
+
+    mod proptests {
+        use super::*;
+        use proptest::prelude::*;
+
+        proptest! {
+            #[test]
+            fn scalar_is_non_negative_for_all_inputs(
+                x in -1.0e12_f64..1.0e12,
+                y in -1.0e12_f64..1.0e12,
+            ) {
+                let v = make_velocity(x, y);
+                let s = v.scalar().get::<meter_per_second>();
+                prop_assert!(s >= 0.0, "scalar was {} for vx={}, vy={}", s, x, y);
+                prop_assert!(s.is_finite(), "scalar was infinite for vx={}, vy={}", x, y);
+            }
+        }
+    }
 }

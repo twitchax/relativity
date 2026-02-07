@@ -303,4 +303,32 @@ mod tests {
         let scale_b = rocket_sprite_pixel_radius_to_scale(100.0);
         assert_relative_eq!(f64::from(scale_b.x) / f64::from(scale_a.x), 2.0, epsilon = 1e-4);
     }
+
+    // --- proptest property-based tests ---
+
+    mod proptests {
+        use super::*;
+        use proptest::prelude::*;
+
+        proptest! {
+            #[test]
+            fn has_collided_is_symmetric_for_all_inputs(
+                ax in -1.0e9_f64..1.0e9,
+                ay in -1.0e9_f64..1.0e9,
+                ar in 0.0_f64..1.0e6,
+                bx in -1.0e9_f64..1.0e9,
+                by in -1.0e9_f64..1.0e9,
+                br in 0.0_f64..1.0e6,
+            ) {
+                let pos_a = make_position(ax, ay);
+                let rad_a = make_radius(ar);
+                let pos_b = make_position(bx, by);
+                let rad_b = make_radius(br);
+
+                let ab = has_collided((&pos_a, &rad_a), (&pos_b, &rad_b));
+                let ba = has_collided((&pos_b, &rad_b), (&pos_a, &rad_a));
+                prop_assert_eq!(ab, ba, "has_collided not symmetric for a=({},{}), b=({},{})", ax, ay, bx, by);
+            }
+        }
+    }
 }

@@ -291,4 +291,46 @@ mod tests {
         let result_both = calculate_player_clock(dt, 2.0, 2.0, prev);
         assert!(result_v_only.value > result_both.value);
     }
+
+    // --- proptest property-based tests ---
+
+    mod proptests {
+        use super::*;
+        use proptest::prelude::*;
+
+        /// Speed of light in km/s for range calculations.
+        const C_KMS: f64 = 299_792.0;
+
+        proptest! {
+            #[test]
+            fn velocity_gamma_ge_one_for_all_sub_c(
+                vx_kms in -0.99 * C_KMS..0.99 * C_KMS,
+                vy_kms in -0.99 * C_KMS..0.99 * C_KMS,
+            ) {
+                // Skip if combined speed >= c.
+                let v_sq = vx_kms * vx_kms + vy_kms * vy_kms;
+                let c_sq = C_KMS * C_KMS;
+                prop_assume!(v_sq < 0.99 * 0.99 * c_sq);
+
+                let gamma = calculate_velocity_gamma(make_vel(vx_kms), make_vel(vy_kms), c());
+                prop_assert!(gamma >= 1.0, "gamma was {} for vx={}, vy={}", gamma, vx_kms, vy_kms);
+                prop_assert!(gamma.is_finite(), "gamma was infinite for vx={}, vy={}", vx_kms, vy_kms);
+            }
+
+            #[test]
+            fn gravitational_gamma_ge_one_for_positive_mass_and_distance(
+                px_km in 1.0e6_f64..1.0e12,
+                py_km in -1.0e12_f64..1.0e12,
+                mass_kg in 1.0e20_f64..1.0e40,
+            ) {
+                let gamma = calculate_gravitational_gamma(
+                    UomLength::new::<kilometer>(px_km),
+                    UomLength::new::<kilometer>(py_km),
+                    &[(UomLength::new::<kilometer>(0.0), UomLength::new::<kilometer>(0.0), UomMass::new::<kilogram>(mass_kg))],
+                );
+                prop_assert!(gamma >= 1.0, "gamma was {} for px={}, py={}, mass={}", gamma, px_km, py_km, mass_kg);
+                prop_assert!(gamma.is_finite(), "gamma was infinite for px={}, py={}, mass={}", px_km, py_km, mass_kg);
+            }
+        }
+    }
 }
