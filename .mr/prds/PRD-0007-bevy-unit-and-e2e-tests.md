@@ -78,7 +78,7 @@ tasks:
   - id: T-008
     title: "Extract and test launch velocity calculation from player_sprite.rs"
     priority: 2
-    status: todo
+    status: done
     notes: "Extract launch velocity/direction calculation from player_launch() into a pure function. Test: respects max velocity, direction toward cursor, power scales with distance"
   - id: T-009
     title: "Extract and test observer clock formatting from observer/mod.rs"
@@ -398,4 +398,18 @@ This gives CI a meaningful "the game boots and renders" gate without requiring a
     - Magnitude invariance: scaling velocity does not change angle
     - Asymmetric velocity: non-unit vector (3, 4) produces correct angle
   - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 92/92 tests passed ✅
+- **Constitution Compliance**: No violations.
+
+## 2026-02-07 — T-008 Completed
+- **Task**: Extract and test launch velocity calculation from player_sprite.rs
+- **Status**: ✅ Done
+- **Changes**:
+  - Extracted pure `pub(crate)` function `calculate_launch_velocity(cursor_x, cursor_y, player_x, player_y, screen_width_px, max_velocity)` from `player_launch` in `src/game/player/player_sprite.rs`
+  - The function computes a launch velocity vector directed from the player toward the cursor, with power scaling linearly with distance (clamped at 80% of screen width)
+  - Refactored `player_launch` system to call the extracted function (thin wrapper pattern)
+  - Added `#[cfg(test)]` module with 12 unit tests covering:
+    - Direction: right, left, up, down, diagonal
+    - Power scaling: scales with distance, clamps at max, at exactly 80% threshold
+    - Constraints: respects max velocity, very short distance produces small velocity, different max velocity values, horizontal symmetry
+  - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 104/104 tests passed ✅
 - **Constitution Compliance**: No violations.
