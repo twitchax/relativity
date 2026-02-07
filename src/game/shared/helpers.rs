@@ -6,6 +6,7 @@ use crate::shared::{SCREEN_HEIGHT_PX, SCREEN_WIDTH_PX};
 use bevy::prelude::*;
 use uom::si::f64::Length as UomLength;
 
+#[must_use]
 pub fn has_collided(a: (&Position, &Radius), b: (&Position, &Radius)) -> bool {
     let a_pos = a.0;
     let b_pos = b.0;
@@ -20,6 +21,7 @@ pub fn has_collided(a: (&Position, &Radius), b: (&Position, &Radius)) -> bool {
     distance <= a_radius.value + b_radius.value
 }
 
+#[must_use]
 pub fn get_translation_from_position(position: &Position) -> Vec3 {
     let x = (position.x / *SCREEN_WIDTH_UOM).value;
     let y = (position.y / *SCREEN_HEIGHT_UOM).value;
@@ -27,6 +29,8 @@ pub fn get_translation_from_position(position: &Position) -> Vec3 {
     get_translation_from_percentage(x, y)
 }
 
+#[must_use]
+#[allow(clippy::cast_possible_truncation)]
 pub fn get_translation_from_percentage(x: f64, y: f64) -> Vec3 {
     let x = (SCREEN_WIDTH_PX * x) as f32;
     let y = (SCREEN_HEIGHT_PX * y) as f32;
@@ -34,6 +38,7 @@ pub fn get_translation_from_percentage(x: f64, y: f64) -> Vec3 {
     Vec3::new(x, y, 0.0)
 }
 
+#[must_use]
 pub fn get_position_from_percentage(x: f64, y: f64) -> Position {
     let x = *SCREEN_WIDTH_UOM * x;
     let y = *SCREEN_HEIGHT_UOM * y;
@@ -41,6 +46,7 @@ pub fn get_position_from_percentage(x: f64, y: f64) -> Position {
     Position { x, y }
 }
 
+#[must_use]
 pub fn length_to_pixel(length: UomLength) -> f64 {
     let galaxy_length = *SCREEN_WIDTH_UOM;
     let length_percent = length / galaxy_length;
@@ -48,10 +54,14 @@ pub fn length_to_pixel(length: UomLength) -> f64 {
     length_percent.value * SCREEN_WIDTH_PX
 }
 
+#[must_use]
+#[allow(clippy::cast_possible_truncation)]
 pub fn planet_sprite_pixel_radius_to_scale(pixels: f64) -> Vec3 {
     Vec3::splat((2.0 * pixels / PLANET_SPRITE_WIDTH_PX) as f32)
 }
 
+#[must_use]
+#[allow(clippy::cast_possible_truncation)]
 pub fn rocket_sprite_pixel_radius_to_scale(pixels: f64) -> Vec3 {
     Vec3::splat((2.0 * pixels / ROCKET_SPRITE_WIDTH_PX) as f32)
 }

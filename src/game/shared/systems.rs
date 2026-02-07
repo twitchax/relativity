@@ -14,6 +14,7 @@ use uom::si::{acceleration::meter_per_second_squared, f64::Acceleration as UomAc
 
 // Escape button.
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn exit_level_check(keyboard_input: ResMut<ButtonInput<KeyCode>>, mut app_state: ResMut<NextState<AppState>>, mut game_state: ResMut<NextState<GameState>>) {
     if keyboard_input.just_pressed(KeyCode::Escape) {
         app_state.set(AppState::Menu);
@@ -24,33 +25,36 @@ pub fn exit_level_check(keyboard_input: ResMut<ButtonInput<KeyCode>>, mut app_st
 // Basic scale / velocity / position.
 
 pub fn planet_scale_update(mut query: Query<(&mut Transform, &Radius), With<PlanetSprite>>) {
-    for (mut transform, radius) in query.iter_mut() {
+    for (mut transform, radius) in &mut query {
         let scale = planet_sprite_pixel_radius_to_scale(length_to_pixel(radius.value));
         transform.scale = scale;
     }
 }
 
 pub fn rocket_scale_update(mut query: Query<(&mut Transform, &Radius), With<RocketSprite>>) {
-    for (mut transform, radius) in query.iter_mut() {
+    for (mut transform, radius) in &mut query {
         let scale = rocket_sprite_pixel_radius_to_scale(length_to_pixel(radius.value));
         transform.scale = scale;
     }
 }
 
 pub fn rocket_rotation_update(mut query: Query<(&mut Transform, &Velocity), With<RocketSprite>>) {
-    for (mut transform, velocity) in query.iter_mut() {
+    for (mut transform, velocity) in &mut query {
         let velocity = DVec2::new(velocity.x.value, velocity.y.value);
         let velocity = velocity.normalize();
 
         let rotation = velocity.y.atan2(velocity.x) - std::f64::consts::FRAC_PI_2;
 
-        transform.rotation = Quat::from_rotation_z(rotation as f32);
+        #[allow(clippy::cast_possible_truncation)]
+        let rotation = rotation as f32;
+        transform.rotation = Quat::from_rotation_z(rotation);
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn position_update(mut query: Query<(&mut Position, &Velocity)>, time: Res<Time>) {
-    for (mut position, velocity) in query.iter_mut() {
-        let time_elapsed = *DAYS_PER_SECOND_UOM * time.delta_secs() as f64;
+    for (mut position, velocity) in &mut query {
+        let time_elapsed = *DAYS_PER_SECOND_UOM * f64::from(time.delta_secs());
 
         position.x += velocity.x * time_elapsed;
         position.y += velocity.y * time_elapsed;
@@ -58,17 +62,18 @@ pub fn position_update(mut query: Query<(&mut Position, &Velocity)>, time: Res<T
 }
 
 pub fn translation_update(mut query: Query<(&mut Transform, &Position)>) {
-    for (mut transform, position) in query.iter_mut() {
+    for (mut transform, position) in &mut query {
         transform.translation = get_translation_from_position(position);
     }
 }
 
 // Velocity based on gravitation.
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn velocity_update(mut query: Query<(&mut Velocity, Entity, &Position)>, masses: Query<(Entity, &Position, &Mass)>, time: Res<Time>) {
-    let time_elapsed = *DAYS_PER_SECOND_UOM * time.delta_secs() as f64;
+    let time_elapsed = *DAYS_PER_SECOND_UOM * f64::from(time.delta_secs());
 
-    for (mut velocity, entity, position) in query.iter_mut() {
+    for (mut velocity, entity, position) in &mut query {
         if velocity.x.value == 0.0 || velocity.y.value == 0.0 {
             continue;
         }
@@ -76,7 +81,7 @@ pub fn velocity_update(mut query: Query<(&mut Velocity, Entity, &Position)>, mas
         let mut total_gravitational_acceleration_x = UomAcceleration::new::<meter_per_second_squared>(0.0);
         let mut total_gravitational_acceleration_y = UomAcceleration::new::<meter_per_second_squared>(0.0);
 
-        for (other_entity, other_position, other_mass) in masses.iter() {
+        for (other_entity, other_position, other_mass) in &masses {
             if entity == other_entity {
                 continue;
             }
@@ -129,7 +134,7 @@ pub fn collision_check(
         println!("success!");
     }
 
-    for (planet_position, planet_radius) in planet_query.iter() {
+    for (planet_position, planet_radius) in &planet_query {
         if has_collided((player_position, player_radius), (planet_position, planet_radius)) {
             game_state.set(GameState::Paused);
             println!("failed!");

@@ -42,13 +42,14 @@ pub fn spawn_player_clock(commands: &mut Commands, asset_server: &Res<AssetServe
 
 // Systems.
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn player_clock_update(
     mut query: Query<(&mut Clock, &mut VelocityGamma, &mut GravitationalGamma), With<Player>>,
     player_query: Query<(Entity, &Position, &Velocity), With<Player>>,
     masses: Query<(Entity, &Position, &Mass)>,
     time: Res<Time>,
 ) {
-    let time_elapsed = *DAYS_PER_SECOND_UOM * time.delta_secs() as f64;
+    let time_elapsed = *DAYS_PER_SECOND_UOM * f64::from(time.delta_secs());
 
     let Ok((mut clock, mut velocity_gamma, mut gravitational_gamma)) = query.single_mut() else {
         return;
@@ -64,7 +65,7 @@ pub fn player_clock_update(
 
     let mut total_graviational_gamma = 1.0f64;
 
-    for (other_entity, other_position, other_mass) in masses.iter() {
+    for (other_entity, other_position, other_mass) in &masses {
         if player_entity == other_entity {
             continue;
         }

@@ -39,8 +39,9 @@ pub fn spawn_observer_clock(commands: &mut Commands, asset_server: &Res<AssetSer
 
 // Clock systems.
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn observer_clock_update(mut query: Query<&mut Clock, With<Observer>>, time: Res<Time>) {
-    let time_elapsed = *DAYS_PER_SECOND_UOM * time.delta_secs() as f64;
+    let time_elapsed = *DAYS_PER_SECOND_UOM * f64::from(time.delta_secs());
 
     let Ok(mut clock) = query.single_mut() else { return };
 
@@ -53,5 +54,5 @@ pub fn observer_clock_text_update(mut query: Query<(&mut Text, &Clock), With<Obs
     let days = clock.value.value / 24.0 / 3600.0;
 
     // In Bevy 0.17, Text implements Deref<Target = String>, so we use **text to mutate the underlying String.
-    **text = format!("t_o = {:2.2}", days);
+    **text = format!("t_o = {days:2.2}");
 }

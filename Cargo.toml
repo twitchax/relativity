@@ -10,7 +10,6 @@ bevy = "0.17"
 uom = "0.37"
 nalgebra-spacetime = "0.5"
 glam = "0.30"
-once_cell = "1"
 
 # WASM support: webgl2 feature for browser compatibility
 [target.'cfg(target_arch = "wasm32")'.dependencies]

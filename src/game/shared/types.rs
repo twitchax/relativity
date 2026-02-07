@@ -33,6 +33,7 @@ pub struct Velocity {
 }
 
 impl Velocity {
+    #[must_use]
     pub fn scalar(&self) -> UomVelocity {
         (self.x * self.x + self.y * self.y).sqrt()
     }

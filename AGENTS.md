@@ -42,6 +42,15 @@ cargo make uat
 - Reduce nesting by using guard clauses and early returns.
 - Prefer functional programming techniques where appropriate.
 
+### Clippy Denies
+
+Strict clippy denies are enforced in `src/main.rs`:
+- `#![deny(unused)]`, `#![deny(clippy::unwrap_used)]`, `#![deny(clippy::correctness)]`, `#![deny(clippy::complexity)]`, `#![deny(clippy::pedantic)]`
+- Bevy system functions require `#[allow(clippy::needless_pass_by_value)]` since Bevy's ECS requires pass-by-value for system parameters.
+- Use `#[allow(clippy::cast_possible_truncation)]` on intentional `f64 as f32` conversions (e.g., graphics/pixel coordinates).
+- Use `f64::from(f32_value)` instead of `f32_value as f64` for lossless casts.
+- Use `std::sync::LazyLock` instead of `once_cell::sync::Lazy` for lazy statics.
+
 ## PRD Format
 
 PRDs are Markdown files with YAML frontmatter containing:

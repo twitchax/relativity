@@ -33,7 +33,7 @@ acceptance_tests:
   - id: uat-003
     name: "All clippy denies are satisfied with zero warnings"
     command: cargo clippy --all-targets --all-features -- -D warnings
-    uat_status: unverified
+    uat_status: verified
 tasks:
   - id: T-001
     title: "Create Makefile.toml with full task suite"
@@ -48,12 +48,12 @@ tasks:
   - id: T-003
     title: "Add clippy denies to src/main.rs"
     priority: 2
-    status: todo
+    status: done
     notes: "Add deny(unused), deny(clippy::unwrap_used), deny(clippy::correctness), deny(clippy::complexity), deny(clippy::pedantic) matching microralph"
   - id: T-004
     title: "Fix all clippy deny violations across codebase"
     priority: 2
-    status: todo
+    status: done
     notes: "Fix unwrap_used (use expect or proper error handling), pedantic lints, complexity warnings, and unused items. May require allow attributes on specific items where pedantic is too strict (e.g., Bevy system signatures)."
   - id: T-005
     title: "Rewrite build.yml to use cargo-make and match microralph pattern"
@@ -233,4 +233,39 @@ copilot-setup-steps.yml (new)
   - No code changes needed; task was already satisfied
   - `cargo make uat` passes: fmt-check ✅, clippy ✅, nextest 2/2 tests passed ✅
 - **Constitution Compliance**: No violations.
+
+## 2026-02-07 — T-003 In Progress
+- **Task**: Add clippy denies to src/main.rs
+- **Status**: ❌ Failed (UAT fails pending T-004)
+- **Changes**:
+  - Added clippy deny directives to `src/main.rs` matching the microralph pattern:
+    - `#![deny(unused)]`
+    - `#![deny(clippy::unwrap_used)]`
+    - `#![deny(clippy::correctness)]`
+    - `#![deny(clippy::complexity)]`
+    - `#![deny(clippy::pedantic)]`
+  - Added explanatory comments matching microralph style
+  - `cargo make uat` fails: fmt-check ✅, clippy ❌ (47-49 deny violations across codebase)
+  - Violations include: `unwrap_used`, `pedantic` lints (missing docs, needless borrows, etc.), `non_std_lazy_statics` (once_cell::sync::Lazy → std::sync::LazyLock), and others
+  - These violations are expected and will be fixed in T-004 ("Fix all clippy deny violations across codebase")
+- **Constitution Compliance**: No violations. The denies are correctly added; fixing the resulting violations is scoped to T-004.
+
+## 2026-02-07 — T-003 + T-004 Completed
+- **Task**: Add clippy denies to src/main.rs + Fix all clippy deny violations across codebase
+- **Status**: ✅ Done
+- **Changes**:
+  - T-003 denies were already in place from previous attempt; T-004 fixes applied to make UAT pass
+  - Replaced `once_cell::sync::Lazy` with `std::sync::LazyLock` across `src/game/shared/constants.rs` (9 instances)
+  - Removed `once_cell` dependency from `Cargo.toml`
+  - Added `#[must_use]` to 7 functions in `src/game/shared/helpers.rs` and 1 method in `src/game/shared/types.rs`
+  - Added `#[allow(clippy::cast_possible_truncation)]` on 4 functions/blocks where `f64 as f32` is intentional (graphics conversions)
+  - Replaced `as f64` casts with `f64::from()` for lossless `f32→f64` conversions in observer, player_clock, player_sprite, systems
+  - Added `#[allow(clippy::needless_pass_by_value)]` on 7 Bevy system functions (Bevy requires pass-by-value for system params)
+  - Replaced `.iter()`/`.iter_mut()` with `&query`/`&mut query` for idiomatic Bevy iteration (6 instances)
+  - Fixed `uninlined_format_args` in observer clock text update
+  - Fixed wildcard match in test to enumerate all variants explicitly
+  - Replaced `_level` binding with `assert!(matches!(...))` to eliminate no-effect binding
+  - `cargo make uat` passes: fmt-check ✅, clippy ✅, nextest 2/2 tests passed ✅
+- **Constitution Compliance**: No violations. Changes are mechanical lint fixes. `once_cell` removal is a dependency simplification justified by std library replacement.
+- **Opportunistic UAT Verification**: uat-003 ("All clippy denies satisfied with zero warnings") is now verifiable — `cargo clippy --all-targets --all-features -- -D warnings` exits cleanly with zero errors.
 

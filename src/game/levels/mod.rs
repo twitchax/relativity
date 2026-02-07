@@ -23,6 +23,7 @@ pub enum CurrentLevel {
 
 // Startup systems.
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn spawn_level(commands: Commands, asset_server: Res<AssetServer>, current_level: Res<CurrentLevel>) {
     match current_level.into_inner() {
         CurrentLevel::One => level1(commands, asset_server),
@@ -30,8 +31,9 @@ pub fn spawn_level(commands: Commands, asset_server: Res<AssetServer>, current_l
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn despawn_level(mut commands: Commands, query: Query<Entity, With<GameItem>>) {
-    for entity in query.iter() {
+    for entity in &query {
         // Note: Using despawn() instead of despawn_recursive() is appropriate here
         // because game entities in this codebase do not have children.
         commands.entity(entity).despawn();
@@ -40,6 +42,7 @@ pub fn despawn_level(mut commands: Commands, query: Query<Entity, With<GameItem>
 
 // Levels.
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn level1(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Spawn clocks.
 
@@ -113,6 +116,7 @@ pub fn level1(mut commands: Commands, asset_server: Res<AssetServer>) {
 /// Time Warp level: A central moving gravity well creates a time-dilation region.
 /// The player must navigate from a slingshot starting position to an exit gate
 /// while managing the time-dilation effects of the moving well.
+#[allow(clippy::needless_pass_by_value)]
 pub fn level_time_warp(mut commands: Commands, asset_server: Res<AssetServer>) {
     use uom::si::{f64::Velocity as UomVelocity, velocity::kilometer_per_second};
 
@@ -196,7 +200,7 @@ mod tests {
         let level = CurrentLevel::TimeWarp;
         match level {
             CurrentLevel::TimeWarp => (),
-            _ => panic!("TimeWarp variant should exist"),
+            CurrentLevel::One => panic!("Expected TimeWarp variant"),
         }
     }
 
@@ -205,7 +209,7 @@ mod tests {
         // This test verifies that the spawn_level function has a match arm for TimeWarp
         // We can't easily test the actual spawning without a full Bevy app setup,
         // but we can verify the enum variant compiles and can be matched.
-        let _level = CurrentLevel::TimeWarp;
-        // If this compiles and the match in spawn_level is exhaustive, we're good
+        let level = CurrentLevel::TimeWarp;
+        assert!(matches!(level, CurrentLevel::TimeWarp));
     }
 }

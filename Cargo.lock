@@ -3972,7 +3972,6 @@ dependencies = [
  "getrandom 0.2.10",
  "glam",
  "nalgebra-spacetime",
- "once_cell",
  "uom",
 ]
 

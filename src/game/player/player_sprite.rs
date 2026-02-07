@@ -25,6 +25,7 @@ pub struct PlayerSpriteBundle {
 
 // Systems.
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn player_launch(
     mouse_input: Res<ButtonInput<MouseButton>>,
     mut player_velocity_query: Query<(&Transform, &mut Velocity), With<Player>>,
@@ -41,9 +42,12 @@ pub fn player_launch(
 
     let Ok(window) = window_query.single() else { return };
     let Some(cursor_position) = window.cursor_position() else { return };
-    let cursor_transform = DVec2::new(cursor_position.x as f64, SCREEN_HEIGHT_PX - cursor_position.y as f64);
+    let cursor_transform = DVec2::new(f64::from(cursor_position.x), SCREEN_HEIGHT_PX - f64::from(cursor_position.y));
 
-    let launch_vector = DVec2::new(cursor_transform.x - player_transform.translation.x as f64, cursor_transform.y - player_transform.translation.y as f64);
+    let launch_vector = DVec2::new(
+        cursor_transform.x - f64::from(player_transform.translation.x),
+        cursor_transform.y - f64::from(player_transform.translation.y),
+    );
     let launch_direction = launch_vector.normalize();
     let launch_power = f64::min(0.8 * SCREEN_WIDTH_PX, launch_vector.length()) / (0.8 * SCREEN_WIDTH_PX);
 
