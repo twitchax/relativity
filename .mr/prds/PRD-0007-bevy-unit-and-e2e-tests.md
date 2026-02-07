@@ -1,7 +1,7 @@
 ---
 id: PRD-0007
 title: "Bevy Unit and E2E Tests"
-status: draft
+status: active
 owner: twitchax
 created: 2026-02-07
 updated: 2026-02-07
@@ -43,7 +43,7 @@ tasks:
   - id: T-001
     title: "Add dev-dependencies: approx and proptest"
     priority: 1
-    status: todo
+    status: done
     notes: "Add approx (float comparison) and proptest (property-based testing) to Cargo.toml [dev-dependencies]"
   - id: T-002
     title: "Unit tests for game/shared/helpers.rs (7 pure functions)"
@@ -299,3 +299,11 @@ This gives CI a meaningful "the game boots and renders" gate without requiring a
 - Testing audio or input handling
 
 # History
+
+## 2026-02-07 — T-001 Completed
+- **Task**: Add dev-dependencies: approx and proptest
+- **Status**: ✅ Done
+- **Changes**:
+  - Added `[dev-dependencies]` section to `Cargo.toml` with `approx = "0.5"` and `proptest = "1"`
+  - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 2/2 tests passed ✅
+- **Constitution Compliance**: No violations.
