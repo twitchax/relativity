@@ -63,7 +63,7 @@ tasks:
   - id: T-005
     title: "Extract and test relativistic gamma calculations from player_clock.rs"
     priority: 1
-    status: todo
+    status: done
     notes: "Extract calculate_velocity_gamma, calculate_gravitational_gamma, and calculate_player_clock as pure functions. Test: gamma >= 1 always, gamma == 1 at rest, gamma increases with velocity, gravitational gamma near massive bodies"
   - id: T-006
     title: "Extract and test gravitational acceleration from game/shared/systems.rs"
@@ -326,4 +326,20 @@ This gives CI a meaningful "the game boots and renders" gate without requiring a
   - Tests cover: zero velocity, unit x velocity, unit y velocity, Pythagorean triples (3-4-5, 5-12-13), negative components, mixed sign components, non-negativity invariant
   - Used `approx::assert_relative_eq!` for float comparisons and `uom::si::velocity::meter_per_second` for unit-aware construction
   - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 34/34 tests passed ✅
+- **Constitution Compliance**: No violations.
+
+## 2026-02-07 — T-005 Completed
+- **Task**: Extract and test relativistic gamma calculations from player_clock.rs
+- **Status**: ✅ Done
+- **Changes**:
+  - Extracted three pure `pub(crate)` functions from `player_clock_update` in `src/game/player/player_clock.rs`:
+    - `calculate_velocity_gamma(vx, vy, c)` — Lorentz gamma factor from velocity
+    - `calculate_gravitational_gamma(player_x, player_y, masses)` — gravitational gamma from nearby masses
+    - `calculate_player_clock(dt, v_gamma, g_gamma, prev)` — clock advance with time dilation
+  - Refactored `player_clock_update` system to call the extracted functions (thin wrapper pattern)
+  - Added `#[cfg(test)]` module with 18 unit tests covering:
+    - Velocity gamma: at rest == 1, >= 1 always, increases with speed, large near c, symmetric in x/y, sign-independent
+    - Gravitational gamma: no masses == 1, >= 1 always, increases closer to mass, increases with mass, compounds across multiple masses, clamps near singularity
+    - Player clock: advances at rest, slows with velocity gamma, slows with gravitational gamma, preserves previous value, combined gamma slows more
+  - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 52/52 tests passed ✅
 - **Constitution Compliance**: No violations.
