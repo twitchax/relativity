@@ -56,7 +56,7 @@ $ relativity
 Or, if building from source:
 
 ```bash
-$ cargo run
+$ cargo make build && cargo run
 ```
 
 ### Controls
@@ -78,10 +78,10 @@ $ cd relativity
 $ cargo run
 
 # Run tests
-$ cargo test
+$ cargo make test
 
 # Format code
-$ cargo fmt
+$ cargo make fmt
 ```
 
 ### Building for Web (WASM)
@@ -89,17 +89,11 @@ $ cargo fmt
 To build and test the web version locally:
 
 ```bash
-# Install trunk (build tool for WASM)
-$ cargo install trunk
-
 # Add the WASM target
 $ rustup target add wasm32-unknown-unknown
 
-# Serve locally (opens at http://127.0.0.1:8080)
-$ trunk serve --release
-
-# Or build for deployment
-$ trunk build --release
+# Build for deployment
+$ cargo make build-web
 # Output will be in the dist/ directory
 ```
 
@@ -108,7 +102,7 @@ The web version is automatically deployed to GitHub Pages when changes are pushe
 ## Test
 
 ```bash
-$ cargo test
+$ cargo make test
 ```
 
 ## Contributing

@@ -1,100 +1,100 @@
 ---
 id: PRD-0006
-title: "Align with Best Practices: Makefile, CI, Denies, and Docs"
-status: active
+title: 'Align with Best Practices: Makefile, CI, Denies, and Docs'
+status: done
 owner: twitchax
 created: 2026-02-07
 updated: 2026-02-07
 principles:
-  - Align CI, tooling, and lint configuration with twitchax/kord and twitchax/microralph patterns
-  - Use cargo-make as the single entry point for all dev/CI workflows
-  - Enforce strict clippy denies to maintain code quality
-  - Keep changes mechanical where possible to reduce risk
+- Align CI, tooling, and lint configuration with twitchax/kord and twitchax/microralph patterns
+- Use cargo-make as the single entry point for all dev/CI workflows
+- Enforce strict clippy denies to maintain code quality
+- Keep changes mechanical where possible to reduce risk
 references:
-  - name: "microralph Makefile.toml"
-    url: "https://github.com/twitchax/microralph/blob/main/Makefile.toml"
-  - name: "microralph build.yml"
-    url: "https://github.com/twitchax/microralph/blob/main/.github/workflows/build.yml"
-  - name: "kord Makefile.toml"
-    url: "https://github.com/twitchax/kord/blob/main/Makefile.toml"
-  - name: "kord build.yml"
-    url: "https://github.com/twitchax/kord/blob/main/.github/workflows/build.yml"
-  - name: "microralph main.rs denies"
-    url: "https://github.com/twitchax/microralph/blob/main/src/main.rs"
+- name: microralph Makefile.toml
+  url: https://github.com/twitchax/microralph/blob/main/Makefile.toml
+- name: microralph build.yml
+  url: https://github.com/twitchax/microralph/blob/main/.github/workflows/build.yml
+- name: kord Makefile.toml
+  url: https://github.com/twitchax/kord/blob/main/Makefile.toml
+- name: kord build.yml
+  url: https://github.com/twitchax/kord/blob/main/.github/workflows/build.yml
+- name: microralph main.rs denies
+  url: https://github.com/twitchax/microralph/blob/main/src/main.rs
 acceptance_tests:
-  - id: uat-001
-    name: "cargo make ci passes cleanly (fmt-check, clippy with denies, nextest)"
-    command: cargo make ci
-    uat_status: verified
-  - id: uat-002
-    name: "cargo make uat passes cleanly"
-    command: cargo make uat
-    uat_status: verified
-  - id: uat-003
-    name: "All clippy denies are satisfied with zero warnings"
-    command: cargo clippy --all-targets --all-features -- -D warnings
-    uat_status: verified
+- id: uat-001
+  name: cargo make ci passes cleanly (fmt-check, clippy with denies, nextest)
+  command: cargo make ci
+  uat_status: verified
+- id: uat-002
+  name: cargo make uat passes cleanly
+  command: cargo make uat
+  uat_status: verified
+- id: uat-003
+  name: All clippy denies are satisfied with zero warnings
+  command: cargo clippy --all-targets --all-features -- -D warnings
+  uat_status: verified
 tasks:
-  - id: T-001
-    title: "Create Makefile.toml with full task suite"
-    priority: 1
-    status: done
-    notes: "Model after microralph: tool installs (nextest, llvm-cov, git-cliff), fmt, fmt-check, clippy, build, build-release, test (nextest), ci, uat, codecov, platform builds, changelog, release, github-release, clean"
-  - id: T-002
-    title: "Create .config/nextest.toml"
-    priority: 1
-    status: done
-    notes: "Copy microralph pattern: slow-timeout with period 5s, terminate-after 6"
-  - id: T-003
-    title: "Add clippy denies to src/main.rs"
-    priority: 2
-    status: done
-    notes: "Add deny(unused), deny(clippy::unwrap_used), deny(clippy::correctness), deny(clippy::complexity), deny(clippy::pedantic) matching microralph"
-  - id: T-004
-    title: "Fix all clippy deny violations across codebase"
-    priority: 2
-    status: done
-    notes: "Fix unwrap_used (use expect or proper error handling), pedantic lints, complexity warnings, and unused items. May require allow attributes on specific items where pedantic is too strict (e.g., Bevy system signatures)."
-  - id: T-005
-    title: "Rewrite build.yml to use cargo-make and match microralph pattern"
-    priority: 3
-    status: done
-    notes: "Pin RUST_TOOLCHAIN, use cargo-binstall for tool installs, single ci task, cache-bin false, add rustfmt+clippy components, use cargo make tasks for platform builds"
-  - id: T-006
-    title: "Update web.yml to use cargo-make and cargo-binstall for Trunk"
-    priority: 3
-    status: done
-    notes: "Use cargo-binstall for trunk install, add a build-web task to Makefile.toml"
-  - id: T-007
-    title: "Add copilot-setup-steps.yml workflow"
-    priority: 3
-    status: done
-    notes: "Model after kord: checkout, install system deps (Bevy audio/graphics libs), rust toolchain, cargo-binstall, rust-cache, install cargo tools, cargo fetch"
-  - id: T-008
-    title: "Add codecov job to build.yml"
-    priority: 4
-    status: done
-    notes: "Add codecov job using cargo make codecov, upload with codecov/codecov-action"
-  - id: T-009
-    title: "Add release and changelog tasks to Makefile.toml"
-    priority: 4
-    status: done
-    notes: "git-cliff for changelog generation, github-release task for creating GitHub releases with binary artifacts from CI. No crates.io publishing needed."
-  - id: T-010
-    title: "Update DEVELOPMENT.md to reference cargo make commands"
-    priority: 5
-    status: done
-    notes: "Replace raw cargo commands with cargo make equivalents throughout"
-  - id: T-011
-    title: "Update CONTRIBUTING.md to reference cargo make commands"
-    priority: 5
-    status: done
-    notes: "Replace cargo test / cargo clippy / cargo fmt with cargo make ci"
-  - id: T-012
-    title: "Update AGENTS.md if new patterns or workflows are introduced"
-    priority: 5
-    status: done
-    notes: "Document cargo make tasks, deny patterns, and any new conventions"
+- id: T-001
+  title: Create Makefile.toml with full task suite
+  priority: 1
+  status: done
+  notes: 'Model after microralph: tool installs (nextest, llvm-cov, git-cliff), fmt, fmt-check, clippy, build, build-release, test (nextest), ci, uat, codecov, platform builds, changelog, release, github-release, clean'
+- id: T-002
+  title: Create .config/nextest.toml
+  priority: 1
+  status: done
+  notes: 'Copy microralph pattern: slow-timeout with period 5s, terminate-after 6'
+- id: T-003
+  title: Add clippy denies to src/main.rs
+  priority: 2
+  status: done
+  notes: Add deny(unused), deny(clippy::unwrap_used), deny(clippy::correctness), deny(clippy::complexity), deny(clippy::pedantic) matching microralph
+- id: T-004
+  title: Fix all clippy deny violations across codebase
+  priority: 2
+  status: done
+  notes: Fix unwrap_used (use expect or proper error handling), pedantic lints, complexity warnings, and unused items. May require allow attributes on specific items where pedantic is too strict (e.g., Bevy system signatures).
+- id: T-005
+  title: Rewrite build.yml to use cargo-make and match microralph pattern
+  priority: 3
+  status: done
+  notes: Pin RUST_TOOLCHAIN, use cargo-binstall for tool installs, single ci task, cache-bin false, add rustfmt+clippy components, use cargo make tasks for platform builds
+- id: T-006
+  title: Update web.yml to use cargo-make and cargo-binstall for Trunk
+  priority: 3
+  status: done
+  notes: Use cargo-binstall for trunk install, add a build-web task to Makefile.toml
+- id: T-007
+  title: Add copilot-setup-steps.yml workflow
+  priority: 3
+  status: done
+  notes: 'Model after kord: checkout, install system deps (Bevy audio/graphics libs), rust toolchain, cargo-binstall, rust-cache, install cargo tools, cargo fetch'
+- id: T-008
+  title: Add codecov job to build.yml
+  priority: 4
+  status: done
+  notes: Add codecov job using cargo make codecov, upload with codecov/codecov-action
+- id: T-009
+  title: Add release and changelog tasks to Makefile.toml
+  priority: 4
+  status: done
+  notes: git-cliff for changelog generation, github-release task for creating GitHub releases with binary artifacts from CI. No crates.io publishing needed.
+- id: T-010
+  title: Update DEVELOPMENT.md to reference cargo make commands
+  priority: 5
+  status: done
+  notes: Replace raw cargo commands with cargo make equivalents throughout
+- id: T-011
+  title: Update CONTRIBUTING.md to reference cargo make commands
+  priority: 5
+  status: done
+  notes: Replace cargo test / cargo clippy / cargo fmt with cargo make ci
+- id: T-012
+  title: Update AGENTS.md if new patterns or workflows are introduced
+  priority: 5
+  status: done
+  notes: Document cargo make tasks, deny patterns, and any new conventions
 ---
 
 # Summary
@@ -397,3 +397,15 @@ copilot-setup-steps.yml (new)
   - nextest: ✅ 2/2 tests passed (test_time_warp_level_enum_exists, test_spawn_level_handles_time_warp)
   - Exit code: 0 (clean pass)
 
+
+## 2026-02-07 — PRD Finalized
+- **Status**: ✅ Finalized
+- **Tasks Completed**: 12 tasks (T-001 through T-012)
+- **Outcome**: All tasks completed, acceptance tests passed (2/2 tests)
+- **Cleanup**: Updated README.md to use `cargo make` commands (5 instances of raw `cargo` commands replaced). No temporary files, debug statements, or resolved TODOs found requiring removal.
+- **Summary**:
+  - Created Makefile.toml with full task suite (18 tasks) and .config/nextest.toml, establishing cargo-make as the single entry point for all workflows
+  - Added strict clippy denies (unused, unwrap_used, correctness, complexity, pedantic) and fixed all 47+ violations across the codebase, including replacing once_cell with std::sync::LazyLock
+  - Rewrote CI workflows (build.yml, web.yml) to use cargo-make, cargo-binstall, and pinned nightly toolchain; added copilot-setup-steps.yml and codecov integration
+  - Added release automation with git-cliff changelog generation and GitHub release workflow
+  - Updated all documentation (DEVELOPMENT.md, CONTRIBUTING.md, AGENTS.md, README.md) to reference cargo make commands
