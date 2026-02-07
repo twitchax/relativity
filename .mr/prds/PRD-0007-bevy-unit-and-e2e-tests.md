@@ -123,7 +123,7 @@ tasks:
   - id: T-017
     title: "E2E headless test: despawn_level cleans up all GameItem entities"
     priority: 3
-    status: todo
+    status: done
     notes: "Spawn a level, run despawn_level, verify no entities with GameItem component remain"
   - id: T-018
     title: "Headless render smoke test: DefaultPlugins without a window"
@@ -533,4 +533,17 @@ This gives CI a meaningful "the game boots and renders" gate without requiring a
     - Clone: cloned values are equal to originals for both enums
     - Hash consistency: equal values produce equal hashes for both enums
   - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 156/156 tests passed ✅
+- **Constitution Compliance**: No violations.
+
+## 2026-02-07 — T-017 Completed
+- **Task**: E2E headless test: despawn_level cleans up all GameItem entities
+- **Status**: ✅ Done
+- **Changes**:
+  - Created `tests/e2e_despawn_level.rs` integration test with 7 E2E tests verifying despawn behavior
+  - Uses `MinimalPlugins` + `TransformPlugin` + `AssetPlugin` + `ImagePlugin` + `TextPlugin` — same headless setup as `e2e_level_spawning.rs`
+  - Uses `RunSystemOnce` trait to invoke `despawn_level` after level spawning, then verifies cleanup
+  - Level 1 tests (5): verifies all `GameItem`, `Player`, `Planet`, `Destination`, and `Observer` entities are removed after `despawn_level`
+  - TimeWarp test (1): verifies all `GameItem` entities are removed after `despawn_level`
+  - Edge case test (1): verifies `despawn_level` on an empty world is a no-op (no panic)
+  - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 163/163 tests passed ✅
 - **Constitution Compliance**: No violations.
