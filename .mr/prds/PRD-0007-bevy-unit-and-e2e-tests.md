@@ -98,7 +98,7 @@ tasks:
   - id: T-012
     title: "E2E headless test: level spawning creates expected entities"
     priority: 2
-    status: todo
+    status: done
     notes: "Use MinimalPlugins + TransformPlugin. Spawn level 1 and TimeWarp, then query world to verify correct number of entities with expected components (Player, Planet, Destination, Observer)"
   - id: T-013
     title: "E2E headless test: collision triggers level completion"
@@ -441,4 +441,16 @@ This gives CI a meaningful "the game boots and renders" gate without requiring a
   - Added `#[cfg(test)] pub mod test_helpers` to `src/game/mod.rs`
   - Added 4 unit tests verifying: app creates with `Time` resource, multiple frames run without panic, `spawn_test_entity` populates all components correctly, `spawn_positioned_entity` defaults velocity/mass/radius to zero
   - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 112/112 tests passed ✅
+- **Constitution Compliance**: No violations.
+
+## 2026-02-07 — T-012 Completed
+- **Task**: E2E headless test: level spawning creates expected entities
+- **Status**: ✅ Done
+- **Changes**:
+  - Created `tests/e2e_level_spawning.rs` integration test with 10 E2E tests verifying entity spawning for both levels
+  - Uses `MinimalPlugins` + `TransformPlugin` + `AssetPlugin` + `ImagePlugin` + `TextPlugin` — the minimum headless setup needed by `spawn_level` (which loads sprite images and font assets)
+  - Level 1 tests (5): verifies 7 `GameItem` entities, 2 `Player` entities (sprite + clock), 3 `Planet` entities (SUN, SUN2, EARTH), 1 `Destination`, 1 `Observer`
+  - TimeWarp tests (5): verifies 5 `GameItem` entities, 2 `Player` entities (sprite + clock), 1 `Planet` entity (dynamic gravity well), 1 `Destination`, 1 `Observer`
+  - Helper function `count_entities::<F>()` avoids repetitive mutable-world query boilerplate
+  - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 122/122 tests passed ✅
 - **Constitution Compliance**: No violations.
