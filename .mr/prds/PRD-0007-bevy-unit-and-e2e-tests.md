@@ -48,7 +48,7 @@ tasks:
   - id: T-002
     title: "Unit tests for game/shared/helpers.rs (7 pure functions)"
     priority: 1
-    status: todo
+    status: done
     notes: "Test has_collided, get_translation_from_position, get_translation_from_percentage, get_position_from_percentage, length_to_pixel, planet_sprite_pixel_radius_to_scale, rocket_sprite_pixel_radius_to_scale with normal, edge, and boundary cases"
   - id: T-003
     title: "Unit tests for game/shared/types.rs (Velocity::scalar)"
@@ -306,4 +306,14 @@ This gives CI a meaningful "the game boots and renders" gate without requiring a
 - **Changes**:
   - Added `[dev-dependencies]` section to `Cargo.toml` with `approx = "0.5"` and `proptest = "1"`
   - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 2/2 tests passed ✅
+- **Constitution Compliance**: No violations.
+
+## 2026-02-07 — T-002 Completed
+- **Task**: Unit tests for game/shared/helpers.rs (7 pure functions)
+- **Status**: ✅ Done
+- **Changes**:
+  - Added `#[cfg(test)]` module to `src/game/shared/helpers.rs` with 24 unit tests covering all 7 pure functions
+  - Tests cover: `has_collided` (overlapping, distant, boundary, same position, symmetry, zero radius, diagonal), `get_translation_from_percentage` (origin, full, half), `get_translation_from_position` (origin, screen edge), `get_position_from_percentage` (origin, full, half), `length_to_pixel` (zero, full width, half width), `planet_sprite_pixel_radius_to_scale` (half sprite width, zero, proportional), `rocket_sprite_pixel_radius_to_scale` (half sprite width, zero, proportional)
+  - Used `approx::assert_relative_eq!` for float comparisons
+  - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 26/26 tests passed ✅
 - **Constitution Compliance**: No violations.
