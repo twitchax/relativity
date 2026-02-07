@@ -1,135 +1,135 @@
 ---
 id: PRD-0007
-title: "Bevy Unit and E2E Tests"
-status: active
+title: Bevy Unit and E2E Tests
+status: done
 owner: twitchax
 created: 2026-02-07
 updated: 2026-02-07
 principles:
-  - "Extract pure logic from Bevy systems to enable direct unit testing"
-  - "Use MinimalPlugins for headless E2E tests — add only what each test needs"
-  - "Prioritize physics and relativity math for highest-value test coverage"
-  - "Refactoring must not change observable game behavior"
-  - "Tests must run in CI without a GPU or display server"
+- Extract pure logic from Bevy systems to enable direct unit testing
+- Use MinimalPlugins for headless E2E tests — add only what each test needs
+- Prioritize physics and relativity math for highest-value test coverage
+- Refactoring must not change observable game behavior
+- Tests must run in CI without a GPU or display server
 references:
-  - name: "Bevy MinimalPlugins docs"
-    url: "https://docs.rs/bevy/latest/bevy/struct.MinimalPlugins.html"
-  - name: "Bevy headless testing guide"
-    url: "https://taintedcoders.com/bevy/how-to/headless-mode"
-  - name: "Bevy headless rendering (offscreen render target)"
-    url: "https://github.com/bevyengine/bevy/issues/3155"
-  - name: "approx crate"
-    url: "https://docs.rs/approx/latest/approx/"
-  - name: "proptest crate"
-    url: "https://docs.rs/proptest/latest/proptest/"
+- name: Bevy MinimalPlugins docs
+  url: https://docs.rs/bevy/latest/bevy/struct.MinimalPlugins.html
+- name: Bevy headless testing guide
+  url: https://taintedcoders.com/bevy/how-to/headless-mode
+- name: Bevy headless rendering (offscreen render target)
+  url: https://github.com/bevyengine/bevy/issues/3155
+- name: approx crate
+  url: https://docs.rs/approx/latest/approx/
+- name: proptest crate
+  url: https://docs.rs/proptest/latest/proptest/
 acceptance_tests:
-  - id: uat-001
-    name: "All unit tests pass"
-    command: cargo make test
-    uat_status: verified
-  - id: uat-002
-    name: "All E2E headless tests pass"
-    command: cargo make test
-    uat_status: verified
-  - id: uat-003
-    name: "CI pipeline passes (fmt-check, clippy, test)"
-    command: cargo make ci
-    uat_status: verified
-  - id: uat-004
-    name: "Headless render smoke test passes without a window or display"
-    command: cargo make test
-    uat_status: verified
+- id: uat-001
+  name: All unit tests pass
+  command: cargo make test
+  uat_status: verified
+- id: uat-002
+  name: All E2E headless tests pass
+  command: cargo make test
+  uat_status: verified
+- id: uat-003
+  name: CI pipeline passes (fmt-check, clippy, test)
+  command: cargo make ci
+  uat_status: verified
+- id: uat-004
+  name: Headless render smoke test passes without a window or display
+  command: cargo make test
+  uat_status: verified
 tasks:
-  - id: T-001
-    title: "Add dev-dependencies: approx and proptest"
-    priority: 1
-    status: done
-    notes: "Add approx (float comparison) and proptest (property-based testing) to Cargo.toml [dev-dependencies]"
-  - id: T-002
-    title: "Unit tests for game/shared/helpers.rs (7 pure functions)"
-    priority: 1
-    status: done
-    notes: "Test has_collided, get_translation_from_position, get_translation_from_percentage, get_position_from_percentage, length_to_pixel, planet_sprite_pixel_radius_to_scale, rocket_sprite_pixel_radius_to_scale with normal, edge, and boundary cases"
-  - id: T-003
-    title: "Unit tests for game/shared/types.rs (Velocity::scalar)"
-    priority: 1
-    status: done
-    notes: "Test Velocity::scalar() with zero, unit, and Pythagorean triple inputs"
-  - id: T-004
-    title: "Unit tests for game/shared/constants.rs (value validation)"
-    priority: 2
-    status: done
-    notes: "Validate physical constants are reasonable: mass_of_sun > mass_of_earth, max_velocity < C, G and C are positive, LazyLock statics initialize correctly"
-  - id: T-005
-    title: "Extract and test relativistic gamma calculations from player_clock.rs"
-    priority: 1
-    status: done
-    notes: "Extract calculate_velocity_gamma, calculate_gravitational_gamma, and calculate_player_clock as pure functions. Test: gamma >= 1 always, gamma == 1 at rest, gamma increases with velocity, gravitational gamma near massive bodies"
-  - id: T-006
-    title: "Extract and test gravitational acceleration from game/shared/systems.rs"
-    priority: 1
-    status: done
-    notes: "Extract gravitational acceleration calculation and relativistic velocity adjustment from velocity_update() into pure functions. Test: force proportional to mass, inverse-square distance, direction toward mass"
-  - id: T-007
-    title: "Extract and test rocket rotation calculation from game/shared/systems.rs"
-    priority: 2
-    status: done
-    notes: "Extract rotation angle calculation from rocket_rotation_update() into a pure function. Test: angle correct for cardinal and diagonal velocities"
-  - id: T-008
-    title: "Extract and test launch velocity calculation from player_sprite.rs"
-    priority: 2
-    status: done
-    notes: "Extract launch velocity/direction calculation from player_launch() into a pure function. Test: respects max velocity, direction toward cursor, power scales with distance"
-  - id: T-009
-    title: "Extract and test observer clock formatting from observer/mod.rs"
-    priority: 3
-    status: done
-    notes: "Extract time formatting into a pure function. Test: correct format string output"
-  - id: T-010
-    title: "Add proptest property-based tests for physics invariants"
-    priority: 2
-    status: done
-    notes: "Property tests: velocity gamma >= 1 for all velocities < C, gravitational gamma >= 1 for all positive masses/distances, has_collided is symmetric, scalar() >= 0 for all inputs"
-  - id: T-011
-    title: "Create test helper module for shared Bevy test setup"
-    priority: 2
-    status: done
-    notes: "Create src/game/test_helpers.rs (or similar) with helper functions to build a MinimalPlugins test app, spawn test entities with Position/Velocity/Mass/Radius, and run N frames"
-  - id: T-012
-    title: "E2E headless test: level spawning creates expected entities"
-    priority: 2
-    status: done
-    notes: "Use MinimalPlugins + TransformPlugin. Spawn level 1 and TimeWarp, then query world to verify correct number of entities with expected components (Player, Planet, Destination, Observer)"
-  - id: T-013
-    title: "E2E headless test: collision triggers level completion"
-    priority: 3
-    status: done
-    notes: "Spawn player and destination at overlapping positions, run collision_check system, verify GameState transitions to Finished"
-  - id: T-014
-    title: "E2E headless test: velocity_update applies gravity correctly"
-    priority: 3
-    status: done
-    notes: "Spawn player and planet, run velocity_update for several frames, verify player velocity increases toward planet"
-  - id: T-015
-    title: "E2E headless test: player clock experiences time dilation"
-    priority: 3
-    status: done
-    notes: "Spawn player with nonzero velocity, run player_clock_update, verify player clock runs slower than observer clock (time dilation effect)"
-  - id: T-016
-    title: "Unit tests for shared/state.rs enums (AppState, GameState)"
-    priority: 3
-    status: done
-    notes: "Verify enum variants exist, default values are correct, and Debug/Clone derive works"
-  - id: T-017
-    title: "E2E headless test: despawn_level cleans up all GameItem entities"
-    priority: 3
-    status: done
-    notes: "Spawn a level, run despawn_level, verify no entities with GameItem component remain"
-  - id: T-018
-    title: "Headless render smoke test: DefaultPlugins without a window"
-    priority: 1
-    status: done
-    notes: "Add at least one integration test that builds a Bevy App with DefaultPlugins but disables window creation (WindowPlugin { primary_window: None } + disable WinitPlugin) and uses ScheduleRunnerPlugin. This exercises the full render pipeline (asset loading, transforms, cameras) headlessly. The test should spawn a camera rendering to an offscreen Image target, run several app.update() cycles, and assert no panics. This replaces the old manual 'cargo run' UAT with an automated, CI-safe smoke test that proves the game bootstraps and renders without a display server or GPU window."
+- id: T-001
+  title: 'Add dev-dependencies: approx and proptest'
+  priority: 1
+  status: done
+  notes: Add approx (float comparison) and proptest (property-based testing) to Cargo.toml [dev-dependencies]
+- id: T-002
+  title: Unit tests for game/shared/helpers.rs (7 pure functions)
+  priority: 1
+  status: done
+  notes: Test has_collided, get_translation_from_position, get_translation_from_percentage, get_position_from_percentage, length_to_pixel, planet_sprite_pixel_radius_to_scale, rocket_sprite_pixel_radius_to_scale with normal, edge, and boundary cases
+- id: T-003
+  title: Unit tests for game/shared/types.rs (Velocity::scalar)
+  priority: 1
+  status: done
+  notes: Test Velocity::scalar() with zero, unit, and Pythagorean triple inputs
+- id: T-004
+  title: Unit tests for game/shared/constants.rs (value validation)
+  priority: 2
+  status: done
+  notes: 'Validate physical constants are reasonable: mass_of_sun > mass_of_earth, max_velocity < C, G and C are positive, LazyLock statics initialize correctly'
+- id: T-005
+  title: Extract and test relativistic gamma calculations from player_clock.rs
+  priority: 1
+  status: done
+  notes: 'Extract calculate_velocity_gamma, calculate_gravitational_gamma, and calculate_player_clock as pure functions. Test: gamma >= 1 always, gamma == 1 at rest, gamma increases with velocity, gravitational gamma near massive bodies'
+- id: T-006
+  title: Extract and test gravitational acceleration from game/shared/systems.rs
+  priority: 1
+  status: done
+  notes: 'Extract gravitational acceleration calculation and relativistic velocity adjustment from velocity_update() into pure functions. Test: force proportional to mass, inverse-square distance, direction toward mass'
+- id: T-007
+  title: Extract and test rocket rotation calculation from game/shared/systems.rs
+  priority: 2
+  status: done
+  notes: 'Extract rotation angle calculation from rocket_rotation_update() into a pure function. Test: angle correct for cardinal and diagonal velocities'
+- id: T-008
+  title: Extract and test launch velocity calculation from player_sprite.rs
+  priority: 2
+  status: done
+  notes: 'Extract launch velocity/direction calculation from player_launch() into a pure function. Test: respects max velocity, direction toward cursor, power scales with distance'
+- id: T-009
+  title: Extract and test observer clock formatting from observer/mod.rs
+  priority: 3
+  status: done
+  notes: 'Extract time formatting into a pure function. Test: correct format string output'
+- id: T-010
+  title: Add proptest property-based tests for physics invariants
+  priority: 2
+  status: done
+  notes: 'Property tests: velocity gamma >= 1 for all velocities < C, gravitational gamma >= 1 for all positive masses/distances, has_collided is symmetric, scalar() >= 0 for all inputs'
+- id: T-011
+  title: Create test helper module for shared Bevy test setup
+  priority: 2
+  status: done
+  notes: Create src/game/test_helpers.rs (or similar) with helper functions to build a MinimalPlugins test app, spawn test entities with Position/Velocity/Mass/Radius, and run N frames
+- id: T-012
+  title: 'E2E headless test: level spawning creates expected entities'
+  priority: 2
+  status: done
+  notes: Use MinimalPlugins + TransformPlugin. Spawn level 1 and TimeWarp, then query world to verify correct number of entities with expected components (Player, Planet, Destination, Observer)
+- id: T-013
+  title: 'E2E headless test: collision triggers level completion'
+  priority: 3
+  status: done
+  notes: Spawn player and destination at overlapping positions, run collision_check system, verify GameState transitions to Finished
+- id: T-014
+  title: 'E2E headless test: velocity_update applies gravity correctly'
+  priority: 3
+  status: done
+  notes: Spawn player and planet, run velocity_update for several frames, verify player velocity increases toward planet
+- id: T-015
+  title: 'E2E headless test: player clock experiences time dilation'
+  priority: 3
+  status: done
+  notes: Spawn player with nonzero velocity, run player_clock_update, verify player clock runs slower than observer clock (time dilation effect)
+- id: T-016
+  title: Unit tests for shared/state.rs enums (AppState, GameState)
+  priority: 3
+  status: done
+  notes: Verify enum variants exist, default values are correct, and Debug/Clone derive works
+- id: T-017
+  title: 'E2E headless test: despawn_level cleans up all GameItem entities'
+  priority: 3
+  status: done
+  notes: Spawn a level, run despawn_level, verify no entities with GameItem component remain
+- id: T-018
+  title: 'Headless render smoke test: DefaultPlugins without a window'
+  priority: 1
+  status: done
+  notes: 'Add at least one integration test that builds a Bevy App with DefaultPlugins but disables window creation (WindowPlugin { primary_window: None } + disable WinitPlugin) and uses ScheduleRunnerPlugin. This exercises the full render pipeline (asset loading, transforms, cameras) headlessly. The test should spawn a camera rendering to an offscreen Image target, run several app.update() cycles, and assert no panics. This replaces the old manual ''cargo run'' UAT with an automated, CI-safe smoke test that proves the game bootstraps and renders without a display server or GPU window.'
 ---
 
 # Summary
@@ -593,3 +593,14 @@ This gives CI a meaningful "the game boots and renders" gate without requiring a
   - Ran `cargo make test` — 163 tests run, 163 passed (1 slow), 0 skipped
   - The headless smoke test builds the app with DefaultPlugins (WinitPlugin disabled, no primary window), renders to an offscreen Image target, and runs 5 update cycles without panic
   - Test passed in 63.5s confirming the render graph executes without a window or display server
+
+## 2026-02-07 — PRD Finalized
+- **Status**: ✅ Finalized
+- **Tasks Completed**: 18 tasks (T-001 through T-018)
+- **Outcome**: All tasks completed, acceptance tests passed (163/163 tests)
+- **Cleanup**: No cleanup required — no temporary files, debug statements, or resolved TODOs found in PRD-related code. Pre-existing `println!` statements and TODOs in production code left untouched per Minimal Changes rule.
+- **Summary**:
+  - Extracted 7 pure functions from Bevy systems and added 80+ unit tests covering all core game logic (physics, collision, relativity math, player mechanics, observer formatting, state enums, constants validation)
+  - Added 4 property-based tests via `proptest` verifying physics invariants (gamma ≥ 1, collision symmetry, velocity scalar non-negativity)
+  - Created 6 E2E headless integration test suites (27 tests) covering level spawning, collision, gravity, time dilation, despawn cleanup, and a headless render smoke test replacing the manual `cargo run` UAT
+  - Established `lib.rs` library crate and test helper module (`test_helpers.rs`) as reusable infrastructure for future test development
