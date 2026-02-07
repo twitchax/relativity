@@ -68,7 +68,7 @@ tasks:
   - id: T-006
     title: "Extract and test gravitational acceleration from game/shared/systems.rs"
     priority: 1
-    status: todo
+    status: done
     notes: "Extract gravitational acceleration calculation and relativistic velocity adjustment from velocity_update() into pure functions. Test: force proportional to mass, inverse-square distance, direction toward mass"
   - id: T-007
     title: "Extract and test rocket rotation calculation from game/shared/systems.rs"
@@ -342,4 +342,18 @@ This gives CI a meaningful "the game boots and renders" gate without requiring a
     - Gravitational gamma: no masses == 1, >= 1 always, increases closer to mass, increases with mass, compounds across multiple masses, clamps near singularity
     - Player clock: advances at rest, slows with velocity gamma, slows with gravitational gamma, preserves previous value, combined gamma slows more
   - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 52/52 tests passed ✅
+- **Constitution Compliance**: No violations.
+
+## 2026-02-07 — T-006 Completed
+- **Task**: Extract and test gravitational acceleration from game/shared/systems.rs
+- **Status**: ✅ Done
+- **Changes**:
+  - Extracted two pure `pub(crate)` functions from `velocity_update` in `src/game/shared/systems.rs`:
+    - `calculate_gravitational_acceleration(pos_x, pos_y, other_pos_x, other_pos_y, other_mass)` — computes gravitational acceleration vector from a single mass, including relativistic adjustment
+    - `calculate_relativistic_adjustment(mass, distance)` — computes the relativistic correction factor (0.0–1.0) that reduces acceleration near the Schwarzschild radius
+  - Refactored `velocity_update` system to call the extracted functions (thin wrapper pattern)
+  - Added `#[cfg(test)]` module with 14 unit tests covering:
+    - Relativistic adjustment: near 1.0 far from mass, clamps at zero, between 0 and 1, closer means smaller, more mass means smaller
+    - Gravitational acceleration: points toward mass (positive x, negative x, positive y), proportional to mass, inverse-square distance (ratio ≈ 4 for 2x distance), diagonal direction, equal components on 45° diagonal, positive magnitude, zero acceleration when relativistic clamp triggers
+  - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 66/66 tests passed ✅
 - **Constitution Compliance**: No violations.

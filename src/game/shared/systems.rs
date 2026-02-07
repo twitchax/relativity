@@ -10,7 +10,10 @@ use super::{
 };
 use bevy::prelude::*;
 use glam::DVec2;
-use uom::si::{acceleration::meter_per_second_squared, f64::Acceleration as UomAcceleration};
+use uom::si::{
+    acceleration::meter_per_second_squared,
+    f64::{Acceleration as UomAcceleration, Length as UomLength, Mass as UomMass},
+};
 
 // Escape button.
 
@@ -69,6 +72,45 @@ pub fn translation_update(mut query: Query<(&mut Transform, &Position)>) {
 
 // Velocity based on gravitation.
 
+// Pure functions.
+
+/// Compute the gravitational acceleration (x, y) exerted on a body at `pos` by a single mass at `other_pos`.
+///
+/// Includes a relativistic adjustment factor that reduces acceleration near the Schwarzschild radius.
+#[must_use]
+pub(crate) fn calculate_gravitational_acceleration(pos_x: UomLength, pos_y: UomLength, other_pos_x: UomLength, other_pos_y: UomLength, other_mass: UomMass) -> (UomAcceleration, UomAcceleration) {
+    let direction = DVec2::new((other_pos_x - pos_x).value, (other_pos_y - pos_y).value);
+    let direction = direction.normalize();
+
+    let delta_x = pos_x - other_pos_x;
+    let delta_y = pos_y - other_pos_y;
+    let distance_squared = delta_x * delta_x + delta_y * delta_y;
+    let distance = distance_squared.sqrt();
+
+    let gravitational_acceleration = (*G * other_mass) / distance_squared;
+
+    let relativistic_adjustment = calculate_relativistic_adjustment(other_mass, distance);
+
+    let accel_x = direction.x * gravitational_acceleration * relativistic_adjustment;
+    let accel_y = direction.y * gravitational_acceleration * relativistic_adjustment;
+
+    (accel_x, accel_y)
+}
+
+/// Compute the relativistic adjustment factor for gravitational acceleration.
+///
+/// Returns a value in `[0.0, 1.0]` that reduces acceleration near the Schwarzschild radius.
+#[must_use]
+pub(crate) fn calculate_relativistic_adjustment(mass: UomMass, distance: UomLength) -> f64 {
+    let adjustment = 1.0 - (2.0 * *G * mass / (*C * *C * distance)).value;
+
+    if adjustment <= 0.0 {
+        0.0
+    } else {
+        adjustment
+    }
+}
+
 #[allow(clippy::needless_pass_by_value)]
 pub fn velocity_update(mut query: Query<(&mut Velocity, Entity, &Position)>, masses: Query<(Entity, &Position, &Mass)>, time: Res<Time>) {
     let time_elapsed = *DAYS_PER_SECOND_UOM * f64::from(time.delta_secs());
@@ -86,27 +128,10 @@ pub fn velocity_update(mut query: Query<(&mut Velocity, Entity, &Position)>, mas
                 continue;
             }
 
-            let direction = DVec2::new((other_position.x - position.x).value, (other_position.y - position.y).value);
-            let direction = direction.normalize();
+            let (accel_x, accel_y) = calculate_gravitational_acceleration(position.x, position.y, other_position.x, other_position.y, other_mass.value);
 
-            let delta_x = position.x - other_position.x;
-            let delta_y = position.y - other_position.y;
-            let distance_squared = delta_x * delta_x + delta_y * delta_y;
-            let distance = distance_squared.sqrt();
-
-            let gravitational_acceleration = (*G * other_mass.value) / distance_squared;
-
-            let mut relativistic_adjustment = 1.0 - (2.0 * *G * other_mass.value / (*C * *C * distance)).value;
-
-            if relativistic_adjustment <= 0.0 {
-                relativistic_adjustment = 0.0;
-            }
-
-            let gravitational_acceleration_x = direction.x * gravitational_acceleration * relativistic_adjustment;
-            let gravitational_acceleration_y = direction.y * gravitational_acceleration * relativistic_adjustment;
-
-            total_gravitational_acceleration_x += gravitational_acceleration_x;
-            total_gravitational_acceleration_y += gravitational_acceleration_y;
+            total_gravitational_acceleration_x += accel_x;
+            total_gravitational_acceleration_y += accel_y;
         }
 
         velocity.x += total_gravitational_acceleration_x * time_elapsed;
@@ -139,5 +164,143 @@ pub fn collision_check(
             game_state.set(GameState::Paused);
             println!("failed!");
         }
+    }
+}
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+    use uom::si::{length::kilometer, mass::kilogram};
+
+    fn km(v: f64) -> UomLength {
+        UomLength::new::<kilometer>(v)
+    }
+
+    fn kg(v: f64) -> UomMass {
+        UomMass::new::<kilogram>(v)
+    }
+
+    // --- calculate_relativistic_adjustment ---
+
+    #[test]
+    fn relativistic_adjustment_far_from_mass_is_near_one() {
+        let mass = kg(1.989e30);
+        let distance = km(1_000_000_000.0);
+        let adj = calculate_relativistic_adjustment(mass, distance);
+        assert!(adj > 0.99, "far from mass, adjustment should be near 1.0, got {adj}");
+        assert!(adj <= 1.0);
+    }
+
+    #[test]
+    fn relativistic_adjustment_clamps_at_zero() {
+        // Extremely massive body at tiny distance triggers the clamp.
+        let mass = kg(1.0e60);
+        let distance = km(1.0);
+        let adj = calculate_relativistic_adjustment(mass, distance);
+        assert_relative_eq!(adj, 0.0);
+    }
+
+    #[test]
+    fn relativistic_adjustment_is_between_zero_and_one() {
+        let mass = kg(1.989e38);
+        let distance = km(500_000_000.0);
+        let adj = calculate_relativistic_adjustment(mass, distance);
+        assert!(adj >= 0.0);
+        assert!(adj <= 1.0);
+    }
+
+    #[test]
+    fn relativistic_adjustment_closer_means_smaller() {
+        let mass = kg(1.989e38);
+        let adj_far = calculate_relativistic_adjustment(mass, km(1_000_000_000.0));
+        let adj_close = calculate_relativistic_adjustment(mass, km(100_000_000.0));
+        assert!(adj_far > adj_close, "closer should reduce the adjustment");
+    }
+
+    #[test]
+    fn relativistic_adjustment_more_mass_means_smaller() {
+        let distance = km(500_000_000.0);
+        let adj_light = calculate_relativistic_adjustment(kg(1.0e30), distance);
+        let adj_heavy = calculate_relativistic_adjustment(kg(1.0e38), distance);
+        assert!(adj_light > adj_heavy, "more mass should reduce the adjustment");
+    }
+
+    // --- calculate_gravitational_acceleration ---
+
+    #[test]
+    fn gravitational_acceleration_points_toward_mass() {
+        // Mass to the right of the body.
+        let (ax, ay) = calculate_gravitational_acceleration(km(0.0), km(0.0), km(1_000_000.0), km(0.0), kg(1.989e30));
+        assert!(ax.get::<meter_per_second_squared>() > 0.0, "accel should point toward mass (positive x)");
+        assert_relative_eq!(ay.get::<meter_per_second_squared>(), 0.0, epsilon = 1e-20);
+    }
+
+    #[test]
+    fn gravitational_acceleration_points_toward_mass_negative_x() {
+        // Mass to the left.
+        let (ax, _ay) = calculate_gravitational_acceleration(km(1_000_000.0), km(0.0), km(0.0), km(0.0), kg(1.989e30));
+        assert!(ax.get::<meter_per_second_squared>() < 0.0, "accel should point toward mass (negative x)");
+    }
+
+    #[test]
+    fn gravitational_acceleration_points_toward_mass_y() {
+        // Mass above.
+        let (ax, ay) = calculate_gravitational_acceleration(km(0.0), km(0.0), km(0.0), km(1_000_000.0), kg(1.989e30));
+        assert_relative_eq!(ax.get::<meter_per_second_squared>(), 0.0, epsilon = 1e-20);
+        assert!(ay.get::<meter_per_second_squared>() > 0.0, "accel should point toward mass (positive y)");
+    }
+
+    #[test]
+    fn gravitational_acceleration_proportional_to_mass() {
+        let (ax_light, _) = calculate_gravitational_acceleration(km(0.0), km(0.0), km(1_000_000.0), km(0.0), kg(1.0e30));
+        let (ax_heavy, _) = calculate_gravitational_acceleration(km(0.0), km(0.0), km(1_000_000.0), km(0.0), kg(2.0e30));
+        // Heavier mass should produce greater acceleration.
+        assert!(ax_heavy.get::<meter_per_second_squared>() > ax_light.get::<meter_per_second_squared>());
+    }
+
+    #[test]
+    fn gravitational_acceleration_inverse_square_distance() {
+        let mass = kg(1.989e30);
+        let (ax_close, _) = calculate_gravitational_acceleration(km(0.0), km(0.0), km(500_000.0), km(0.0), mass);
+        let (ax_far, _) = calculate_gravitational_acceleration(km(0.0), km(0.0), km(1_000_000.0), km(0.0), mass);
+        // Closer should produce much greater acceleration (roughly 4x for 2x distance).
+        assert!(ax_close.get::<meter_per_second_squared>() > ax_far.get::<meter_per_second_squared>());
+
+        let ratio = ax_close.get::<meter_per_second_squared>() / ax_far.get::<meter_per_second_squared>();
+        // At far distances where relativistic adjustment ≈ 1, ratio should be close to 4.
+        assert!(ratio > 3.5, "inverse-square: ratio should be near 4, got {ratio}");
+        assert!(ratio < 4.5, "inverse-square: ratio should be near 4, got {ratio}");
+    }
+
+    #[test]
+    fn gravitational_acceleration_diagonal_direction() {
+        // Mass at (1M, 1M), body at origin — both components should be positive.
+        let (ax, ay) = calculate_gravitational_acceleration(km(0.0), km(0.0), km(1_000_000.0), km(1_000_000.0), kg(1.989e30));
+        assert!(ax.get::<meter_per_second_squared>() > 0.0);
+        assert!(ay.get::<meter_per_second_squared>() > 0.0);
+    }
+
+    #[test]
+    fn gravitational_acceleration_both_components_equal_on_diagonal() {
+        // Mass at 45° should produce equal x and y acceleration.
+        let (ax, ay) = calculate_gravitational_acceleration(km(0.0), km(0.0), km(1_000_000.0), km(1_000_000.0), kg(1.989e30));
+        assert_relative_eq!(ax.get::<meter_per_second_squared>(), ay.get::<meter_per_second_squared>(), epsilon = 1e-25);
+    }
+
+    #[test]
+    fn gravitational_acceleration_is_positive_magnitude() {
+        let (ax, ay) = calculate_gravitational_acceleration(km(0.0), km(0.0), km(1_000_000.0), km(1_000_000.0), kg(1.989e30));
+        let magnitude = (ax.get::<meter_per_second_squared>().powi(2) + ay.get::<meter_per_second_squared>().powi(2)).sqrt();
+        assert!(magnitude > 0.0);
+    }
+
+    #[test]
+    fn gravitational_acceleration_with_strong_relativistic_clamp() {
+        // Extremely massive body at small distance — should not panic, acceleration should be zero due to clamp.
+        let (ax, ay) = calculate_gravitational_acceleration(km(0.0), km(0.0), km(1.0), km(0.0), kg(1.0e60));
+        assert_relative_eq!(ax.get::<meter_per_second_squared>(), 0.0);
+        assert_relative_eq!(ay.get::<meter_per_second_squared>(), 0.0);
     }
 }
