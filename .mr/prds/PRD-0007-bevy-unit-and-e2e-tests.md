@@ -38,7 +38,7 @@ acceptance_tests:
   - id: uat-004
     name: "Headless render smoke test passes without a window or display"
     command: cargo make test
-    uat_status: unverified
+    uat_status: verified
 tasks:
   - id: T-001
     title: "Add dev-dependencies: approx and proptest"
@@ -582,3 +582,14 @@ This gives CI a meaningful "the game boots and renders" gate without requiring a
   - fmt-check: code formatting verified
   - clippy: no warnings (strict denies enforced)
   - test: all unit, integration, and E2E tests passed via nextest
+
+## 2026-02-07 — uat-004 Verification
+- **UAT**: Headless render smoke test passes without a window or display
+- **Status**: ✅ Verified
+- **Method**: Existing test
+- **Details**:
+  - Test file: `tests/headless_render_smoke.rs`
+  - Test name: `headless_app_boots_and_runs_without_panic`
+  - Ran `cargo make test` — 163 tests run, 163 passed (1 slow), 0 skipped
+  - The headless smoke test builds the app with DefaultPlugins (WinitPlugin disabled, no primary window), renders to an offscreen Image target, and runs 5 update cycles without panic
+  - Test passed in 63.5s confirming the render graph executes without a window or display server
