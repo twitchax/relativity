@@ -83,7 +83,7 @@ tasks:
   - id: T-010
     title: "Update DEVELOPMENT.md to reference cargo make commands"
     priority: 5
-    status: todo
+    status: done
     notes: "Replace raw cargo commands with cargo make equivalents throughout"
   - id: T-011
     title: "Update CONTRIBUTING.md to reference cargo make commands"
@@ -334,4 +334,22 @@ copilot-setup-steps.yml (new)
   - `changelog` task unchanged (already correct)
   - `cargo make uat` passes: fmt-check ✅, clippy ✅, nextest 2/2 tests passed ✅
 - **Constitution Compliance**: No violations. Changes are limited to the Publishing section of Makefile.toml and a new cliff.toml config file.
+
+## 2026-02-07 — T-010 Completed
+- **Task**: Update DEVELOPMENT.md to reference cargo make commands
+- **Status**: ✅ Done
+- **Changes**:
+  - Replaced all raw `cargo` commands in `DEVELOPMENT.md` with `cargo make` equivalents:
+    - `cargo build` → `cargo make build`
+    - `cargo run --release` → `cargo make build-release`
+    - `cargo fmt` → `cargo make fmt`
+    - `cargo clippy --all-targets --all-features` → `cargo make clippy`
+    - `cargo test` → `cargo make test`
+    - Raw platform build commands → `cargo make build-linux`, `cargo make build-windows`, `cargo make build-macos`
+  - Added new sections: Full CI Pipeline (`cargo make ci`), UAT (`cargo make uat`), Code Coverage (`cargo make codecov`/`cargo make codecov-html`), Changelog (`cargo make changelog`), Release (`cargo make release`), GitHub Release (`cargo make github-release`)
+  - Added prerequisites for `cargo-make` and `cargo-binstall` in the Local Setup section
+  - Updated Web Build section to use `cargo make build-web` instead of manual `cargo install trunk` + `trunk build`
+  - Removed obsolete "Publishing to crates.io" section (project is a binary game, not a crate)
+  - `cargo make uat` passes: fmt-check ✅, clippy ✅, nextest 2/2 tests passed ✅
+- **Constitution Compliance**: No violations. Changes are limited to documentation updates.
 

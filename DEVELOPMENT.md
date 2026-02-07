@@ -10,6 +10,13 @@ Make sure you have Rust (nightly) installed via [rustup](https://rustup.rs/).
 $ rustup install nightly
 ```
 
+You will also need [cargo-make](https://github.com/sagiegurari/cargo-make) and [cargo-binstall](https://github.com/cargo-bins/cargo-binstall) installed:
+
+```bash
+$ cargo install cargo-make
+$ cargo install cargo-binstall
+```
+
 ### System Dependencies
 
 For Linux development, you'll need several system libraries for Bevy's rendering and audio support:
@@ -33,7 +40,7 @@ For other platforms, refer to the [Bevy setup guide](https://bevyengine.org/lear
 ### Build
 
 ```bash
-$ cargo build
+$ cargo make build
 ```
 
 ### Run in Debug Mode
@@ -45,25 +52,37 @@ $ cargo run
 ### Run in Release Mode
 
 ```bash
-$ cargo run --release
+$ cargo make build-release
 ```
 
 ### Format Code
 
 ```bash
-$ cargo fmt
+$ cargo make fmt
 ```
 
 ### Lint with Clippy
 
 ```bash
-$ cargo clippy --all-targets --all-features
+$ cargo make clippy
 ```
 
 ### Test
 
 ```bash
-$ cargo test
+$ cargo make test
+```
+
+### Full CI Pipeline (Format Check + Clippy + Test)
+
+```bash
+$ cargo make ci
+```
+
+### UAT (The One True Gate)
+
+```bash
+$ cargo make uat
 ```
 
 ## Development Workflow
@@ -133,23 +152,62 @@ Binaries are uploaded as artifacts and can be downloaded from the Actions tab.
 
 ```bash
 # Linux
-$ cargo build --release --target x86_64-unknown-linux-gnu
+$ cargo make build-linux
 
 # Windows (cross-compile from Linux)
-$ cargo install cross
-$ cross build --release --target x86_64-pc-windows-gnu
+$ cargo make build-windows
 
 # macOS (requires macOS host for aarch64-apple-darwin)
-$ cargo build --release --target aarch64-apple-darwin
+$ cargo make build-macos
 ```
 
-### Publishing to crates.io
+### Changelog
 
-Currently, this is a binary game project and is not published to crates.io. If you want to publish it in the future:
+Generate a changelog using [git-cliff](https://git-cliff.org/):
 
 ```bash
-$ cargo publish
+$ cargo make changelog
 ```
+
+### Release
+
+Run the full automated release pipeline (CI → changelog → version bump → push → wait for CI artifacts):
+
+```bash
+$ cargo make release
+```
+
+### GitHub Release
+
+Create a GitHub release with binary artifacts:
+
+```bash
+$ cargo make github-release <tag>
+```
+
+### Code Coverage
+
+Generate code coverage reports:
+
+```bash
+# LCOV format (for CI / codecov upload)
+$ cargo make codecov
+
+# HTML format (for local viewing)
+$ cargo make codecov-html
+```
+
+## Building for Web (WASM)
+
+To build the web version:
+
+```bash
+# Build for deployment (installs trunk automatically via cargo-binstall)
+$ cargo make build-web
+# Output will be in the dist/ directory
+```
+
+The web version is automatically deployed to GitHub Pages when changes are pushed to the main branch.
 
 ## Assets
 
