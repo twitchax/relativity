@@ -1,0 +1,257 @@
+# relativity — cargo-make configuration
+# Reference: https://github.com/twitchax/microralph/blob/main/Makefile.toml
+
+# =============================================================================
+# Tool Installation
+# =============================================================================
+
+[tasks.install-cargo-binstall]
+# In CI, this is installed by the cargo-bins/cargo-binstall@main action.
+# Locally, users should install manually: https://github.com/cargo-bins/cargo-binstall
+script = "echo 'Checking cargo-binstall availability...'"
+
+[tasks.install-nextest]
+dependencies = ["install-cargo-binstall"]
+command = "cargo"
+args = ["binstall", "cargo-nextest", "--no-confirm"]
+
+[tasks.install-llvm-cov]
+dependencies = ["install-cargo-binstall"]
+command = "cargo"
+args = ["binstall", "cargo-llvm-cov", "--no-confirm"]
+
+[tasks.install-cargo-release]
+dependencies = ["install-cargo-binstall"]
+command = "cargo"
+args = ["binstall", "cargo-release", "--no-confirm"]
+
+[tasks.install-git-cliff]
+dependencies = ["install-cargo-binstall"]
+command = "cargo"
+args = ["binstall", "git-cliff", "--no-confirm"]
+
+[tasks.tools]
+dependencies = ["install-nextest", "install-llvm-cov"]
+
+# =============================================================================
+# Formatting
+# =============================================================================
+
+[tasks.fmt]
+cwd = "."
+workspace = false
+command = "cargo"
+args = ["fmt"]
+
+[tasks.fmt-check]
+cwd = "."
+workspace = false
+command = "cargo"
+args = ["fmt", "--check"]
+
+# =============================================================================
+# Linting
+# =============================================================================
+
+[tasks.clippy]
+cwd = "."
+workspace = false
+command = "cargo"
+args = ["clippy", "--all-targets", "--all-features", "--", "-D", "warnings"]
+
+# =============================================================================
+# Build
+# =============================================================================
+
+[tasks.build]
+cwd = "."
+workspace = false
+command = "cargo"
+args = ["build"]
+
+[tasks.build-release]
+cwd = "."
+workspace = false
+command = "cargo"
+args = ["build", "--release"]
+
+# =============================================================================
+# Testing
+# =============================================================================
+
+[tasks.test]
+cwd = "."
+workspace = false
+dependencies = ["install-nextest"]
+command = "cargo"
+args = ["nextest", "run"]
+
+[tasks.test-cargo]
+# Fallback for environments without nextest.
+cwd = "."
+workspace = false
+command = "cargo"
+args = ["test"]
+
+# =============================================================================
+# CI Pipeline
+# =============================================================================
+
+[tasks.ci]
+# The full CI pipeline: fmt, clippy, test.
+workspace = false
+dependencies = ["fmt-check", "clippy", "test"]
+
+# =============================================================================
+# UAT (User Acceptance Tests)
+# =============================================================================
+
+[tasks.uat]
+# The one true gate for this repo.
+workspace = false
+dependencies = ["ci"]
+
+# =============================================================================
+# Code Coverage
+# =============================================================================
+
+[tasks.codecov]
+cwd = "."
+workspace = false
+clear = true
+dependencies = ["tools"]
+command = "cargo"
+args = ["llvm-cov", "nextest", "--lcov", "--output-path", "coverage.lcov"]
+
+[tasks.codecov-html]
+cwd = "."
+workspace = false
+clear = true
+dependencies = ["tools"]
+command = "cargo"
+args = ["llvm-cov", "nextest", "--html"]
+
+# =============================================================================
+# Platform Builds (for CI artifact generation)
+# =============================================================================
+
+[tasks.build-linux]
+cwd = "."
+workspace = false
+command = "cargo"
+args = ["build", "--target", "x86_64-unknown-linux-gnu", "--release"]
+
+[tasks.build-windows]
+cwd = "."
+workspace = false
+command = "cargo"
+args = ["build", "--target", "x86_64-pc-windows-gnu", "--release"]
+
+[tasks.build-macos]
+cwd = "."
+workspace = false
+command = "cargo"
+args = ["build", "--target", "aarch64-apple-darwin", "--release"]
+
+# =============================================================================
+# Web Build (Trunk / WASM)
+# =============================================================================
+
+[tasks.install-trunk]
+dependencies = ["install-cargo-binstall"]
+command = "cargo"
+args = ["binstall", "trunk", "--no-confirm"]
+
+[tasks.build-web]
+cwd = "."
+workspace = false
+dependencies = ["install-trunk"]
+command = "trunk"
+args = ["build", "--release"]
+
+# =============================================================================
+# Publishing
+# =============================================================================
+
+[tasks.changelog]
+cwd = "."
+workspace = false
+dependencies = ["install-git-cliff"]
+command = "git-cliff"
+args = ["--output", "CHANGELOG.md"]
+
+[tasks.release]
+cwd = "."
+workspace = false
+dependencies = ["ci", "changelog", "install-cargo-release"]
+command = "cargo"
+args = ["release", "--no-publish", "--execute"]
+
+[tasks.github-release]
+cwd = "."
+workspace = false
+script_runner = "@shell"
+script = '''#!/bin/bash
+set -e
+
+TAG=${1:-}
+if [ -z "$TAG" ]; then
+    echo "❌ Error: Version tag required"
+    echo "Usage: cargo make github-release <tag> [--draft]"
+    exit 1
+fi
+
+echo "📦 Creating GitHub release for $TAG..."
+
+TEMP_DIR=$(mktemp -d)
+trap "rm -rf $TEMP_DIR" EXIT
+NOTES_FILE="$TEMP_DIR/release_notes.md"
+
+if [ -f "CHANGELOG.md" ]; then
+    cp CHANGELOG.md "$NOTES_FILE"
+else
+    echo "## Release $TAG" > "$NOTES_FILE"
+fi
+
+ARTIFACTS=""
+STAGING_DIR=$(mktemp -d)
+if [ -d "target/release-artifacts" ]; then
+    for file in $(find target/release-artifacts -type f); do
+        parent_dir=$(basename "$(dirname "$file")")
+        filename=$(basename "$file")
+        if [[ "$filename" == *.* ]]; then
+            ext=".${filename##*.}"
+        else
+            ext=""
+        fi
+        new_name="${parent_dir}${ext}"
+        staged_file="$STAGING_DIR/$new_name"
+        cp "$file" "$staged_file"
+        ARTIFACTS="$ARTIFACTS \"$staged_file\""
+    done
+fi
+
+GH_CMD="gh release create \"$TAG\" --title \"$TAG\" --notes-file \"$NOTES_FILE\""
+
+shift
+if echo "$@" | grep -q "\-\-draft"; then
+    GH_CMD="$GH_CMD --draft"
+fi
+
+if [ -n "$ARTIFACTS" ]; then
+    GH_CMD="$GH_CMD $ARTIFACTS"
+fi
+
+eval $GH_CMD
+echo "✅ GitHub release created: https://github.com/twitchax/relativity/releases/tag/$TAG"
+'''
+
+# =============================================================================
+# Clean
+# =============================================================================
+
+[tasks.clean]
+cwd = "."
+workspace = false
+command = "cargo"
+args = ["clean"]

@@ -1,7 +1,7 @@
 ---
 id: PRD-0006
 title: "Align with Best Practices: Makefile, CI, Denies, and Docs"
-status: draft
+status: active
 owner: twitchax
 created: 2026-02-07
 updated: 2026-02-07
@@ -38,7 +38,7 @@ tasks:
   - id: T-001
     title: "Create Makefile.toml with full task suite"
     priority: 1
-    status: todo
+    status: done
     notes: "Model after microralph: tool installs (nextest, llvm-cov, git-cliff), fmt, fmt-check, clippy, build, build-release, test (nextest), ci, uat, codecov, platform builds, changelog, release, github-release, clean"
   - id: T-002
     title: "Create .config/nextest.toml"
@@ -214,4 +214,13 @@ copilot-setup-steps.yml (new)
 - Devcontainer configuration
 
 # History
+
+## 2026-02-07 — T-001 Completed
+- **Task**: Create Makefile.toml with full task suite
+- **Status**: ✅ Done
+- **Changes**:
+  - Created `Makefile.toml` with full task suite modeled after microralph: tool installs (nextest, llvm-cov, git-cliff, cargo-release, trunk), fmt, fmt-check, clippy, build, build-release, test (nextest), test-cargo (fallback), ci, uat, codecov, codecov-html, platform builds (linux, windows, macos), build-web (trunk), changelog, release, github-release, clean
+  - Created `.config/nextest.toml` with slow-timeout configuration (period 5s, terminate-after 6)
+  - `cargo make uat` passes: fmt-check ✅, clippy ✅, nextest 2/2 tests passed ✅
+- **Constitution Compliance**: No violations.
 
