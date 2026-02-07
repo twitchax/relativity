@@ -83,7 +83,7 @@ tasks:
   - id: T-009
     title: "Extract and test observer clock formatting from observer/mod.rs"
     priority: 3
-    status: todo
+    status: done
     notes: "Extract time formatting into a pure function. Test: correct format string output"
   - id: T-010
     title: "Add proptest property-based tests for physics invariants"
@@ -453,4 +453,24 @@ This gives CI a meaningful "the game boots and renders" gate without requiring a
   - TimeWarp tests (5): verifies 5 `GameItem` entities, 2 `Player` entities (sprite + clock), 1 `Planet` entity (dynamic gravity well), 1 `Destination`, 1 `Observer`
   - Helper function `count_entities::<F>()` avoids repetitive mutable-world query boilerplate
   - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 122/122 tests passed ✅
+- **Constitution Compliance**: No violations.
+
+## 2026-02-07 — T-009 Completed
+- **Task**: Extract and test observer clock formatting from observer/mod.rs
+- **Status**: ✅ Done
+- **Changes**:
+  - Extracted pure `pub(crate)` function `format_observer_time(clock_value_seconds: f64) -> String` from `observer_clock_text_update` in `src/game/observer/mod.rs`
+  - The function converts a clock value in seconds to days and formats it as `"t_o = {days:2.2}"`
+  - Refactored `observer_clock_text_update` system to call the extracted function (thin wrapper pattern)
+  - Added `#[cfg(test)]` module with 9 unit tests covering:
+    - Zero seconds (0.00 days)
+    - One full day (86400 seconds)
+    - Half day (43200 seconds)
+    - Multiple days (10 days)
+    - Fractional day (1.5 days)
+    - Small value (1 hour = 0.04 days)
+    - Large value (365 days)
+    - Negative value (-1 day)
+    - Prefix format verification ("t_o = " prefix present)
+  - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 131/131 tests passed ✅
 - **Constitution Compliance**: No violations.
