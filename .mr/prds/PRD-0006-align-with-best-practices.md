@@ -78,7 +78,7 @@ tasks:
   - id: T-009
     title: "Add release and changelog tasks to Makefile.toml"
     priority: 4
-    status: todo
+    status: done
     notes: "git-cliff for changelog generation, github-release task for creating GitHub releases with binary artifacts from CI. No crates.io publishing needed."
   - id: T-010
     title: "Update DEVELOPMENT.md to reference cargo make commands"
@@ -321,4 +321,17 @@ copilot-setup-steps.yml (new)
   - No code changes needed; task was already satisfied by previous work
   - `cargo make uat` passes: fmt-check ✅, clippy ✅, nextest 2/2 tests passed ✅
 - **Constitution Compliance**: No violations. Minimal changes principle satisfied — no unnecessary modifications made since the work was already complete.
+
+## 2026-02-07 — T-009 Completed
+- **Task**: Add release and changelog tasks to Makefile.toml
+- **Status**: ✅ Done
+- **Changes**:
+  - Created `cliff.toml` with git-cliff configuration matching microralph pattern (conventional commits, grouped by type with emoji headers, semantic versioning)
+  - Updated `Makefile.toml` Publishing section to match microralph's release automation pattern:
+    - Added `release-bump` task for standalone version bumping via cargo-release
+    - Upgraded `release` task from simple `cargo release` command to full automated pipeline: CI → changelog → bump → commit → push → wait for CI artifacts → download artifacts
+    - Enhanced `github-release` task with detailed logging, artifact staging with rename, fallback changelog text, and draft mode support (matching microralph's verbose style)
+  - `changelog` task unchanged (already correct)
+  - `cargo make uat` passes: fmt-check ✅, clippy ✅, nextest 2/2 tests passed ✅
+- **Constitution Compliance**: No violations. Changes are limited to the Publishing section of Makefile.toml and a new cliff.toml config file.
 

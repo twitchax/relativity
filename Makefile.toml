@@ -180,12 +180,91 @@ dependencies = ["install-git-cliff"]
 command = "git-cliff"
 args = ["--output", "CHANGELOG.md"]
 
+[tasks.release-bump]
+cwd = "."
+workspace = false
+dependencies = ["install-cargo-release"]
+command = "cargo"
+args = ["release", "--no-publish", "--execute"]
+
 [tasks.release]
+# Fully automated release: CI → changelog → bump → commit → push → wait for artifacts
 cwd = "."
 workspace = false
 dependencies = ["ci", "changelog", "install-cargo-release"]
-command = "cargo"
-args = ["release", "--no-publish", "--execute"]
+script_runner = "@shell"
+script = '''#!/bin/bash
+set -e
+
+echo ""
+echo "🚀 Starting automated release pipeline..."
+echo ""
+
+# Step 1: Version bump (cargo-release determines version from commits)
+echo "📦 Step 1/5: Bumping version..."
+cargo release --no-publish --execute
+
+# Step 2: Extract new version from Cargo.toml
+VERSION=$(grep '^version = ' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+echo "   → New version: v$VERSION"
+
+# Step 3: Commit changes
+echo ""
+echo "📝 Step 2/5: Committing changes..."
+git add .
+git commit -m "chore: release v$VERSION" || echo "   → No changes to commit (already committed by cargo-release)"
+
+# Step 4: Push to trigger CI
+echo ""
+echo "🚀 Step 3/5: Pushing to remote..."
+git push
+git push --tags
+
+# Step 5: Wait for CI and download artifacts
+echo ""
+echo "⏳ Step 4/5: Waiting for CI workflow to complete..."
+echo "   This may take a few minutes..."
+
+# Get the latest workflow run ID for the build workflow
+sleep 5  # Give GitHub a moment to register the push
+RUN_ID=""
+for i in {1..60}; do
+    RUN_ID=$(gh run list --branch main --workflow build.yml --limit 1 --json databaseId,status --jq '.[0] | select(.status != "completed") | .databaseId' 2>/dev/null || echo "")
+    if [ -n "$RUN_ID" ]; then
+        break
+    fi
+    sleep 2
+done
+
+if [ -z "$RUN_ID" ]; then
+    # Try to get the most recent completed run
+    RUN_ID=$(gh run list --branch main --workflow build.yml --limit 1 --json databaseId --jq '.[0].databaseId')
+fi
+
+if [ -n "$RUN_ID" ]; then
+    echo "   → Workflow run ID: $RUN_ID"
+    gh run watch "$RUN_ID" --exit-status || {
+        echo "❌ CI failed! Check the workflow at:"
+        echo "   https://github.com/twitchax/relativity/actions/runs/$RUN_ID"
+        exit 1
+    }
+
+    echo ""
+    echo "📥 Step 5/5: Downloading artifacts..."
+    rm -rf target/release-artifacts
+    gh run download "$RUN_ID" --dir target/release-artifacts
+    echo "   → Artifacts downloaded to target/release-artifacts/"
+else
+    echo "⚠️  Could not find workflow run. Download artifacts manually with:"
+    echo "   gh run list --branch main --workflow build.yml --limit 1 --json databaseId --jq '.[0].databaseId' | xargs -I {} gh run download {} --dir target/release-artifacts"
+fi
+
+echo ""
+echo "✅ Release pipeline complete!"
+echo ""
+echo "Next steps:"
+echo "  1. Create GitHub release: cargo make github-release v$VERSION"
+'''
 
 [tasks.github-release]
 cwd = "."
@@ -198,52 +277,77 @@ TAG=${1:-}
 if [ -z "$TAG" ]; then
     echo "❌ Error: Version tag required"
     echo "Usage: cargo make github-release <tag> [--draft]"
+    echo "Example: cargo make github-release v0.1.0"
     exit 1
 fi
 
 echo "📦 Creating GitHub release for $TAG..."
 
+# Prepare release notes
 TEMP_DIR=$(mktemp -d)
 trap "rm -rf $TEMP_DIR" EXIT
 NOTES_FILE="$TEMP_DIR/release_notes.md"
 
 if [ -f "CHANGELOG.md" ]; then
+    echo "Using changelog for release notes..."
     cp CHANGELOG.md "$NOTES_FILE"
 else
     echo "## Release $TAG" > "$NOTES_FILE"
+    echo "" >> "$NOTES_FILE"
+    echo "See the full changelog at https://github.com/twitchax/relativity/blob/main/CHANGELOG.md" >> "$NOTES_FILE"
 fi
 
+# Check for artifacts directory and rename files for unique asset names
 ARTIFACTS=""
 STAGING_DIR=$(mktemp -d)
 if [ -d "target/release-artifacts" ]; then
+    echo "📎 Found target/release-artifacts directory"
+    # Find all files recursively and rename using parent dir name
     for file in $(find target/release-artifacts -type f); do
+        # Extract parent dir name (e.g., relativity_x86_64-unknown-linux-gnu)
         parent_dir=$(basename "$(dirname "$file")")
         filename=$(basename "$file")
+        # Get extension if any
         if [[ "$filename" == *.* ]]; then
             ext=".${filename##*.}"
         else
             ext=""
         fi
+        # Create unique name: relativity-x86_64-unknown-linux-gnu or relativity-x86_64-pc-windows-gnu.exe
         new_name="${parent_dir}${ext}"
         staged_file="$STAGING_DIR/$new_name"
         cp "$file" "$staged_file"
+        echo "  → $new_name"
         ARTIFACTS="$ARTIFACTS \"$staged_file\""
     done
 fi
 
+# Build gh release create command
 GH_CMD="gh release create \"$TAG\" --title \"$TAG\" --notes-file \"$NOTES_FILE\""
 
+# Add draft flag if requested
 shift
 if echo "$@" | grep -q "\-\-draft"; then
     GH_CMD="$GH_CMD --draft"
+    echo "📝 Creating as draft release"
 fi
 
+# Add artifacts
 if [ -n "$ARTIFACTS" ]; then
     GH_CMD="$GH_CMD $ARTIFACTS"
 fi
 
+# Execute the release creation
+echo ""
+echo "🚀 Creating GitHub release..."
 eval $GH_CMD
-echo "✅ GitHub release created: https://github.com/twitchax/relativity/releases/tag/$TAG"
+
+echo ""
+echo "✅ GitHub release created successfully!"
+echo "   View at: https://github.com/twitchax/relativity/releases/tag/$TAG"
+echo ""
+echo "💡 To download artifacts from CI, run:"
+echo "   gh run list --branch main --workflow build.yml --limit 1 --json databaseId --jq '.[0].databaseId' | xargs -I {} gh run download {} --dir target/release-artifacts"
 '''
 
 # =============================================================================
