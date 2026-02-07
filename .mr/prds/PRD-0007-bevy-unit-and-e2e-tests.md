@@ -128,7 +128,7 @@ tasks:
   - id: T-018
     title: "Headless render smoke test: DefaultPlugins without a window"
     priority: 1
-    status: todo
+    status: done
     notes: "Add at least one integration test that builds a Bevy App with DefaultPlugins but disables window creation (WindowPlugin { primary_window: None } + disable WinitPlugin) and uses ScheduleRunnerPlugin. This exercises the full render pipeline (asset loading, transforms, cameras) headlessly. The test should spawn a camera rendering to an offscreen Image target, run several app.update() cycles, and assert no panics. This replaces the old manual 'cargo run' UAT with an automated, CI-safe smoke test that proves the game bootstraps and renders without a display server or GPU window."
 ---
 
@@ -357,3 +357,19 @@ This gives CI a meaningful "the game boots and renders" gate without requiring a
     - Gravitational acceleration: points toward mass (positive x, negative x, positive y), proportional to mass, inverse-square distance (ratio ≈ 4 for 2x distance), diagonal direction, equal components on 45° diagonal, positive magnitude, zero acceleration when relativistic clamp triggers
   - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 66/66 tests passed ✅
 - **Constitution Compliance**: No violations.
+
+## 2026-02-07 — T-018 Completed
+- **Task**: Headless render smoke test: DefaultPlugins without a window
+- **Status**: ✅ Done
+- **Changes**:
+  - Created `src/lib.rs` to expose `game`, `menu`, and `shared` modules as a library crate, enabling integration tests to import project types
+  - Updated `src/main.rs` to import from the library crate (`use relativity::...`) instead of declaring modules directly
+  - Created `tests/headless_render_smoke.rs` integration test that:
+    - Builds a full Bevy `App` with `DefaultPlugins`, disabling `WinitPlugin` and setting `primary_window: None`
+    - Adds `GamePlugin` and `MenuPlugin` (exercising the full system graph)
+    - Spawns a `Camera2d` rendering to an offscreen `Image` asset (320×180 `Rgba8UnormSrgb` texture with `RENDER_ATTACHMENT` usage)
+    - Calls `app.finish()` and `app.cleanup()` to complete async GPU/plugin initialization
+    - Runs 5 `app.update()` cycles and asserts no panics
+  - Added nextest timeout override in `.config/nextest.toml` for the headless smoke test (`slow-timeout: period=15s, terminate-after=6`) since GPU initialization under parallel test load can take longer
+  - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 67/67 tests passed ✅
+- **Constitution Compliance**: No violations. The `lib.rs` extraction follows the DRY principle (modules defined once, imported by both `main.rs` and integration tests). The `main.rs` change is minimal and preserves identical behavior.

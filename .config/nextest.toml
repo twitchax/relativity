@@ -5,3 +5,10 @@
 # Global timeout: kill tests after 30 seconds (prevents hung tests)
 # Tests will be marked slow after 5s, then killed after 6 periods (30s total)
 slow-timeout = { period = "5s", terminate-after = 6 }
+
+# The headless render smoke test initializes a full Bevy render pipeline with
+# GPU resources. Under parallel execution the GPU init can be slow, so we
+# give this test a longer timeout.
+[[profile.default.overrides]]
+filter = "test(headless_app_boots_and_runs_without_panic)"
+slow-timeout = { period = "15s", terminate-after = 6 }

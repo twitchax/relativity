@@ -1,19 +1,9 @@
-// Deny unwrap_used in production code to ensure proper error handling.
-// Test code is allowed to use unwrap via #[cfg(test)] and module-level allows.
-#![deny(unused)]
-#![deny(clippy::unwrap_used)]
-#![deny(clippy::correctness)]
-#![deny(clippy::complexity)]
-#![deny(clippy::pedantic)]
-
-pub mod game;
-pub mod menu;
-pub mod shared;
-
 use bevy::prelude::*;
-use game::{levels::CurrentLevel, GamePlugin};
-use menu::MenuPlugin;
-use shared::{state::AppState, types::spawn_camera};
+use relativity::{
+    game::{levels::CurrentLevel, GamePlugin},
+    menu::MenuPlugin,
+    shared::{state::AppState, types::spawn_camera},
+};
 
 fn main() {
     // Install better panic hook for WASM
