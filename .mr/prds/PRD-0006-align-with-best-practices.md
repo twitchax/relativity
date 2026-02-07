@@ -43,7 +43,7 @@ tasks:
   - id: T-002
     title: "Create .config/nextest.toml"
     priority: 1
-    status: todo
+    status: done
     notes: "Copy microralph pattern: slow-timeout with period 5s, terminate-after 6"
   - id: T-003
     title: "Add clippy denies to src/main.rs"
@@ -221,6 +221,16 @@ copilot-setup-steps.yml (new)
 - **Changes**:
   - Created `Makefile.toml` with full task suite modeled after microralph: tool installs (nextest, llvm-cov, git-cliff, cargo-release, trunk), fmt, fmt-check, clippy, build, build-release, test (nextest), test-cargo (fallback), ci, uat, codecov, codecov-html, platform builds (linux, windows, macos), build-web (trunk), changelog, release, github-release, clean
   - Created `.config/nextest.toml` with slow-timeout configuration (period 5s, terminate-after 6)
+  - `cargo make uat` passes: fmt-check ✅, clippy ✅, nextest 2/2 tests passed ✅
+- **Constitution Compliance**: No violations.
+
+## 2026-02-07 — T-002 Completed
+- **Task**: Create .config/nextest.toml
+- **Status**: ✅ Done
+- **Changes**:
+  - `.config/nextest.toml` was already created during T-001 with the correct microralph pattern (slow-timeout period 5s, terminate-after 6)
+  - Verified contents match `twitchax/microralph/.config/nextest.toml` exactly
+  - No code changes needed; task was already satisfied
   - `cargo make uat` passes: fmt-check ✅, clippy ✅, nextest 2/2 tests passed ✅
 - **Constitution Compliance**: No violations.
 
