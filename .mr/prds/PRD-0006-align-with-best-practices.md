@@ -73,7 +73,7 @@ tasks:
   - id: T-008
     title: "Add codecov job to build.yml"
     priority: 4
-    status: todo
+    status: done
     notes: "Add codecov job using cargo make codecov, upload with codecov/codecov-action"
   - id: T-009
     title: "Add release and changelog tasks to Makefile.toml"
@@ -310,4 +310,15 @@ copilot-setup-steps.yml (new)
   - Workflow triggers on push/PR changes to itself, plus manual dispatch
   - `cargo make uat` passes: fmt-check ✅, clippy ✅, nextest 2/2 tests passed ✅
 - **Constitution Compliance**: No violations. New workflow file only, following established patterns.
+
+## 2026-02-07 — T-008 Completed
+- **Task**: Add codecov job to build.yml
+- **Status**: ✅ Done
+- **Changes**:
+  - Verified that the codecov job already exists in `.github/workflows/build.yml` (lines 29-50), having been added during T-005 (build.yml rewrite)
+  - The existing codecov job matches the microralph pattern exactly: `needs: test`, system deps, pinned toolchain, cargo-binstall, rust-cache with `cache-bin: "false"`, `cargo make codecov`, and `codecov/codecov-action@v5` with token and slug
+  - The Makefile.toml `codecov` task (using `cargo llvm-cov nextest --lcov --output-path coverage.lcov`) was already created in T-001
+  - No code changes needed; task was already satisfied by previous work
+  - `cargo make uat` passes: fmt-check ✅, clippy ✅, nextest 2/2 tests passed ✅
+- **Constitution Compliance**: No violations. Minimal changes principle satisfied — no unnecessary modifications made since the work was already complete.
 
