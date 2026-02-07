@@ -65,3 +65,109 @@ pub static G: LazyLock<
 
 // TODO: Make this go away, and use some acceleration.
 pub static MAX_PLAYER_LAUNCH_VELOCITY: LazyLock<UomVelocity> = LazyLock::new(|| UomVelocity::new::<kilometer_per_second>(MAX_PLAYER_VELOCITY_KMS));
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+mod tests {
+    use super::*;
+    use uom::si::{length::kilometer as km_unit, mass::kilogram as kg_unit, time::day as day_unit, velocity::kilometer_per_second as kps_unit};
+
+    // --- LazyLock initialization ---
+
+    #[test]
+    fn days_per_second_uom_initializes() {
+        let val = DAYS_PER_SECOND_UOM.get::<day_unit>();
+        assert!(val > 0.0, "DAYS_PER_SECOND_UOM should be positive");
+    }
+
+    #[test]
+    fn unit_radius_initializes() {
+        let val = UNIT_RADIUS.get::<km_unit>();
+        assert!(val > 0.0, "UNIT_RADIUS should be positive");
+    }
+
+    #[test]
+    fn mass_of_sun_initializes() {
+        let val = MASS_OF_SUN.get::<kg_unit>();
+        assert!(val > 0.0, "MASS_OF_SUN should be positive");
+    }
+
+    #[test]
+    fn mass_of_earth_initializes() {
+        let val = MASS_OF_EARTH.get::<kg_unit>();
+        assert!(val > 0.0, "MASS_OF_EARTH should be positive");
+    }
+
+    #[test]
+    fn screen_width_uom_initializes() {
+        let val = SCREEN_WIDTH_UOM.get::<km_unit>();
+        assert!(val > 0.0, "SCREEN_WIDTH_UOM should be positive");
+    }
+
+    #[test]
+    fn screen_height_uom_initializes() {
+        let val = SCREEN_HEIGHT_UOM.get::<km_unit>();
+        assert!(val > 0.0, "SCREEN_HEIGHT_UOM should be positive");
+    }
+
+    #[test]
+    fn c_initializes() {
+        let val = C.get::<kps_unit>();
+        assert!(val > 0.0, "C should be positive");
+    }
+
+    #[test]
+    fn g_initializes_and_is_positive() {
+        let val = G.value;
+        assert!(val > 0.0, "G should be positive");
+    }
+
+    #[test]
+    fn max_player_launch_velocity_initializes() {
+        let val = MAX_PLAYER_LAUNCH_VELOCITY.get::<kps_unit>();
+        assert!(val > 0.0, "MAX_PLAYER_LAUNCH_VELOCITY should be positive");
+    }
+
+    // --- Physical constant validation ---
+
+    #[test]
+    fn mass_of_sun_greater_than_mass_of_earth() {
+        assert!(MASS_OF_SUN.get::<kg_unit>() > MASS_OF_EARTH.get::<kg_unit>(), "Sun mass should exceed Earth mass");
+    }
+
+    #[test]
+    fn max_velocity_less_than_c() {
+        assert!(
+            MAX_PLAYER_LAUNCH_VELOCITY.get::<kps_unit>() < C.get::<kps_unit>(),
+            "Max player velocity should be less than the speed of light"
+        );
+    }
+
+    #[test]
+    fn max_velocity_is_ninety_nine_percent_of_c() {
+        let ratio = MAX_PLAYER_LAUNCH_VELOCITY.get::<kps_unit>() / C.get::<kps_unit>();
+        approx::assert_relative_eq!(ratio, 0.99, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn screen_height_less_than_screen_width() {
+        assert!(
+            SCREEN_HEIGHT_UOM.get::<km_unit>() < SCREEN_WIDTH_UOM.get::<km_unit>(),
+            "Screen height should be less than screen width (landscape aspect ratio)"
+        );
+    }
+
+    const _: () = assert!(PLANET_SPRITE_WIDTH_PX > 0.0);
+    const _: () = assert!(ROCKET_SPRITE_WIDTH_PX > 0.0);
+    const _: () = assert!(PLANET_SPRITE_WIDTH_PX > ROCKET_SPRITE_WIDTH_PX);
+
+    #[test]
+    fn gravitational_constant_matches_known_value() {
+        approx::assert_relative_eq!(G.value, 6.674e-11, epsilon = 1e-14);
+    }
+
+    #[test]
+    fn c_matches_known_speed_of_light() {
+        approx::assert_relative_eq!(C.get::<kps_unit>(), 299_792.0, epsilon = 1.0);
+    }
+}

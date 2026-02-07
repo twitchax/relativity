@@ -58,7 +58,7 @@ tasks:
   - id: T-004
     title: "Unit tests for game/shared/constants.rs (value validation)"
     priority: 2
-    status: todo
+    status: done
     notes: "Validate physical constants are reasonable: mass_of_sun > mass_of_earth, max_velocity < C, G and C are positive, LazyLock statics initialize correctly"
   - id: T-005
     title: "Extract and test relativistic gamma calculations from player_clock.rs"
@@ -373,3 +373,14 @@ This gives CI a meaningful "the game boots and renders" gate without requiring a
   - Added nextest timeout override in `.config/nextest.toml` for the headless smoke test (`slow-timeout: period=15s, terminate-after=6`) since GPU initialization under parallel test load can take longer
   - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 67/67 tests passed ✅
 - **Constitution Compliance**: No violations. The `lib.rs` extraction follows the DRY principle (modules defined once, imported by both `main.rs` and integration tests). The `main.rs` change is minimal and preserves identical behavior.
+
+## 2026-02-07 — T-004 Completed
+- **Task**: Unit tests for game/shared/constants.rs (value validation)
+- **Status**: ✅ Done
+- **Changes**:
+  - Added `#[cfg(test)]` module to `src/game/shared/constants.rs` with 15 tests (12 runtime + 3 compile-time const assertions)
+  - LazyLock initialization tests: verify all 9 `LazyLock` statics (`DAYS_PER_SECOND_UOM`, `UNIT_RADIUS`, `MASS_OF_SUN`, `MASS_OF_EARTH`, `SCREEN_WIDTH_UOM`, `SCREEN_HEIGHT_UOM`, `C`, `G`, `MAX_PLAYER_LAUNCH_VELOCITY`) initialize successfully and produce positive values
+  - Physical constant validation: `MASS_OF_SUN > MASS_OF_EARTH`, `MAX_PLAYER_LAUNCH_VELOCITY < C`, max velocity is exactly 99% of C, `SCREEN_HEIGHT < SCREEN_WIDTH` (landscape), `G` matches known gravitational constant value, `C` matches known speed of light
+  - Compile-time const assertions for `PLANET_SPRITE_WIDTH_PX > 0`, `ROCKET_SPRITE_WIDTH_PX > 0`, `PLANET_SPRITE_WIDTH_PX > ROCKET_SPRITE_WIDTH_PX`
+  - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 82/82 tests passed ✅
+- **Constitution Compliance**: No violations.
