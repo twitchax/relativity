@@ -5,6 +5,9 @@ pub mod observer;
 pub mod player;
 pub mod shared;
 
+#[cfg(test)]
+pub mod test_helpers;
+
 use bevy::prelude::*;
 
 use crate::shared::state::{AppState, GameState};

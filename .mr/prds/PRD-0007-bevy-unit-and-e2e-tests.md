@@ -93,7 +93,7 @@ tasks:
   - id: T-011
     title: "Create test helper module for shared Bevy test setup"
     priority: 2
-    status: todo
+    status: done
     notes: "Create src/game/test_helpers.rs (or similar) with helper functions to build a MinimalPlugins test app, spawn test entities with Position/Velocity/Mass/Radius, and run N frames"
   - id: T-012
     title: "E2E headless test: level spawning creates expected entities"
@@ -427,4 +427,18 @@ This gives CI a meaningful "the game boots and renders" gate without requiring a
     - `scalar_is_non_negative_for_all_inputs`: verifies Velocity::scalar() ≥ 0 for arbitrary velocity components
   - Tests placed inside existing `#[cfg(test)]` modules to access `pub(crate)` functions without changing visibility
   - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 108/108 tests passed ✅
+- **Constitution Compliance**: No violations.
+
+## 2026-02-07 — T-011 Completed
+- **Task**: Create test helper module for shared Bevy test setup
+- **Status**: ✅ Done
+- **Changes**:
+  - Created `src/game/test_helpers.rs` with four `pub` helper functions:
+    - `minimal_test_app()` — builds a headless Bevy `App` with `MinimalPlugins` + `TransformPlugin`
+    - `run_frames(app, n)` — advances the app by N update cycles
+    - `spawn_test_entity(world, pos_x, pos_y, vel_x, vel_y, mass, radius)` — spawns an entity with `Position`, `Velocity`, `Mass`, and `Radius` using convenient km/km·s⁻¹/kg units
+    - `spawn_positioned_entity(world, pos_x, pos_y)` — spawns an entity at a position with zero velocity/mass/radius
+  - Added `#[cfg(test)] pub mod test_helpers` to `src/game/mod.rs`
+  - Added 4 unit tests verifying: app creates with `Time` resource, multiple frames run without panic, `spawn_test_entity` populates all components correctly, `spawn_positioned_entity` defaults velocity/mass/radius to zero
+  - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 112/112 tests passed ✅
 - **Constitution Compliance**: No violations.
