@@ -48,7 +48,6 @@ pub(crate) fn format_observer_time(clock_value_seconds: f64) -> String {
 
 // Clock systems.
 
-#[allow(clippy::needless_pass_by_value)]
 pub fn observer_clock_update(mut query: Query<&mut Clock, With<Observer>>, time: Res<Time>) {
     let time_elapsed = *DAYS_PER_SECOND_UOM * f64::from(time.delta_secs());
 

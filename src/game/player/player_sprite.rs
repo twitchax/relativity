@@ -26,7 +26,6 @@ pub struct PlayerSpriteBundle {
 
 // Systems.
 
-#[allow(clippy::needless_pass_by_value)]
 pub fn player_launch(
     mouse_input: Res<ButtonInput<MouseButton>>,
     mut player_velocity_query: Query<(&Transform, &mut Velocity), With<Player>>,

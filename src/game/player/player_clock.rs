@@ -82,7 +82,6 @@ pub fn spawn_player_clock(commands: &mut Commands, asset_server: &Res<AssetServe
 
 // Systems.
 
-#[allow(clippy::needless_pass_by_value)]
 pub fn player_clock_update(
     mut query: Query<(&mut Clock, &mut VelocityGamma, &mut GravitationalGamma), With<Player>>,
     player_query: Query<(Entity, &Position, &Velocity), With<Player>>,

@@ -5,6 +5,7 @@
 #![deny(clippy::correctness)]
 #![deny(clippy::complexity)]
 #![deny(clippy::pedantic)]
+#![allow(clippy::needless_pass_by_value)]
 
 pub mod game;
 pub mod menu;

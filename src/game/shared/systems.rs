@@ -17,7 +17,6 @@ use uom::si::{
 
 // Escape button.
 
-#[allow(clippy::needless_pass_by_value)]
 pub fn exit_level_check(keyboard_input: ResMut<ButtonInput<KeyCode>>, mut app_state: ResMut<NextState<AppState>>, mut game_state: ResMut<NextState<GameState>>) {
     if keyboard_input.just_pressed(KeyCode::Escape) {
         app_state.set(AppState::Menu);
@@ -64,7 +63,6 @@ pub fn rocket_rotation_update(mut query: Query<(&mut Transform, &Velocity), With
     }
 }
 
-#[allow(clippy::needless_pass_by_value)]
 pub fn position_update(mut query: Query<(&mut Position, &Velocity)>, time: Res<Time>) {
     for (mut position, velocity) in &mut query {
         let time_elapsed = *DAYS_PER_SECOND_UOM * f64::from(time.delta_secs());
@@ -121,7 +119,6 @@ pub(crate) fn calculate_relativistic_adjustment(mass: UomMass, distance: UomLeng
     }
 }
 
-#[allow(clippy::needless_pass_by_value)]
 pub fn velocity_update(mut query: Query<(&mut Velocity, Entity, &Position)>, masses: Query<(Entity, &Position, &Mass)>, time: Res<Time>) {
     let time_elapsed = *DAYS_PER_SECOND_UOM * f64::from(time.delta_secs());
 
