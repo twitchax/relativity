@@ -29,7 +29,7 @@ acceptance_tests:
   - id: uat-002
     name: "cargo make uat passes cleanly"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
   - id: uat-003
     name: "All clippy denies are satisfied with zero warnings"
     command: cargo clippy --all-targets --all-features -- -D warnings
@@ -381,6 +381,17 @@ copilot-setup-steps.yml (new)
 - **Method**: Existing test
 - **Details**:
   - Ran `cargo make ci` which executes fmt-check, clippy with `-D warnings`, and nextest
+  - fmt-check: ✅ passed
+  - clippy: ✅ passed (zero warnings, all denies satisfied)
+  - nextest: ✅ 2/2 tests passed (test_time_warp_level_enum_exists, test_spawn_level_handles_time_warp)
+  - Exit code: 0 (clean pass)
+
+## 2026-02-07 — uat-002 Verification
+- **UAT**: cargo make uat passes cleanly
+- **Status**: ✅ Verified
+- **Method**: Existing test
+- **Details**:
+  - Ran `cargo make uat` which delegates to the `ci` task (fmt-check + clippy + nextest)
   - fmt-check: ✅ passed
   - clippy: ✅ passed (zero warnings, all denies satisfied)
   - nextest: ✅ 2/2 tests passed (test_time_warp_level_enum_exists, test_spawn_level_handles_time_warp)
