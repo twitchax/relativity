@@ -34,7 +34,7 @@ acceptance_tests:
   - id: uat-003
     name: "CI pipeline passes (fmt-check, clippy, test)"
     command: cargo make ci
-    uat_status: unverified
+    uat_status: verified
   - id: uat-004
     name: "Headless render smoke test passes without a window or display"
     command: cargo make test
@@ -571,3 +571,14 @@ This gives CI a meaningful "the game boots and renders" gate without requiring a
     - `e2e_velocity_update` (3 tests): gravity accelerates player toward planet, velocity direction is correct, relativistic clamping works
     - `e2e_time_dilation` (2 tests): moving player clock runs slower, faster velocity means more dilation
     - `headless_render_smoke` (1 test): headless app boots and runs without panic
+
+## 2026-02-07 — uat-003 Verification
+- **UAT**: CI pipeline passes (fmt-check, clippy, test)
+- **Status**: ✅ Verified
+- **Method**: Existing test (CI pipeline itself)
+- **Details**:
+  - Ran `cargo make ci` which executes fmt-check, clippy, and test stages
+  - Result: All stages passed — 163 tests run, 163 passed (1 slow), 0 skipped
+  - fmt-check: code formatting verified
+  - clippy: no warnings (strict denies enforced)
+  - test: all unit, integration, and E2E tests passed via nextest
