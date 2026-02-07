@@ -53,3 +53,68 @@ pub struct VelocityGamma {
 pub struct GravitationalGamma {
     pub value: f64,
 }
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+    use uom::si::velocity::meter_per_second;
+
+    fn make_velocity(x: f64, y: f64) -> Velocity {
+        Velocity {
+            x: UomVelocity::new::<meter_per_second>(x),
+            y: UomVelocity::new::<meter_per_second>(y),
+        }
+    }
+
+    // --- Velocity::scalar ---
+
+    #[test]
+    fn scalar_zero_velocity_returns_zero() {
+        let v = make_velocity(0.0, 0.0);
+        assert_relative_eq!(v.scalar().get::<meter_per_second>(), 0.0);
+    }
+
+    #[test]
+    fn scalar_unit_x_velocity() {
+        let v = make_velocity(1.0, 0.0);
+        assert_relative_eq!(v.scalar().get::<meter_per_second>(), 1.0);
+    }
+
+    #[test]
+    fn scalar_unit_y_velocity() {
+        let v = make_velocity(0.0, 1.0);
+        assert_relative_eq!(v.scalar().get::<meter_per_second>(), 1.0);
+    }
+
+    #[test]
+    fn scalar_pythagorean_3_4_5() {
+        let v = make_velocity(3.0, 4.0);
+        assert_relative_eq!(v.scalar().get::<meter_per_second>(), 5.0);
+    }
+
+    #[test]
+    fn scalar_pythagorean_5_12_13() {
+        let v = make_velocity(5.0, 12.0);
+        assert_relative_eq!(v.scalar().get::<meter_per_second>(), 13.0);
+    }
+
+    #[test]
+    fn scalar_negative_components() {
+        let v = make_velocity(-3.0, -4.0);
+        assert_relative_eq!(v.scalar().get::<meter_per_second>(), 5.0);
+    }
+
+    #[test]
+    fn scalar_mixed_sign_components() {
+        let v = make_velocity(-3.0, 4.0);
+        assert_relative_eq!(v.scalar().get::<meter_per_second>(), 5.0);
+    }
+
+    #[test]
+    fn scalar_is_always_non_negative() {
+        let v = make_velocity(-100.0, -200.0);
+        assert!(v.scalar().get::<meter_per_second>() >= 0.0);
+    }
+}

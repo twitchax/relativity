@@ -53,7 +53,7 @@ tasks:
   - id: T-003
     title: "Unit tests for game/shared/types.rs (Velocity::scalar)"
     priority: 1
-    status: todo
+    status: done
     notes: "Test Velocity::scalar() with zero, unit, and Pythagorean triple inputs"
   - id: T-004
     title: "Unit tests for game/shared/constants.rs (value validation)"
@@ -316,4 +316,14 @@ This gives CI a meaningful "the game boots and renders" gate without requiring a
   - Tests cover: `has_collided` (overlapping, distant, boundary, same position, symmetry, zero radius, diagonal), `get_translation_from_percentage` (origin, full, half), `get_translation_from_position` (origin, screen edge), `get_position_from_percentage` (origin, full, half), `length_to_pixel` (zero, full width, half width), `planet_sprite_pixel_radius_to_scale` (half sprite width, zero, proportional), `rocket_sprite_pixel_radius_to_scale` (half sprite width, zero, proportional)
   - Used `approx::assert_relative_eq!` for float comparisons
   - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 26/26 tests passed ✅
+- **Constitution Compliance**: No violations.
+
+## 2026-02-07 — T-003 Completed
+- **Task**: Unit tests for game/shared/types.rs (Velocity::scalar)
+- **Status**: ✅ Done
+- **Changes**:
+  - Added `#[cfg(test)]` module to `src/game/shared/types.rs` with 8 unit tests for `Velocity::scalar()`
+  - Tests cover: zero velocity, unit x velocity, unit y velocity, Pythagorean triples (3-4-5, 5-12-13), negative components, mixed sign components, non-negativity invariant
+  - Used `approx::assert_relative_eq!` for float comparisons and `uom::si::velocity::meter_per_second` for unit-aware construction
+  - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 34/34 tests passed ✅
 - **Constitution Compliance**: No violations.
