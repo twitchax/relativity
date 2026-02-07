@@ -108,7 +108,7 @@ tasks:
   - id: T-014
     title: "E2E headless test: velocity_update applies gravity correctly"
     priority: 3
-    status: todo
+    status: done
     notes: "Spawn player and planet, run velocity_update for several frames, verify player velocity increases toward planet"
   - id: T-015
     title: "E2E headless test: player clock experiences time dilation"
@@ -488,4 +488,20 @@ This gives CI a meaningful "the game boots and renders" gate without requiring a
   - Test 5: `boundary_collision_touching_edges` — player and destination exactly touching (distance == r1 + r2) triggers collision per `has_collided` `<=` check
   - Helper functions `spawn_player`, `spawn_destination`, `spawn_planet` for clean entity setup
   - `cargo make ci` passed: fmt-check ✅, clippy ✅, nextest 136/136 tests passed ✅
+- **Constitution Compliance**: No violations.
+
+## 2026-02-07 — T-014 Completed
+- **Task**: E2E headless test: velocity_update applies gravity correctly
+- **Status**: ✅ Done
+- **Changes**:
+  - Created `tests/e2e_velocity_update.rs` integration test with 5 E2E tests verifying gravitational acceleration via the `velocity_update` system
+  - Uses `MinimalPlugins` + `TimeUpdateStrategy::ManualDuration` for deterministic time advancement (1/60s per frame)
+  - Test 1: `player_velocity_increases_toward_planet` — player at origin with mass to the right gains positive x-velocity over multiple frames
+  - Test 2: `player_velocity_y_increases_toward_planet_above` — player at origin with mass above gains positive y-velocity
+  - Test 3: `no_velocity_change_without_mass` — player with initial velocity but no mass entities has unchanged velocity
+  - Test 4: `heavier_mass_produces_greater_acceleration` — compares velocity change between 1/100th solar mass and full solar mass; heavier produces greater acceleration
+  - Test 5: `zero_velocity_axis_skips_gravity` — verifies the guard clause (`velocity.x == 0 || velocity.y == 0`) prevents gravity from applying
+  - Mass/distance values chosen to avoid relativistic adjustment clamping (real solar mass at 1M km distance, where 2GM/c²d ≈ 3e-6)
+  - Helper functions `spawn_player`, `spawn_mass` for clean entity setup
+  - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 141/141 tests passed ✅
 - **Constitution Compliance**: No violations.
