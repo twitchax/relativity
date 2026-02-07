@@ -118,7 +118,7 @@ tasks:
   - id: T-016
     title: "Unit tests for shared/state.rs enums (AppState, GameState)"
     priority: 3
-    status: todo
+    status: done
     notes: "Verify enum variants exist, default values are correct, and Debug/Clone derive works"
   - id: T-017
     title: "E2E headless test: despawn_level cleans up all GameItem entities"
@@ -520,4 +520,17 @@ This gives CI a meaningful "the game boots and renders" gate without requiring a
   - Spawns separate player sprite entity (Position+Velocity+Player) and player clock entity (PlayerClockBundle) matching the production system architecture
   - Helper functions `spawn_player_sprite`, `spawn_player_clock`, `spawn_observer_clock`, `spawn_mass`, `read_clock_seconds` for clean test setup
   - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 146/146 tests passed ✅
+- **Constitution Compliance**: No violations.
+
+## 2026-02-07 — T-016 Completed
+- **Task**: Unit tests for shared/state.rs enums (AppState, GameState)
+- **Status**: ✅ Done
+- **Changes**:
+  - Added `#[cfg(test)]` module to `src/shared/state.rs` with 10 unit tests covering:
+    - Default values: `AppState::default() == Menu`, `GameState::default() == Paused`
+    - Variant distinctness: all `AppState` variants differ, all `GameState` variant pairs differ
+    - Debug formatting: correct string output for all variants (`"Menu"`, `"InGame"`, `"Paused"`, `"Running"`, `"Finished"`)
+    - Clone: cloned values are equal to originals for both enums
+    - Hash consistency: equal values produce equal hashes for both enums
+  - `cargo make uat` passed: fmt-check ✅, clippy ✅, nextest 156/156 tests passed ✅
 - **Constitution Compliance**: No violations.
