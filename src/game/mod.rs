@@ -1,6 +1,7 @@
 pub mod destination;
 pub mod fade;
 pub mod gravity_grid;
+pub mod hud;
 pub mod levels;
 pub mod object;
 pub mod observer;
@@ -19,6 +20,7 @@ use crate::shared::state::{AppState, GameState};
 use self::{
     fade::{fade_update_system, spawn_fade_overlay, FadeState},
     gravity_grid::gravity_grid_render_system,
+    hud::HudPlugin,
     levels::{despawn_level, spawn_level},
     observer::{observer_clock_text_update, observer_clock_update},
     outcome::{apply_collision_shake, despawn_failure_overlay, despawn_success_overlay, failure_auto_reset, spawn_failure_overlay, spawn_success_overlay, success_button_interaction},
@@ -37,7 +39,8 @@ pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        app.init_state::<GameState>()
+        app.add_plugins(HudPlugin)
+            .init_state::<GameState>()
             .init_resource::<LaunchState>()
             .init_resource::<FadeState>()
             // Spawn the persistent fade overlay.

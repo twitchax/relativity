@@ -60,7 +60,7 @@ tasks:
   - id: T-002
     title: "Create HUD module with bevy_lunex layout root and plugin"
     priority: 2
-    status: todo
+    status: done
     notes: "Create src/game/hud/ module. Add a HudPlugin that registers UiLunexPlugins and spawns the HUD layout root (UiLayoutRoot::new_2d + UiFetchFromCamera). Register in game plugin."
   - id: T-003
     title: "Build bottom-anchored HUD bar with two segmented panels"
@@ -226,3 +226,15 @@ UiLayoutRoot (2D, camera-synced)
   - `Cargo.lock` updated with bevy_lunex and its transitive dependencies
   - UAT passed: 230 tests run, 230 passed, 0 skipped (`cargo make uat` exit code 0)
 - **Constitution Compliance**: No violations. Minimal change (two lines added to Cargo.toml), consistent with existing dependency style.
+
+## 2026-02-08 — T-002 Completed
+- **Task**: Create HUD module with bevy_lunex layout root and plugin
+- **Status**: ✅ Done
+- **Changes**:
+  - Created `src/game/hud/mod.rs` with `HudPlugin` that spawns a `UiLayoutRoot::new_2d()` + `UiFetchFromCamera::<0>` entity on `OnEnter(AppState::InGame)` and despawns it on `OnExit(AppState::InGame)`.
+  - Added `HudRoot` marker component and `GameItem` component to the layout root entity for lifecycle management.
+  - Registered `pub mod hud` in `src/game/mod.rs` and added `HudPlugin` to `GamePlugin`.
+  - Added `UiSourceCamera::<0>` to the camera spawn in `src/shared/types.rs` so `UiFetchFromCamera::<0>` can fetch viewport dimensions.
+  - Added `UiLunexPlugins` in `src/main.rs` (not inside `GamePlugin`) so that bevy_lunex's cursor/picking systems have access to window resources from `DefaultPlugins`. This avoids panics in headless tests that use `MinimalPlugins` + `GamePlugin`.
+  - UAT passed: 230 tests run, 230 passed, 0 skipped (`cargo make uat` exit code 0)
+- **Constitution Compliance**: No violations. `UiLunexPlugins` is registered in `main.rs` rather than in `HudPlugin` to respect separation of concerns — the plugin group requires `DefaultPlugins` resources, so it belongs at the app level.
