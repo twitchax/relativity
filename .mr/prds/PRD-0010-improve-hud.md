@@ -41,7 +41,7 @@ acceptance_tests:
   - id: uat-004
     name: "HUD adapts to different window sizes and aspect ratios"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
   - id: uat-005
     name: "WASM build compiles and runs with new HUD"
     command: cargo make build-web
@@ -370,3 +370,15 @@ UiLayoutRoot (2D, camera-synced)
     - `observer_panel_shows_default_value_at_spawn`: Verifies initial `Text2d` content is `t_o = 0.00`.
     - `observer_panel_updates_with_correct_values_after_running`: After running several frames, verifies t_o advances beyond 0 and the formatted value is positive — confirming the `observer_hud_text_update` system writes correct formatted values.
   - Full UAT passed: 238 tests run, 238 passed, 0 skipped (`cargo make uat` exit code 0).
+
+## 2026-02-08 — uat-004 Verification
+- **UAT**: HUD adapts to different window sizes and aspect ratios
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Created `tests/e2e_hud_responsive.rs` with three tests:
+    - `hud_structural_entities_have_responsive_layout`: Verifies HudBar, PlayerPanel, and ObserverPanel all carry `UiLayout` components, confirming bevy_lunex manages their positioning with relative units.
+    - `hud_text_labels_have_responsive_sizing`: Verifies all five text labels (HudPlayerTime, HudVelocityGamma, HudGravGamma, HudVelocityFraction, HudObserverTime) carry both `UiLayout` and `UiTextSize` components, ensuring font scaling adapts to parent height.
+    - `hud_root_has_layout_root_for_viewport_tracking`: Verifies HudRoot carries `UiLayoutRoot`, which drives viewport-size-aware layout computation.
+  - The HUD uses exclusively relative layout units (`Rl` for percentage positions, `Rh` for height-relative text sizing), which guarantees correct adaptation to any window size or aspect ratio by design.
+  - Full UAT passed: 241 tests run, 241 passed, 0 skipped (`cargo make uat` exit code 0).
