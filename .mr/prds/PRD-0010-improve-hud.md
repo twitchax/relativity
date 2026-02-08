@@ -90,7 +90,7 @@ tasks:
   - id: T-008
     title: "Mark HUD entities with GameItem for lifecycle management"
     priority: 5
-    status: todo
+    status: done
     notes: "Ensure all new HUD entities include the GameItem component so they are properly despawned on state transitions."
   - id: T-009
     title: "Verify WASM build and test cross-platform"
@@ -307,3 +307,13 @@ UiLayoutRoot (2D, camera-synced)
   - Updated `tests/e2e_velocity_hud.rs` to verify data components (VelocityGamma, Velocity) on the PlayerHud entity instead of querying removed `Text` component
   - UAT passed: 230 tests run, 230 passed, 0 skipped (`cargo make uat` exit code 0)
 - **Constitution Compliance**: No violations. All pure functions (calculate_*, format_*) and clock update systems (player_clock_update, observer_clock_update) left untouched. Only Node-based UI spawning and text-update systems removed.
+
+## 2026-02-08 — T-008 Completed
+- **Task**: Mark HUD entities with GameItem for lifecycle management
+- **Status**: ✅ Done
+- **Changes**:
+  - Verified all HUD entities (HudRoot, HudBar, PlayerPanel, ObserverPanel, and all 5 text labels) already include `GameItem` component — this was done proactively during T-002 through T-006
+  - Updated outdated comment in `src/game/levels/mod.rs` `despawn_level` function: replaced "game entities do not have children" with accurate note that Bevy 0.18 `despawn()` recursively despawns children
+  - Confirmed `despawn_level` (GameItem-based) and `despawn_hud_root` (HudRoot-based) both correctly handle HUD cleanup with no double-despawn panics
+  - UAT passed: 230 tests run, 230 passed, 0 skipped (`cargo make uat` exit code 0)
+- **Constitution Compliance**: No violations. Minimal change (one comment update), consistent with existing patterns.
