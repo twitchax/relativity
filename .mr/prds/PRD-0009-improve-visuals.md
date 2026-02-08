@@ -27,49 +27,72 @@ acceptance_tests:
     command: cargo make uat
     uat_status: unverified
   - id: uat-002
-    name: "Menu screen shows level list; clicking a level starts that level"
-    command: "cargo run (manual verification)"
+    name: "Menu screen spawns Button nodes for each CurrentLevel variant"
+    command: cargo make uat
     uat_status: unverified
+    automated_test: "Headless gameplay test: enter AppState::Menu, query for Button entities with Text children matching each CurrentLevel variant's display name. Assert count equals number of variants. Screenshot baseline test: capture menu screen and compare against committed baseline."
+    manual_note: "Visual spot-check: verify layout, spacing, and readability of menu buttons."
   - id: uat-003
-    name: "Launch mechanic: angle line appears on click, power bar fills on drag, release launches"
-    command: "cargo run (manual verification)"
+    name: "Launch state machine transitions correctly (Idle → AimLocked → Launching → Running)"
+    command: cargo make uat
     uat_status: unverified
+    automated_test: "Headless gameplay test: insert synthetic mouse-press input event, assert LaunchState transitions to AimLocked with correct angle. Insert drag input, assert LaunchState::Launching with power proportional to drag distance. Insert mouse-release, assert GameState transitions to Running and player Velocity matches expected angle/power."
   - id: uat-004
-    name: "Trajectory trail renders behind the player, colored by total gamma"
-    command: "cargo run (manual verification)"
+    name: "Launch visuals: direction line and power bar render correctly"
+    command: cargo make uat
     uat_status: unverified
+    automated_test: "Screenshot baseline test: capture frame during AimLocked state, compare against baseline showing direction gizmo line. Capture during Launching state, compare against baseline showing power bar UI."
+    manual_note: "Visual spot-check: verify gizmo line and power bar feel intuitive during interactive play."
   - id: uat-005
-    name: "Gravity grid visualization shows field around massive objects"
-    command: "cargo run (manual verification)"
+    name: "Trajectory trail renders behind the player, colored by total gamma"
+    command: cargo make uat
     uat_status: unverified
+    automated_test: "Headless gameplay test: run physics for N frames, assert TrailBuffer contains expected number of entries with positions along the trajectory. Assert color values map correctly (γ ≈ 1 → cool color, γ > 2 → warm color). Screenshot baseline test: capture at a deterministic frame (e.g., frame 120 after launch) and compare trail rendering against committed baseline."
+    manual_note: "Visual spot-check: verify trail gradient looks smooth and colors are distinguishable."
   - id: uat-006
-    name: "Success screen appears on destination collision with Next Level button"
-    command: "cargo run (manual verification)"
+    name: "Gravity grid visualization shows field around massive objects"
+    command: cargo make uat
     uat_status: unverified
+    automated_test: "Screenshot baseline test: capture a frame during InGame with at least one massive object, compare against baseline showing grid gizmo lines. Unit-test the grid sampling logic separately: given known Mass entity positions, assert computed field vectors at sample points match expected gravitational acceleration."
+    manual_note: "Visual spot-check: verify grid density and opacity feel informative without cluttering the scene."
   - id: uat-007
-    name: "Failure screen appears on planet collision, auto-resets after short delay"
-    command: "cargo run (manual verification)"
+    name: "Success overlay spawns on GameState::Finished with Next Level button"
+    command: cargo make uat
     uat_status: unverified
+    automated_test: "Headless gameplay test: trigger destination collision, assert GameState transitions to Finished. Query for entity with SuccessOverlay marker component. Assert a Button child with 'Next Level' text exists. Screenshot baseline test: capture the success overlay and compare against committed baseline."
   - id: uat-008
-    name: "Camera shake triggers on planet collision"
-    command: "cargo run (manual verification)"
+    name: "Failure overlay spawns on GameState::Failed and auto-resets to Paused after delay"
+    command: cargo make uat
     uat_status: unverified
+    automated_test: "Headless gameplay test: trigger planet collision, assert GameState transitions to Failed. Query for entity with FailureOverlay marker component. Run ~90 frames (1.5s at 60fps), assert GameState transitions to Paused and FailureOverlay entity is despawned. Screenshot baseline test: capture the failure overlay immediately after spawn and compare against committed baseline."
   - id: uat-009
-    name: "Fade transitions between menu, game, and outcome screens"
-    command: "cargo run (manual verification)"
+    name: "Camera shake trauma is applied on planet collision"
+    command: cargo make uat
     uat_status: unverified
+    automated_test: "Headless gameplay test: trigger planet collision (GameState::Failed). Query camera entity for Shake component and assert trauma value > 0 (approximately 0.4)."
+    manual_note: "Visual spot-check: verify shake intensity feels appropriate and does not disrupt gameplay."
   - id: uat-010
-    name: "HUD shows velocity as fraction of c alongside existing clock/gamma displays"
-    command: "cargo run (manual verification)"
+    name: "Fade overlay animates on state transitions"
+    command: cargo make uat
     uat_status: unverified
+    automated_test: "Headless gameplay test: trigger a state transition (e.g., Menu → InGame). Assert FadeState resource transitions through FadeOut → state change → FadeIn. Query the fade overlay entity and assert BackgroundColor alpha interpolates from 0 → 1 → 0 over the expected frame count (~0.3s per direction). Screenshot baseline test: capture mid-fade frame and verify overlay alpha is approximately 0.5."
+    manual_note: "Visual spot-check: verify fade looks smooth and does not feel sluggish."
   - id: uat-011
-    name: "Escape key returns to menu from any game state"
-    command: "cargo run (manual verification)"
+    name: "HUD displays velocity as fraction of c alongside clock/gamma"
+    command: cargo make uat
     uat_status: unverified
+    automated_test: "Headless gameplay test: enter InGame, launch player at a known velocity. Query for velocity HUD text entity and assert displayed string matches expected format (e.g., '0.42c'). Screenshot baseline test: capture HUD layout during gameplay and compare against committed baseline."
+    manual_note: "Visual spot-check: verify HUD layout is readable and well-positioned."
   - id: uat-012
-    name: "Completing Level 1 advances to the next level (TimeWarp)"
-    command: "cargo run (manual verification)"
+    name: "Escape key returns to menu from all GameState sub-states"
+    command: cargo make uat
     uat_status: unverified
+    automated_test: "Headless gameplay test: for each GameState variant (Paused, Running, Failed, Finished), enter that state, inject Escape key press via ButtonInput<KeyCode>, run one frame, assert AppState transitions to Menu. Verify outcome overlay entities are despawned."
+  - id: uat-013
+    name: "Completing Level 1 advances CurrentLevel via next() and re-enters InGame"
+    command: cargo make uat
+    uat_status: unverified
+    automated_test: "Headless gameplay test: set CurrentLevel to Level 1, trigger destination collision → GameState::Finished. Simulate Next Level button click (or directly call next()), assert CurrentLevel resource advances to the next variant. Assert AppState re-enters InGame and new level entities are spawned."
 tasks:
   - id: T-001
     title: "Add GameState::Failed variant and update collision_check"
@@ -242,6 +265,20 @@ A persistent full-screen `bevy_ui` node with `BackgroundColor` (black, alpha=0) 
 ## HUD Improvements
 
 Migrate clock/gamma text from raw `Text` entities to structured `bevy_ui` nodes. Add a velocity display showing `v = 0.42c` format. Layout: left-aligned player info (clock, gamma, velocity), right-aligned observer clock.
+
+## Visual Regression Testing Strategy
+
+Many UATs involve visual output that cannot be verified through ECS queries alone (trails, grids, overlays, HUD layout). The project already has a working screenshot baseline infrastructure (see `tests/e2e_screenshot.rs` and `tests/common/screenshot.rs`) that renders to an offscreen `Image` asset and compares pixel-by-pixel against committed PNG baselines in `tests/baselines/`.
+
+This infrastructure should be extended to cover the new visual features. The approach:
+
+1. **Deterministic frame capture**: Each visual UAT specifies a deterministic capture point (e.g., "frame 120 after launch at velocity X"). Because the test app uses `TimeUpdateStrategy::ManualDuration`, physics is frame-deterministic, so the rendered output is reproducible.
+2. **One baseline per visual feature**: Separate baseline PNGs per feature (e.g., `trail_gamma_frame120.png`, `gravity_grid_level1.png`, `success_overlay.png`, `failure_overlay.png`, `hud_layout.png`, `menu_screen.png`, `launch_aim.png`, `launch_power.png`, `fade_mid.png`).
+3. **First-run bootstrap**: On first run (no baseline exists), the test saves the rendered image as the new baseline and fails with a review prompt. The developer commits the baseline after visual inspection.
+4. **Threshold tolerance**: Pixel comparison should use a small tolerance (e.g., ≤1% differing pixels) to accommodate minor rendering differences across GPU drivers and platforms.
+5. **CI compatibility**: The headless render pipeline (`DefaultPlugins` minus `WinitPlugin` with offscreen camera) works in CI without a display server. GPU availability may vary — tests should be skipped gracefully on CI runners without GPU support.
+
+This means an automated agent can implement a feature, run `cargo make uat`, and get a pass/fail signal for the visual output. The only manual step is the initial baseline review when a new screenshot test is first added or when a visual change intentionally updates the baseline.
 
 # Assumptions
 
