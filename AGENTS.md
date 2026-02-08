@@ -79,6 +79,12 @@ Strict clippy denies are enforced in `src/main.rs`:
 - Use `f64::from(f32_value)` instead of `f32_value as f64` for lossless casts.
 - Use `std::sync::LazyLock` instead of `once_cell::sync::Lazy` for lazy statics.
 
+### UI Architecture
+
+- In-game HUD uses **bevy_lunex** (v0.6) for layout and rendering (`src/game/hud/mod.rs`). Menu and outcome screens use native `bevy_ui`.
+- `UiLunexPlugins` is registered in `src/main.rs` (not inside `GamePlugin`) because it requires `DefaultPlugins` resources. This avoids panics in headless tests that use `MinimalPlugins`.
+- HUD text labels use individual marker components (`HudPlayerTime`, `HudVelocityGamma`, etc.) for targeted queries rather than a single concatenated text entity.
+
 ### CI / Workflow Patterns
 
 - CI workflow (`.github/workflows/build.yml`) uses `cargo-make` tasks, not raw cargo commands. All jobs (test, codecov, platform builds, web deploy) are in this single file.

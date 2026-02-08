@@ -1,107 +1,103 @@
 ---
 id: PRD-0010
-title: "Improve HUD: Bottom-Anchored Chrome with bevy_lunex"
-status: active
+title: 'Improve HUD: Bottom-Anchored Chrome with bevy_lunex'
+status: done
 owner: twitchax
 created: 2026-02-08
 updated: 2026-02-08
-
 principles:
-  - Use bevy_lunex for HUD layout and styling; keep existing bevy_ui for menu/outcome screens unchanged
-  - Retain all existing HUD data (t_p, γ_v, γ_g, v, t_o) with identical semantics
-  - Dark sci-fi aesthetic consistent with the game's existing visual language
-  - WASM-compatible (bevy_lunex supports wasm feature flag)
-  - Minimal changes to game logic systems; only spawn and text-update code should change
-
+- Use bevy_lunex for HUD layout and styling; keep existing bevy_ui for menu/outcome screens unchanged
+- Retain all existing HUD data (t_p, γ_v, γ_g, v, t_o) with identical semantics
+- Dark sci-fi aesthetic consistent with the game's existing visual language
+- WASM-compatible (bevy_lunex supports wasm feature flag)
+- Minimal changes to game logic systems; only spawn and text-update code should change
 references:
-  - name: "bevy_lunex crate (v0.6, Bevy 0.18)"
-    url: "https://crates.io/crates/bevy_lunex"
-  - name: "bevy_lunex documentation"
-    url: "https://docs.rs/bevy_lunex/0.6.0/bevy_lunex/"
-  - name: "bevy_lunex book"
-    url: "https://bytestring-net.github.io/bevy_lunex/"
-  - name: "Bevypunk example (production-ready bevy_lunex showcase)"
-    url: "https://github.com/IDEDARY/Bevypunk"
-  - name: "bytestring-net/bevy_lunex GitHub (864 stars)"
-    url: "https://github.com/bytestring-net/bevy_lunex"
-
+- name: bevy_lunex crate (v0.6, Bevy 0.18)
+  url: https://crates.io/crates/bevy_lunex
+- name: bevy_lunex documentation
+  url: https://docs.rs/bevy_lunex/0.6.0/bevy_lunex/
+- name: bevy_lunex book
+  url: https://bytestring-net.github.io/bevy_lunex/
+- name: Bevypunk example (production-ready bevy_lunex showcase)
+  url: https://github.com/IDEDARY/Bevypunk
+- name: bytestring-net/bevy_lunex GitHub (864 stars)
+  url: https://github.com/bytestring-net/bevy_lunex
 acceptance_tests:
-  - id: uat-001
-    name: "HUD renders at bottom of screen with chrome panels"
-    command: cargo make uat
-    uat_status: verified
-  - id: uat-002
-    name: "Player panel shows t_p, γ_v, γ_g, v with correct values"
-    command: cargo make uat
-    uat_status: verified
-  - id: uat-003
-    name: "Observer panel shows t_o with correct values"
-    command: cargo make uat
-    uat_status: verified
-  - id: uat-004
-    name: "HUD adapts to different window sizes and aspect ratios"
-    command: cargo make uat
-    uat_status: verified
-  - id: uat-005
-    name: "WASM build compiles and runs with new HUD"
-    command: cargo make build-web
-    uat_status: verified
-  - id: uat-006
-    name: "CI pipeline passes (fmt-check, clippy, nextest)"
-    command: cargo make ci
-    uat_status: verified
-
+- id: uat-001
+  name: HUD renders at bottom of screen with chrome panels
+  command: cargo make uat
+  uat_status: verified
+- id: uat-002
+  name: Player panel shows t_p, γ_v, γ_g, v with correct values
+  command: cargo make uat
+  uat_status: verified
+- id: uat-003
+  name: Observer panel shows t_o with correct values
+  command: cargo make uat
+  uat_status: verified
+- id: uat-004
+  name: HUD adapts to different window sizes and aspect ratios
+  command: cargo make uat
+  uat_status: verified
+- id: uat-005
+  name: WASM build compiles and runs with new HUD
+  command: cargo make build-web
+  uat_status: verified
+- id: uat-006
+  name: CI pipeline passes (fmt-check, clippy, nextest)
+  command: cargo make ci
+  uat_status: verified
 tasks:
-  - id: T-001
-    title: "Add bevy_lunex dependency to Cargo.toml"
-    priority: 1
-    status: done
-    notes: "Add bevy_lunex = \"0.6\" to [dependencies]. Add wasm feature for WASM target in [target.'cfg(target_arch = \"wasm32\")'.dependencies]."
-  - id: T-002
-    title: "Create HUD module with bevy_lunex layout root and plugin"
-    priority: 2
-    status: done
-    notes: "Create src/game/hud/ module. Add a HudPlugin that registers UiLunexPlugins and spawns the HUD layout root (UiLayoutRoot::new_2d + UiFetchFromCamera). Register in game plugin."
-  - id: T-003
-    title: "Build bottom-anchored HUD bar with two segmented panels"
-    priority: 3
-    status: done
-    notes: "Use UiLayout::boundary() or window() to position a bar at the bottom of the screen. Create left panel (player stats) and right panel (observer clock). Use Sprite with 9-slice for chrome background. Semi-transparent dark background (0.1, 0.1, 0.15, 0.85) with thin cyan/white border accent."
-  - id: T-004
-    title: "Create or source HUD chrome sprite assets"
-    priority: 3
-    status: done
-    notes: "Create minimal panel background sprites for 9-slice rendering (dark panel with border glow). Place in assets/sprites/hud/. Can be simple programmatic textures or hand-crafted PNGs."
-  - id: T-005
-    title: "Wire player stats into left HUD panel"
-    priority: 4
-    status: done
-    notes: "Display t_p, γ_v, γ_g, v as separate labeled readouts using Text2d + UiTextSize. Each on its own line or in a grid within the panel. Update player_clock_text_update to target new entities."
-  - id: T-006
-    title: "Wire observer clock into right HUD panel"
-    priority: 4
-    status: done
-    notes: "Display t_o in the right panel. Update observer_clock_text_update to target new entity."
-  - id: T-007
-    title: "Remove old top-positioned HUD spawn code"
-    priority: 5
-    status: done
-    notes: "Remove spawn_player_clock and spawn_observer_clock old Node-based spawning. Keep pure functions (calculate_*, format_*) untouched."
-  - id: T-008
-    title: "Mark HUD entities with GameItem for lifecycle management"
-    priority: 5
-    status: done
-    notes: "Ensure all new HUD entities include the GameItem component so they are properly despawned on state transitions."
-  - id: T-009
-    title: "Verify WASM build and test cross-platform"
-    priority: 6
-    status: done
-    notes: "Run cargo make build-web. Ensure bevy_lunex wasm feature is enabled for wasm32 target. Test in browser."
-  - id: T-010
-    title: "Run full CI and fix any clippy/fmt issues"
-    priority: 7
-    status: done
-    notes: "Run cargo make ci. Fix any pedantic clippy lints from new code. Ensure all existing tests pass."
+- id: T-001
+  title: Add bevy_lunex dependency to Cargo.toml
+  priority: 1
+  status: done
+  notes: Add bevy_lunex = "0.6" to [dependencies]. Add wasm feature for WASM target in [target.'cfg(target_arch = "wasm32")'.dependencies].
+- id: T-002
+  title: Create HUD module with bevy_lunex layout root and plugin
+  priority: 2
+  status: done
+  notes: Create src/game/hud/ module. Add a HudPlugin that registers UiLunexPlugins and spawns the HUD layout root (UiLayoutRoot::new_2d + UiFetchFromCamera). Register in game plugin.
+- id: T-003
+  title: Build bottom-anchored HUD bar with two segmented panels
+  priority: 3
+  status: done
+  notes: Use UiLayout::boundary() or window() to position a bar at the bottom of the screen. Create left panel (player stats) and right panel (observer clock). Use Sprite with 9-slice for chrome background. Semi-transparent dark background (0.1, 0.1, 0.15, 0.85) with thin cyan/white border accent.
+- id: T-004
+  title: Create or source HUD chrome sprite assets
+  priority: 3
+  status: done
+  notes: Create minimal panel background sprites for 9-slice rendering (dark panel with border glow). Place in assets/sprites/hud/. Can be simple programmatic textures or hand-crafted PNGs.
+- id: T-005
+  title: Wire player stats into left HUD panel
+  priority: 4
+  status: done
+  notes: Display t_p, γ_v, γ_g, v as separate labeled readouts using Text2d + UiTextSize. Each on its own line or in a grid within the panel. Update player_clock_text_update to target new entities.
+- id: T-006
+  title: Wire observer clock into right HUD panel
+  priority: 4
+  status: done
+  notes: Display t_o in the right panel. Update observer_clock_text_update to target new entity.
+- id: T-007
+  title: Remove old top-positioned HUD spawn code
+  priority: 5
+  status: done
+  notes: Remove spawn_player_clock and spawn_observer_clock old Node-based spawning. Keep pure functions (calculate_*, format_*) untouched.
+- id: T-008
+  title: Mark HUD entities with GameItem for lifecycle management
+  priority: 5
+  status: done
+  notes: Ensure all new HUD entities include the GameItem component so they are properly despawned on state transitions.
+- id: T-009
+  title: Verify WASM build and test cross-platform
+  priority: 6
+  status: done
+  notes: Run cargo make build-web. Ensure bevy_lunex wasm feature is enabled for wasm32 target. Test in browser.
+- id: T-010
+  title: Run full CI and fix any clippy/fmt issues
+  priority: 7
+  status: done
+  notes: Run cargo make ci. Fix any pedantic clippy lints from new code. Ensure all existing tests pass.
 ---
 
 # Summary
@@ -402,3 +398,15 @@ UiLayoutRoot (2D, camera-synced)
   - All three stages passed with zero warnings and zero errors.
   - Nextest summary: 241 tests run, 241 passed, 0 skipped (exit code 0).
   - Full CI pipeline completed in ~12.67 seconds.
+
+## 2026-02-08 — PRD Finalized
+- **Status**: ✅ Finalized
+- **Tasks Completed**: 10 tasks (T-001 through T-010)
+- **Outcome**: All tasks completed, acceptance tests passed (241/241 tests)
+- **Cleanup**: No temporary files, debug prints, or resolved TODOs found. Codebase is clean.
+- **Summary**:
+  - Replaced top-positioned bare-text HUD with a polished bottom-anchored chrome bar using bevy_lunex v0.6
+  - Built two segmented panels (player stats: t_p, γ_v, γ_g, v; observer: t_o) with 9-slice dark sci-fi sprites and cyan border accents
+  - All 6 UATs verified: HUD structure, player panel values, observer panel values, responsive layout, WASM build, and full CI pipeline
+  - Added bevy_lunex dependency with WASM feature support and getrandom compatibility fixes
+  - Updated AGENTS.md with HUD/bevy_lunex architecture conventions for future agents
