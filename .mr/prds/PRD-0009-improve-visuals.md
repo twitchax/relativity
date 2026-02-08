@@ -66,9 +66,7 @@ acceptance_tests:
   - id: uat-009
     name: "Camera shake trauma is applied on planet collision"
     command: cargo make uat
-    uat_status: unverified
-    automated_test: "Headless gameplay test: trigger planet collision (GameState::Failed). Query camera entity for Shake component and assert trauma value > 0 (approximately 0.4)."
-    manual_note: "Visual spot-check: verify shake intensity feels appropriate and does not disrupt gameplay."
+    uat_status: verified
   - id: uat-010
     name: "Fade overlay animates on state transitions"
     command: cargo make uat
@@ -604,3 +602,12 @@ This means an automated agent can implement a feature, run `cargo make uat`, and
     - `failure_overlay_spawns_on_failed`: transitions to `GameState::Failed`, asserts exactly one `FailureOverlay` entity and `FailureTimer` resource exist.
     - `failure_overlay_auto_resets_to_paused_after_delay`: transitions to `GameState::Failed`, runs 95 frames (~1.58s at 60fps), asserts `GameState` transitions to `Paused` and `FailureOverlay` is despawned.
   - Ran `cargo make uat` — all 225 tests passed.
+
+## 2026-02-08 — uat-009 Verification
+- **UAT**: Camera shake trauma is applied on planet collision
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Created `tests/e2e_camera_shake.rs` with test:
+    - `camera_shake_trauma_applied_on_failed`: spawns a camera with `Shake::default()`, enters game, transitions to `GameState::Failed`, and asserts that the `Shake` component's `trauma` field is > 0.3 (expected ~0.4) using Bevy's Reflect API to read the private field.
+  - Ran `cargo make uat` — all 226 tests passed.
