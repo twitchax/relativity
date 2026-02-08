@@ -82,7 +82,7 @@ tasks:
   - id: T-007
     title: "Modernize GitHub Pages deploy action"
     priority: 3
-    status: todo
+    status: done
     notes: "Evaluate peaceiris/actions-gh-pages@v3 vs v4 or GitHub's built-in pages deployment. Upgrade if appropriate."
 ---
 
@@ -252,4 +252,14 @@ Port from microralph, adapting:
   - `rust-toolchain.toml` is now the single source of truth for all workflow files
   - Updated `AGENTS.md` CI/Workflow Patterns section to reflect the new DRY toolchain approach
   - UAT passed: `cargo make uat` — exit code 0
+- **Constitution Compliance**: No violations.
+
+## 2026-02-08 — T-007 Completed
+- **Task**: Modernize GitHub Pages deploy action
+- **Status**: ✅ Done
+- **Changes**:
+  - Upgraded `peaceiris/actions-gh-pages` from `@v3` to `@v4` in `.github/workflows/build.yml`
+  - v4 uses Node.js 20 (v3 used Node.js 16, which is deprecated on GitHub Actions runners)
+  - Evaluated GitHub's built-in `actions/deploy-pages` as an alternative, but kept `peaceiris/actions-gh-pages` because the PRD constraint requires the `gh-pages` branch approach and the API is identical between v3 and v4
+  - UAT passed: `cargo make uat` — 166 tests passed, 0 failed
 - **Constitution Compliance**: No violations.
