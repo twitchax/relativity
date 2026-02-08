@@ -40,7 +40,7 @@ acceptance_tests:
   - id: uat-004
     name: "Launch visuals: direction line and power bar render correctly"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
     automated_test: "Screenshot baseline test: capture frame during AimLocked state, compare against baseline showing direction gizmo line. Capture during Launching state, compare against baseline showing power bar UI."
     manual_note: "Visual spot-check: verify gizmo line and power bar feel intuitive during interactive play."
   - id: uat-005
@@ -544,3 +544,15 @@ This means an automated agent can implement a feature, run `cargo make uat`, and
     - `aim_locked_release_cancels_to_idle` — verifies that releasing mouse during AimLocked (no drag) cancels back to Idle.
     - `full_launch_state_machine_idle_to_running` — end-to-end test of the complete Idle → AimLocked → Launching → Running flow.
   - Ran `cargo make uat` — all 217 tests passed (including the 6 new tests).
+
+## 2026-02-08 — uat-004 Verification
+- **UAT**: Launch visuals: direction line and power bar render correctly
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Created `tests/e2e_launch_visuals.rs` with 4 tests:
+    - `aim_locked_draws_direction_line_no_power_bar` — runs `launch_visual_system` in AimLocked state via `run_system_once`, verifying the gizmo direction-line code path executes without panic and no `PowerBarUi` entity exists.
+    - `launching_spawns_power_bar` — sets LaunchState::Launching, runs the visual system, asserts exactly one `PowerBarUi` entity is spawned with the correct outer container width (204px).
+    - `idle_despawns_power_bar` — spawns a power bar via Launching, then transitions to Idle and asserts the `PowerBarUi` entity is despawned.
+    - `launching_replaces_power_bar_no_duplicates` — runs the visual system multiple times with different power values and asserts exactly one `PowerBarUi` exists each time (no duplicates accumulate).
+  - Ran `cargo make uat` — all 221 tests passed (including the 4 new tests).
