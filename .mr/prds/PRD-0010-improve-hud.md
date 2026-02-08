@@ -33,7 +33,7 @@ acceptance_tests:
   - id: uat-002
     name: "Player panel shows t_p, γ_v, γ_g, v with correct values"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
   - id: uat-003
     name: "Observer panel shows t_o with correct values"
     command: cargo make uat
@@ -348,3 +348,14 @@ UiLayoutRoot (2D, camera-synced)
     - `hud_spawns_with_bottom_bar_and_chrome_panels`: Verifies HudRoot, HudBar, PlayerPanel (with Sprite), and ObserverPanel (with Sprite) all exist after entering InGame.
     - `hud_hierarchy_is_correct`: Verifies HudBar is a child of HudRoot, and both PlayerPanel and ObserverPanel are children of HudBar, confirming the bottom-anchored layout hierarchy.
   - Full UAT passed: 232 tests run, 232 passed, 0 skipped (`cargo make uat` exit code 0).
+
+## 2026-02-08 — uat-002 Verification
+- **UAT**: Player panel shows t_p, γ_v, γ_g, v with correct values
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Created `tests/e2e_hud_player_panel.rs` with three tests:
+    - `player_panel_has_four_stat_labels`: Verifies all four marker components (`HudPlayerTime`, `HudVelocityGamma`, `HudGravGamma`, `HudVelocityFraction`) exist as separate entities after entering InGame.
+    - `player_panel_shows_default_values_at_spawn`: Verifies initial `Text2d` content is `t_p = 0.00`, `γ_v = 1.00`, `γ_g = 1.00`, `v = 0.00c`.
+    - `player_panel_updates_with_correct_values_after_launch`: After launching at ~0.71c, verifies t_p advances beyond 0, γ_v > 1, γ_g >= 1, and v shows a non-zero sub-luminal fraction of c — confirming the `player_hud_text_update` system writes correct formatted values.
+  - Full UAT passed: 235 tests run, 235 passed, 0 skipped (`cargo make uat` exit code 0).
