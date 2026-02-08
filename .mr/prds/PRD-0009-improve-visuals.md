@@ -127,7 +127,7 @@ tasks:
   - id: T-007
     title: "Add gravitational field grid visualization"
     priority: 2
-    status: todo
+    status: done
     notes: "Render a grid of dots/short lines showing gravitational field direction and strength. Use Gizmos to draw at grid sample points. Calculate field vector at each point by summing gravitational pull from all Mass entities. Intensity/opacity proportional to field strength. Update each frame (or every N frames for performance). Grid should cover the full screen."
   - id: T-008
     title: "Clean up HUD and add velocity display"
@@ -417,3 +417,17 @@ This means an automated agent can implement a feature, run `cargo make uat`, and
   - UAT passed: 187 tests, 0 failures
 
 - **Constitution Compliance**: No violations. Minimal changes, new module follows Separation of Concerns. Consistent with existing ECS patterns (component on player bundle, Gizmos for rendering, marker-based queries).
+
+## 2026-02-08 — T-007 Completed
+- **Task**: Add gravitational field grid visualization
+- **Status**: ✅ Done
+- **Changes**:
+  - Created new `src/game/gravity_grid/mod.rs` module with:
+    - `compute_field_at_point` pure function — computes total gravitational field vector at a world-space point by summing contributions from all Mass entities using `calculate_gravitational_acceleration`.
+    - `gravity_grid_render_system` — samples a 20×12 grid of points across the screen, computes field direction and log-scaled strength at each point, and draws Gizmo lines with length and alpha proportional to field strength.
+  - Registered the `gravity_grid` module in `src/game/mod.rs` and wired the render system alongside `trail_render_system` during all `InGame` sub-states.
+  - Added 5 unit tests for `compute_field_at_point` (no masses, direction toward mass, inverse-square falloff, superposition of two masses).
+  - Regenerated screenshot baseline `tests/baselines/level1_spawn.png` to include gravity grid lines.
+  - UAT passed: 192 tests, 0 failures
+
+- **Constitution Compliance**: No violations. Minimal changes, new module follows Separation of Concerns. Reuses existing `calculate_gravitational_acceleration` function (DRY). Consistent with existing ECS/Gizmos patterns (trail module structure).

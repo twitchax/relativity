@@ -1,4 +1,5 @@
 pub mod destination;
+pub mod gravity_grid;
 pub mod levels;
 pub mod object;
 pub mod observer;
@@ -15,6 +16,7 @@ use bevy::prelude::*;
 use crate::shared::state::{AppState, GameState};
 
 use self::{
+    gravity_grid::gravity_grid_render_system,
     levels::{despawn_level, spawn_level},
     observer::{observer_clock_text_update, observer_clock_update},
     outcome::{despawn_failure_overlay, despawn_success_overlay, failure_auto_reset, spawn_failure_overlay, spawn_success_overlay, success_button_interaction},
@@ -53,8 +55,8 @@ impl Plugin for GamePlugin {
             .add_systems(Update, failure_auto_reset.run_if(in_state(AppState::InGame)).run_if(in_state(GameState::Failed)))
             // Clear trail buffer on level reset.
             .add_systems(OnEnter(GameState::Paused), trail_clear_system)
-            // Render trail while in game (visible across all sub-states).
-            .add_systems(Update, trail_render_system.run_if(in_state(AppState::InGame)))
+            // Render trail and gravity grid while in game (visible across all sub-states).
+            .add_systems(Update, (trail_render_system, gravity_grid_render_system).run_if(in_state(AppState::InGame)))
             // Launch mechanic (aim, power, fire, visuals) while paused.
             .add_systems(
                 Update,
