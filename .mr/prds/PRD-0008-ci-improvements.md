@@ -39,7 +39,7 @@ acceptance_tests:
   - id: uat-004
     name: "Toolchain version is not hardcoded in workflow files (derived or centralized)"
     command: "! grep -q 'nightly-20' .github/workflows/build.yml"
-    uat_status: unverified
+    uat_status: verified
   - id: uat-005
     name: "Linux release build uses mold linker"
     command: "grep -q mold .github/workflows/build.yml"
@@ -57,7 +57,7 @@ tasks:
   - id: T-002
     title: "DRY toolchain pinning in build.yml"
     priority: 1
-    status: todo
+    status: done
     notes: "Remove hardcoded RUST_TOOLCHAIN env var. Read toolchain from rust-toolchain.toml or use a single env var at the top derived from the file."
   - id: T-003
     title: "Add mold linker to Linux release build"
@@ -199,3 +199,14 @@ Port from microralph, adapting:
   - UAT passed: `cargo make uat` — 166 tests passed, 0 failed
 - **UATs Verified**: uat-003 (web.yml removed; all jobs live in build.yml)
 - **Constitution Compliance**: No violations.
+
+## 2026-02-08 — T-002 Completed
+- **Task**: DRY toolchain pinning in build.yml
+- **Status**: ✅ Done
+- **Changes**:
+  - Pinned `rust-toolchain.toml` channel to `nightly-2025-12-22` (single source of truth)
+  - Removed hardcoded `RUST_TOOLCHAIN` env var from `.github/workflows/build.yml`
+  - Added `Read toolchain` step to each job that extracts the channel from `rust-toolchain.toml` and passes it to `dtolnay/rust-toolchain`
+  - UAT passed: `cargo make uat` — 166 tests passed, 0 failed
+- **UATs Verified**: uat-004 (no `nightly-20` string in build.yml)
+- **Constitution Compliance**: No violations. The read-toolchain step is repeated per job, which is necessary since GitHub Actions doesn't support workflow-level dynamic env vars from file reads. This is the minimal repetition needed to achieve DRY toolchain pinning.
