@@ -25,7 +25,7 @@ acceptance_tests:
   - id: uat-001
     name: "Project compiles and all existing tests pass"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
   - id: uat-002
     name: "Menu screen spawns Button nodes for each CurrentLevel variant"
     command: cargo make uat
@@ -512,3 +512,12 @@ This means an automated agent can implement a feature, run `cargo make uat`, and
   - UAT passed: 210 tests, 0 failures
 
 - **Constitution Compliance**: No violations. Minimal changes (6 files modified, 1 file created). Consistent with existing ECS patterns (Resource + System, Startup system, marker component). Separation of Concerns: fade logic is isolated in its own module. DRY: all callers use the same `FadeState::start_fade_out()` API.
+
+## 2026-02-08 — uat-001 Verification
+- **UAT**: Project compiles and all existing tests pass
+- **Status**: ✅ Verified
+- **Method**: Existing test
+- **Details**:
+  - Ran `cargo make uat` which executes the full CI pipeline (fmt-check + clippy + nextest).
+  - All 210 tests passed with 0 failures and 0 skipped.
+  - No new test needed — this UAT is satisfied by the existing test suite passing end-to-end.
