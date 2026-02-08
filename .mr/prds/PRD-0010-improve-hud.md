@@ -49,7 +49,7 @@ acceptance_tests:
   - id: uat-006
     name: "CI pipeline passes (fmt-check, clippy, nextest)"
     command: cargo make ci
-    uat_status: unverified
+    uat_status: verified
 
 tasks:
   - id: T-001
@@ -392,3 +392,13 @@ UiLayoutRoot (2D, camera-synced)
   - Build completed successfully in ~7 seconds with exit code 0.
   - The WASM build includes all new HUD code (bevy_lunex layout, 9-slice panels, text labels) and compiles without errors.
   - `getrandom` v0.2 (`js` feature) and v0.3 (`wasm_js` feature) WASM dependencies (added in T-009) are correctly resolved.
+
+## 2026-02-08 — uat-006 Verification
+- **UAT**: CI pipeline passes (fmt-check, clippy, nextest)
+- **Status**: ✅ Verified
+- **Method**: Existing test
+- **Details**:
+  - Ran `cargo make ci` which executes fmt-check, clippy (with `-D warnings`), and nextest in sequence.
+  - All three stages passed with zero warnings and zero errors.
+  - Nextest summary: 241 tests run, 241 passed, 0 skipped (exit code 0).
+  - Full CI pipeline completed in ~12.67 seconds.
