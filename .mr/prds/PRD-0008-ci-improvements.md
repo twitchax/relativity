@@ -43,7 +43,7 @@ acceptance_tests:
   - id: uat-005
     name: "Linux release build uses mold linker"
     command: "grep -q mold .github/workflows/build.yml"
-    uat_status: unverified
+    uat_status: verified
   - id: uat-006
     name: "Makefile.toml has release, github-release, and publish-all tasks"
     command: "grep -q 'tasks.release' Makefile.toml && grep -q 'tasks.github-release' Makefile.toml"
@@ -62,7 +62,7 @@ tasks:
   - id: T-003
     title: "Add mold linker to Linux release build"
     priority: 2
-    status: todo
+    status: done
     notes: "Install clang + mold in the build_linux job. Set RUSTFLAGS to use mold. Match microralph's pattern."
   - id: T-004
     title: "Gate builds and deploys to main-only; PRs run test + codecov"
@@ -220,3 +220,14 @@ Port from microralph, adapting:
   - `test` and `codecov` jobs have no `if` condition, so they run on all pushes and PRs
   - UAT passed: `cargo make uat` — 166 tests passed, 0 failed
 - **Constitution Compliance**: No violations. Minimal change (single line) to achieve the goal.
+
+## 2026-02-08 — T-003 Completed
+- **Task**: Add mold linker to Linux release build
+- **Status**: ✅ Done
+- **Changes**:
+  - Added "Install mold linker" step to `build_linux` job in `.github/workflows/build.yml` that installs `clang` and `mold` via apt-get
+  - Added `RUSTFLAGS: "-C linker=clang -C link-arg=-fuse-ld=mold"` env var to the `cargo make build-linux` step
+  - Pattern matches microralph's `build.yml` exactly
+  - UAT passed: `cargo make uat` — 166 tests passed, 0 failed
+- **UATs Verified**: uat-005 (`grep -q mold .github/workflows/build.yml` passes)
+- **Constitution Compliance**: No violations.
