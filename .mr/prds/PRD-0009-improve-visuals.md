@@ -102,7 +102,7 @@ tasks:
   - id: T-002
     title: "Implement menu screen with level selector UI"
     priority: 1
-    status: todo
+    status: done
     notes: "Replace blank click-to-start with a bevy_ui vertical list of levels. Each entry is a Button node with text. Clicking sets CurrentLevel resource and transitions AppState::Menu -> AppState::InGame. Derive level names from CurrentLevel enum variants."
   - id: T-003
     title: "Implement two-phase launch mechanic (angle lock + power drag)"
@@ -338,3 +338,15 @@ This means an automated agent can implement a feature, run `cargo make uat`, and
   - UAT passed: 166 tests, 0 failures
 
 - **Constitution Compliance**: No violations. Minimal changes, consistent with existing patterns, no public API breakage (internal state enum).
+
+## 2026-02-08 — T-002 Completed
+- **Task**: Implement menu screen with level selector UI
+- **Status**: ✅ Done
+- **Changes**:
+  - Rewrote `src/menu/mod.rs`: replaced bare `start` system (click-to-start) with a full `bevy_ui` menu featuring `OnEnter`/`OnExit` spawn/despawn lifecycle, a title text node, and one `Button` per `CurrentLevel` variant. Clicking a button sets `CurrentLevel` and transitions to `AppState::InGame`.
+  - Added marker components `MenuScreen` and `LevelButton(CurrentLevel)` for entity management and interaction handling.
+  - Updated `src/game/levels/mod.rs`: added `Display` impl for `CurrentLevel` (display names: "Level 1", "Time Warp"), added `CurrentLevel::all()` const method, derived `Debug`, `Clone`, `Copy`, `PartialEq`, `Eq` on `CurrentLevel`.
+  - Added unit tests for `Display` and `all()` in `src/game/levels/mod.rs`.
+  - UAT passed: 169 tests, 0 failures
+
+- **Constitution Compliance**: No violations. Minimal changes, consistent with existing Bevy ECS patterns, no public API breakage.

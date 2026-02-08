@@ -1,3 +1,5 @@
+use std::fmt;
+
 use bevy::prelude::*;
 
 use super::{
@@ -14,11 +16,28 @@ use super::{
 
 // Components / bundles / resources.
 
-#[derive(Resource, Default)]
+#[derive(Resource, Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CurrentLevel {
     #[default]
     One,
     TimeWarp,
+}
+
+impl CurrentLevel {
+    /// Returns all level variants in order.
+    #[must_use]
+    pub const fn all() -> &'static [Self] {
+        &[Self::One, Self::TimeWarp]
+    }
+}
+
+impl fmt::Display for CurrentLevel {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::One => write!(f, "Level 1"),
+            Self::TimeWarp => write!(f, "Time Warp"),
+        }
+    }
 }
 
 // Startup systems.
@@ -187,6 +206,7 @@ pub fn level_time_warp(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 mod tests {
     use super::*;
 
@@ -207,5 +227,23 @@ mod tests {
         // but we can verify the enum variant compiles and can be matched.
         let level = CurrentLevel::TimeWarp;
         assert!(matches!(level, CurrentLevel::TimeWarp));
+    }
+
+    #[test]
+    fn display_level_one() {
+        assert_eq!(CurrentLevel::One.to_string(), "Level 1");
+    }
+
+    #[test]
+    fn display_level_time_warp() {
+        assert_eq!(CurrentLevel::TimeWarp.to_string(), "Time Warp");
+    }
+
+    #[test]
+    fn all_returns_all_variants() {
+        let all = CurrentLevel::all();
+        assert_eq!(all.len(), 2);
+        assert_eq!(all[0], CurrentLevel::One);
+        assert_eq!(all[1], CurrentLevel::TimeWarp);
     }
 }
