@@ -5,6 +5,7 @@ pub mod observer;
 pub mod outcome;
 pub mod player;
 pub mod shared;
+pub mod trail;
 
 #[cfg(test)]
 pub mod test_helpers;
@@ -25,6 +26,7 @@ use self::{
         systems::{collision_check, exit_level_check, planet_scale_update, position_update, rocket_rotation_update, rocket_scale_update, translation_update, velocity_update},
         types::LaunchState,
     },
+    trail::{trail_clear_system, trail_record_system, trail_render_system},
 };
 
 pub struct GamePlugin;
@@ -49,6 +51,10 @@ impl Plugin for GamePlugin {
             .add_systems(Update, success_button_interaction.run_if(in_state(AppState::InGame)).run_if(in_state(GameState::Finished)))
             // Failure auto-reset timer while failed.
             .add_systems(Update, failure_auto_reset.run_if(in_state(AppState::InGame)).run_if(in_state(GameState::Failed)))
+            // Clear trail buffer on level reset.
+            .add_systems(OnEnter(GameState::Paused), trail_clear_system)
+            // Render trail while in game (visible across all sub-states).
+            .add_systems(Update, trail_render_system.run_if(in_state(AppState::InGame)))
             // Launch mechanic (aim, power, fire, visuals) while paused.
             .add_systems(
                 Update,
@@ -64,6 +70,7 @@ impl Plugin for GamePlugin {
                     velocity_update,
                     position_update.after(velocity_update),
                     translation_update.after(position_update),
+                    trail_record_system.after(player_clock_update),
                     collision_check,
                     observer_clock_update,
                     observer_clock_text_update.after(observer_clock_update),

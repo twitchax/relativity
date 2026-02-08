@@ -2,7 +2,7 @@ use super::shared::Player;
 use crate::{
     game::shared::{
         constants::MAX_PLAYER_LAUNCH_VELOCITY,
-        types::{GameItem, LaunchState, Position, PowerBarUi, Radius, RocketSprite, Velocity},
+        types::{GameItem, LaunchState, Position, PowerBarUi, Radius, RocketSprite, TrailBuffer, Velocity},
     },
     shared::{state::GameState, SCREEN_HEIGHT_PX, SCREEN_WIDTH_PX},
 };
@@ -21,6 +21,7 @@ pub struct PlayerSpriteBundle {
     pub sprite_type: RocketSprite,
     pub sprite: Sprite,
     pub transform: Transform,
+    pub trail_buffer: TrailBuffer,
 }
 
 // Systems.

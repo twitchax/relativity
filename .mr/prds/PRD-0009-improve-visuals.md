@@ -122,7 +122,7 @@ tasks:
   - id: T-006
     title: "Add trajectory trail with gamma-based coloring"
     priority: 2
-    status: todo
+    status: done
     notes: "Add a TrailBuffer component (Vec of (Vec2, Color)) to the player entity. Each frame during Running, push current position with a color derived from total gamma (gamma_v * gamma_g). Use Gizmos::linestrip_gradient_2d to render the trail. Cap buffer length (e.g., 2000 points). Color mapping: low gamma = blue/white, high gamma = red/orange."
   - id: T-007
     title: "Add gravitational field grid visualization"
@@ -400,3 +400,20 @@ This means an automated agent can implement a feature, run `cargo make uat`, and
   - UAT passed: 179 tests, 0 failures
 
 - **Constitution Compliance**: No violations. Minimal changes, consistent with existing success overlay patterns (same module, same component/lifecycle approach).
+
+## 2026-02-08 — T-006 Completed
+- **Task**: Add trajectory trail with gamma-based coloring
+- **Status**: ✅ Done
+- **Changes**:
+  - Added `TrailBuffer` component (Vec of `(Vec2, Color)`) to `src/game/shared/types.rs`.
+  - Added `TrailBuffer` to `PlayerSpriteBundle` in `src/game/player/player_sprite.rs` so it is automatically attached to every player entity.
+  - Created new `src/game/trail/mod.rs` module with:
+    - `gamma_to_color` pure function — maps combined gamma (γ_v × γ_g) to a color gradient: blue/cyan at γ≈1 → red/orange at γ≥3.
+    - `trail_record_system` — records player screen position + gamma-based color each frame during `Running`. Caps buffer at 2000 points.
+    - `trail_render_system` — renders the trail via `Gizmos::linestrip_gradient_2d`, runs across all `InGame` sub-states.
+    - `trail_clear_system` — clears the buffer on `OnEnter(GameState::Paused)` for level resets.
+  - Registered the `trail` module in `src/game/mod.rs` and wired systems: record during `Running` (after `player_clock_update`), render during `InGame`, clear on `OnEnter(GameState::Paused)`.
+  - Added 8 unit tests for `gamma_to_color` and `TrailBuffer` default.
+  - UAT passed: 187 tests, 0 failures
+
+- **Constitution Compliance**: No violations. Minimal changes, new module follows Separation of Concerns. Consistent with existing ECS patterns (component on player bundle, Gizmos for rendering, marker-based queries).

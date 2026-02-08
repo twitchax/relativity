@@ -42,6 +42,15 @@ pub struct FailureOverlay;
 #[derive(Resource)]
 pub struct FailureTimer(pub Timer);
 
+/// Ring buffer of recent player positions with gamma-based colors for trajectory trail rendering.
+///
+/// Each frame during `Running`, the current screen position and a color derived from
+/// `gamma_v * gamma_g` are pushed. Rendered via `Gizmos::linestrip_gradient_2d`.
+#[derive(Component, Default)]
+pub struct TrailBuffer {
+    pub points: Vec<(Vec2, Color)>,
+}
+
 #[derive(Component, Default)]
 pub struct PlanetSprite;
 
