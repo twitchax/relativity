@@ -27,7 +27,7 @@ acceptance_tests:
   - id: uat-001
     name: "CI passes on push to non-main branch (test + codecov only)"
     command: cargo make ci
-    uat_status: unverified
+    uat_status: verified
   - id: uat-002
     name: "CI passes on push to main (full pipeline including platform builds and web deploy)"
     command: cargo make ci
@@ -263,3 +263,11 @@ Port from microralph, adapting:
   - Evaluated GitHub's built-in `actions/deploy-pages` as an alternative, but kept `peaceiris/actions-gh-pages` because the PRD constraint requires the `gh-pages` branch approach and the API is identical between v3 and v4
   - UAT passed: `cargo make uat` — 166 tests passed, 0 failed
 - **Constitution Compliance**: No violations.
+
+## 2026-02-08 — uat-001 Verification
+- **UAT**: CI passes on push to non-main branch (test + codecov only)
+- **Status**: ✅ Verified
+- **Method**: Existing test
+- **Details**:
+  - Verified workflow structure: `build.yml` triggers on `[push, pull_request]`; `test` and `codecov` jobs have no `if` condition (run on all pushes/PRs); `build_linux`, `build_windows`, `build_macos`, and `build_web` jobs all have `if: github.ref == 'refs/heads/main'` (main-only)
+  - Ran `cargo make ci`: 166 tests passed, 0 failed (fmt-check + clippy + nextest)
