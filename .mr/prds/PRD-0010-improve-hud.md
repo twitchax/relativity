@@ -100,7 +100,7 @@ tasks:
   - id: T-010
     title: "Run full CI and fix any clippy/fmt issues"
     priority: 7
-    status: todo
+    status: done
     notes: "Run cargo make ci. Fix any pedantic clippy lints from new code. Ensure all existing tests pass."
 ---
 
@@ -328,3 +328,13 @@ UiLayoutRoot (2D, camera-synced)
   - Verified `cargo make build-web` (full trunk release build) succeeds
   - UAT passed: 230 tests run, 230 passed, 0 skipped (`cargo make uat` exit code 0)
 - **Constitution Compliance**: No violations. Minimal change (two lines added to Cargo.toml), consistent with existing dependency style.
+
+## 2026-02-08 — T-010 Completed
+- **Task**: Run full CI and fix any clippy/fmt issues
+- **Status**: ✅ Done
+- **Changes**:
+  - Ran `cargo make ci` (fmt-check + clippy + nextest): all checks passed with zero warnings and zero errors
+  - Ran `cargo make uat`: 230 tests run, 230 passed, 0 skipped (exit code 0)
+  - No clippy or fmt issues found in the new HUD code — previous tasks maintained clean code throughout
+  - No code changes required; this task is a verification-only gate
+- **Constitution Compliance**: No violations. No code changes made.
