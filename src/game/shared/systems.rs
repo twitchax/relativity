@@ -168,7 +168,7 @@ pub fn collision_check(
 
     for (planet_position, planet_radius) in &planet_query {
         if has_collided((player_position, player_radius), (planet_position, planet_radius)) {
-            game_state.set(GameState::Paused);
+            game_state.set(GameState::Failed);
             println!("failed!");
         }
     }

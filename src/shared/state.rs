@@ -13,6 +13,7 @@ pub enum GameState {
     Paused,
     Running,
     Finished,
+    Failed,
 }
 
 #[cfg(test)]
@@ -43,6 +44,9 @@ mod tests {
         assert_ne!(GameState::Paused, GameState::Running);
         assert_ne!(GameState::Running, GameState::Finished);
         assert_ne!(GameState::Paused, GameState::Finished);
+        assert_ne!(GameState::Failed, GameState::Paused);
+        assert_ne!(GameState::Failed, GameState::Running);
+        assert_ne!(GameState::Failed, GameState::Finished);
     }
 
     // AppState Debug produces expected strings.
@@ -58,6 +62,7 @@ mod tests {
         assert_eq!(format!("{:?}", GameState::Paused), "Paused");
         assert_eq!(format!("{:?}", GameState::Running), "Running");
         assert_eq!(format!("{:?}", GameState::Finished), "Finished");
+        assert_eq!(format!("{:?}", GameState::Failed), "Failed");
     }
 
     // AppState Clone produces an equal value.

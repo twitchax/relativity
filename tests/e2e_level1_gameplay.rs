@@ -56,7 +56,7 @@ fn level1_is_solvable() {
 }
 
 /// Verify the failure path: launching toward a nearby planet causes a
-/// collision and the game transitions to `GameState::Paused`.
+/// collision and the game transitions to `GameState::Failed`.
 ///
 /// The player starts at (0.30, 0.30) and EARTH is at (0.28, 0.28) — very
 /// close.  A slow velocity aimed toward EARTH guarantees a collision.
@@ -76,5 +76,5 @@ fn level1_direct_shot_at_earth_collides() {
 
     let outcome = run_until_resolved(&mut app, 2000);
 
-    assert_eq!(outcome, GameState::Paused, "expected GameState::Paused (player should collide with EARTH), got {outcome:?}");
+    assert_eq!(outcome, GameState::Failed, "expected GameState::Failed (player should collide with EARTH), got {outcome:?}");
 }

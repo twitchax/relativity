@@ -104,7 +104,7 @@ pub fn read_player_clock_days(app: &App, clock_entity: Entity) -> f64 {
 
 /// Run up to `max_frames` updates, returning the final `GameState`.
 ///
-/// Stops early if the state leaves `Running` (either `Finished` or `Paused`).
+/// Stops early if the state leaves `Running` (either `Finished`, `Failed`, or `Paused`).
 pub fn run_until_resolved(app: &mut App, max_frames: usize) -> GameState {
     for _ in 0..max_frames {
         app.update();

@@ -1,7 +1,7 @@
 ---
 id: PRD-0009
 title: "Improve Visuals: Launch UX, Menu, Outcome Screens, and Visual Polish"
-status: draft
+status: active
 owner: twitchax
 created: 2026-02-08
 updated: 2026-02-08
@@ -97,7 +97,7 @@ tasks:
   - id: T-001
     title: "Add GameState::Failed variant and update collision_check"
     priority: 1
-    status: todo
+    status: done
     notes: "Replace the current Paused-on-collision with a new Failed state. collision_check sets GameState::Failed on planet hit. Remove the implicit re-launch on failure."
   - id: T-002
     title: "Implement menu screen with level selector UI"
@@ -324,3 +324,17 @@ This means an automated agent can implement a feature, run `cargo make uat`, and
 - Saving/loading game progress
 
 # History
+
+## 2026-02-08 — T-001 Completed
+- **Task**: Add GameState::Failed variant and update collision_check
+- **Status**: ✅ Done
+- **Changes**:
+  - Added `Failed` variant to `GameState` enum in `src/shared/state.rs`
+  - Updated `collision_check` in `src/game/shared/systems.rs` to set `GameState::Failed` on planet collision (was `GameState::Paused`)
+  - Updated unit tests in `src/shared/state.rs` to cover the new `Failed` variant (distinctness, debug format)
+  - Updated `tests/e2e_collision.rs`: renamed test `collision_with_planet_transitions_to_paused` → `collision_with_planet_transitions_to_failed`, updated assertions and comments
+  - Updated `tests/e2e_level1_gameplay.rs`: updated assertion to expect `GameState::Failed` on planet collision
+  - Updated `tests/common/gameplay.rs`: updated doc comment for `run_until_resolved`
+  - UAT passed: 166 tests, 0 failures
+
+- **Constitution Compliance**: No violations. Minimal changes, consistent with existing patterns, no public API breakage (internal state enum).

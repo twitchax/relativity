@@ -95,13 +95,13 @@ fn no_collision_when_far_apart() {
 }
 
 #[test]
-fn collision_with_planet_transitions_to_paused() {
+fn collision_with_planet_transitions_to_failed() {
     let mut app = build_collision_test_app();
 
     app.world_mut().resource_mut::<NextState<GameState>>().set(GameState::Running);
     app.update();
 
-    // Player overlaps with a planet — should transition to Paused.
+    // Player overlaps with a planet — should transition to Failed.
     spawn_player(app.world_mut(), 0.0, 0.0, 100.0);
     spawn_destination(app.world_mut(), 1_000_000.0, 1_000_000.0, 100.0); // Far-away destination.
     spawn_planet(app.world_mut(), 0.0, 0.0, 100.0);
@@ -110,7 +110,7 @@ fn collision_with_planet_transitions_to_paused() {
     app.update();
 
     let state = app.world().resource::<State<GameState>>();
-    assert_eq!(*state.get(), GameState::Paused, "collision with planet should transition to Paused");
+    assert_eq!(*state.get(), GameState::Failed, "collision with planet should transition to Failed");
 }
 
 #[test]
@@ -122,7 +122,7 @@ fn destination_collision_checked_before_planet() {
 
     // Player overlaps with both destination and planet at origin.
     // The collision_check system checks destination first, then planets.
-    // Since NextState uses set() (last write wins), planet collision (Paused) overwrites destination (Finished).
+    // Since NextState uses set() (last write wins), planet collision (Failed) overwrites destination (Finished).
     spawn_player(app.world_mut(), 0.0, 0.0, 100.0);
     spawn_destination(app.world_mut(), 0.0, 0.0, 100.0);
     spawn_planet(app.world_mut(), 0.0, 0.0, 100.0);
@@ -131,8 +131,8 @@ fn destination_collision_checked_before_planet() {
     app.update();
 
     let state = app.world().resource::<State<GameState>>();
-    // Planet collision sets Paused last, overwriting the Finished from destination.
-    assert_eq!(*state.get(), GameState::Paused, "planet collision should overwrite destination collision (last-write-wins)");
+    // Planet collision sets Failed last, overwriting the Finished from destination.
+    assert_eq!(*state.get(), GameState::Failed, "planet collision should overwrite destination collision (last-write-wins)");
 }
 
 #[test]
