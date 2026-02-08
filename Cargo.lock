@@ -2575,8 +2575,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be4136b2a15dd319360be1c07d9933517ccf0be8f16bf62a3bee4f0d618df427"
 dependencies = [
  "cfg-if",
+ "js-sys",
  "libc",
  "wasi",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -4329,6 +4331,8 @@ dependencies = [
  "bevy_lunex",
  "bevy_trauma_shake",
  "console_error_panic_hook",
+ "getrandom 0.2.10",
+ "getrandom 0.3.4",
  "getrandom 0.4.1",
  "glam 0.31.0",
  "image",

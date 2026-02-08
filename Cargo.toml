@@ -23,5 +23,7 @@ proptest = "1"
 bevy = { version = "0.18", features = ["webgl2"] }
 bevy_lunex = { version = "0.6", features = ["wasm"] }
 console_error_panic_hook = "0.1"
-# getrandom is a transitive dependency that needs "js" feature for WASM
+# getrandom is a transitive dependency that needs "js"/"wasm_js" feature for WASM
+getrandom_02 = { package = "getrandom", version = "0.2", features = ["js"] }
+getrandom_03 = { package = "getrandom", version = "0.3", features = ["wasm_js"] }
 getrandom = { version = "0.4", features = ["wasm_js"] }

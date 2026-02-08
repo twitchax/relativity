@@ -95,7 +95,7 @@ tasks:
   - id: T-009
     title: "Verify WASM build and test cross-platform"
     priority: 6
-    status: todo
+    status: done
     notes: "Run cargo make build-web. Ensure bevy_lunex wasm feature is enabled for wasm32 target. Test in browser."
   - id: T-010
     title: "Run full CI and fix any clippy/fmt issues"
@@ -317,3 +317,14 @@ UiLayoutRoot (2D, camera-synced)
   - Confirmed `despawn_level` (GameItem-based) and `despawn_hud_root` (HudRoot-based) both correctly handle HUD cleanup with no double-despawn panics
   - UAT passed: 230 tests run, 230 passed, 0 skipped (`cargo make uat` exit code 0)
 - **Constitution Compliance**: No violations. Minimal change (one comment update), consistent with existing patterns.
+
+## 2026-02-08 — T-009 Completed
+- **Task**: Verify WASM build and test cross-platform
+- **Status**: ✅ Done
+- **Changes**:
+  - Identified `getrandom` v0.2 (transitive via `nalgebra` → `rand` → `rand_core`) and v0.3 (transitive via `bevy_lunex` → `rand`) missing WASM features, causing `cargo check --target wasm32-unknown-unknown` to fail
+  - Added `getrandom` v0.2 with `"js"` feature and v0.3 with `"wasm_js"` feature to `[target.'cfg(target_arch = "wasm32")'.dependencies]` in `Cargo.toml`
+  - Verified `cargo check --target wasm32-unknown-unknown` passes
+  - Verified `cargo make build-web` (full trunk release build) succeeds
+  - UAT passed: 230 tests run, 230 passed, 0 skipped (`cargo make uat` exit code 0)
+- **Constitution Compliance**: No violations. Minimal change (two lines added to Cargo.toml), consistent with existing dependency style.
