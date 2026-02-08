@@ -147,7 +147,7 @@ tasks:
   - id: T-011
     title: "Wire up level progression (next level on success)"
     priority: 2
-    status: todo
+    status: done
     notes: "Add a next() method to CurrentLevel that returns Option<CurrentLevel>. Success screen Next Level button calls this. If None (last level), go to menu. Ensure CurrentLevel resource is updated before re-entering InGame."
   - id: T-012
     title: "Ensure Escape returns to menu from all game states"
@@ -446,3 +446,15 @@ This means an automated agent can implement a feature, run `cargo make uat`, and
   - UAT passed: 198 tests, 0 failures
 
 - **Constitution Compliance**: No violations. Minimal changes (2 files, ~56 lines added). Consistent with existing patterns (pure function + system query pattern). No public API breakage. DRY: reuses existing `Velocity::scalar()` and `C` constant.
+
+## 2026-02-08 — T-011 Completed
+- **Task**: Wire up level progression (next level on success)
+- **Status**: ✅ Done
+- **Changes**:
+  - Added `PendingNextLevel` marker resource to `src/game/shared/types.rs` — signals the menu to auto-advance to `InGame`.
+  - Updated `success_button_interaction` in `src/game/outcome/mod.rs` to insert `PendingNextLevel` when a next level exists, so the menu auto-advances instead of requiring manual level selection.
+  - Added `auto_advance_to_next_level` system in `src/menu/mod.rs` — runs on `OnEnter(AppState::Menu)`, checks for `PendingNextLevel`, removes it, and immediately transitions to `AppState::InGame`.
+  - Registered `auto_advance_to_next_level` alongside `spawn_menu` in `MenuPlugin`.
+  - UAT passed: 198 tests, 0 failures
+
+- **Constitution Compliance**: No violations. Minimal changes (3 files). Consistent with existing patterns (marker resource, `OnEnter` system). `CurrentLevel::next()` already existed from T-004 — reused (DRY). No public API breakage.

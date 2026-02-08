@@ -1,11 +1,14 @@
-use crate::{game::levels::CurrentLevel, shared::state::AppState};
+use crate::{
+    game::{levels::CurrentLevel, shared::types::PendingNextLevel},
+    shared::state::AppState,
+};
 use bevy::prelude::*;
 
 pub struct MenuPlugin;
 
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(AppState::Menu), spawn_menu)
+        app.add_systems(OnEnter(AppState::Menu), (spawn_menu, auto_advance_to_next_level))
             .add_systems(OnExit(AppState::Menu), despawn_menu)
             .add_systems(Update, menu_button_interaction.run_if(in_state(AppState::Menu)));
     }
@@ -88,6 +91,15 @@ fn spawn_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
 fn despawn_menu(mut commands: Commands, query: Query<Entity, With<MenuScreen>>) {
     for entity in &query {
         commands.entity(entity).despawn();
+    }
+}
+
+/// If `PendingNextLevel` is present (set by the "Next Level" button), skip the menu
+/// and transition directly to `InGame` with the already-updated `CurrentLevel`.
+fn auto_advance_to_next_level(mut commands: Commands, pending: Option<Res<PendingNextLevel>>, mut app_state: ResMut<NextState<AppState>>) {
+    if pending.is_some() {
+        commands.remove_resource::<PendingNextLevel>();
+        app_state.set(AppState::InGame);
     }
 }
 

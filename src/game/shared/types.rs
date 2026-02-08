@@ -46,6 +46,11 @@ pub struct FailureOverlay;
 #[derive(Resource)]
 pub struct FailureTimer(pub Timer);
 
+/// Marker resource inserted when the "Next Level" button is pressed to signal
+/// that the menu should automatically advance to `InGame` without user interaction.
+#[derive(Resource)]
+pub struct PendingNextLevel;
+
 /// Ring buffer of recent player positions with gamma-based colors for trajectory trail rendering.
 ///
 /// Each frame during `Running`, the current screen position and a color derived from

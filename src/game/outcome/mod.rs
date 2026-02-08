@@ -1,7 +1,7 @@
 use crate::{
     game::{
         levels::CurrentLevel,
-        shared::types::{FailureOverlay, FailureTimer, NextLevelButton, SuccessOverlay},
+        shared::types::{FailureOverlay, FailureTimer, NextLevelButton, PendingNextLevel, SuccessOverlay},
     },
     shared::state::{AppState, GameState},
 };
@@ -83,10 +83,13 @@ pub fn despawn_success_overlay(mut commands: Commands, query: Query<Entity, With
 
 /// Handle Next Level button interaction.
 ///
-/// If there is a next level, advance `CurrentLevel` and transition through Menu
-/// to trigger level despawn/respawn. If no next level, return to Menu.
+/// If there is a next level, advance `CurrentLevel`, insert `PendingNextLevel` marker,
+/// and transition through Menu to trigger level despawn/respawn. The menu auto-advances
+/// back to `InGame` when `PendingNextLevel` is present.
+/// If no next level, return to Menu without the marker.
 #[allow(clippy::type_complexity)]
 pub fn success_button_interaction(
+    mut commands: Commands,
     interaction_query: Query<&Interaction, (Changed<Interaction>, With<NextLevelButton>)>,
     mut current_level: ResMut<CurrentLevel>,
     mut app_state: ResMut<NextState<AppState>>,
@@ -96,10 +99,11 @@ pub fn success_button_interaction(
         if *interaction == Interaction::Pressed {
             if let Some(next) = current_level.next() {
                 *current_level = next;
+                commands.insert_resource(PendingNextLevel);
             }
 
             // Transition to Menu to trigger OnExit(InGame) despawn.
-            // From Menu, the player selects the next level (or it auto-starts if we add that later).
+            // If PendingNextLevel is set, the menu will auto-advance to InGame.
             app_state.set(AppState::Menu);
             game_state.set(GameState::Paused);
         }
