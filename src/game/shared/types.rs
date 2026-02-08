@@ -4,6 +4,10 @@ use uom::si::f64::{Length as UomLength, Mass as UomMass, Time as UomTime, Veloci
 #[derive(Component, Default)]
 pub struct GameItem;
 
+/// Marker for the player HUD text entity (clock, gamma, velocity display).
+#[derive(Component, Default)]
+pub struct PlayerHud;
+
 /// Two-phase launch state machine.
 ///
 /// - `Idle`: waiting for the player to click.

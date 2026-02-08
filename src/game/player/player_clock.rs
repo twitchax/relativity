@@ -1,7 +1,7 @@
 use super::shared::Player;
 use crate::game::shared::{
     constants::{C, DAYS_PER_SECOND_UOM, G},
-    types::{Clock, GameItem, GravitationalGamma, Mass, Position, Velocity, VelocityGamma},
+    types::{Clock, GameItem, GravitationalGamma, Mass, PlayerHud, Position, Velocity, VelocityGamma},
 };
 use bevy::prelude::*;
 use uom::si::f64::{Length as UomLength, Mass as UomMass, Time as UomTime, Velocity as UomVelocity};
@@ -12,6 +12,7 @@ use uom::si::f64::{Length as UomLength, Mass as UomMass, Time as UomTime, Veloci
 pub struct PlayerClockBundle {
     pub item: GameItem,
     pub player: Player,
+    pub player_hud: PlayerHud,
     pub velocity_gamma: VelocityGamma,
     pub gravitational_gamma: GravitationalGamma,
     pub clock: Clock,
@@ -58,10 +59,17 @@ pub(crate) fn calculate_player_clock(dt: UomTime, velocity_gamma: f64, gravitati
     previous_clock + dt / velocity_gamma / gravitational_gamma
 }
 
+/// Format the player's scalar velocity as a fraction of the speed of light.
+#[must_use]
+pub(crate) fn format_velocity_fraction(velocity_scalar: UomVelocity, c: UomVelocity) -> String {
+    let fraction = (velocity_scalar / c).value;
+    format!("v = {fraction:.2}c")
+}
+
 // Startup systems.
 
 pub fn spawn_player_clock(commands: &mut Commands, asset_server: &Res<AssetServer>) {
-    let clock_text = Text::new("t_p = 00.00 γ_v = 1.00 γ_g = 1.00 v_p = 00.00");
+    let clock_text = Text::new("t_p = 00.00  γ_v = 1.00  γ_g = 1.00  v = 0.00c");
 
     let node = Node {
         position_type: PositionType::Absolute,
@@ -103,13 +111,15 @@ pub fn player_clock_update(
     clock.value = calculate_player_clock(time_elapsed, velocity_gamma.value, gravitational_gamma.value, clock.value);
 }
 
-pub fn player_clock_text_update(mut query: Query<(&mut Text, &Clock, &VelocityGamma, &GravitationalGamma), With<Player>>) {
+pub fn player_clock_text_update(mut query: Query<(&mut Text, &Clock, &VelocityGamma, &GravitationalGamma), With<PlayerHud>>, velocity_query: Query<&Velocity, With<Player>>) {
     let Ok((mut text, clock, velocity_gamma, gravitational_gamma)) = query.single_mut() else { return };
+    let Ok(velocity) = velocity_query.single() else { return };
 
     let days = clock.value.value / 24.0 / 3600.0;
+    let vel_frac = format_velocity_fraction(velocity.scalar(), *C);
 
     // In Bevy 0.17, Text implements Deref<Target = String>, so we use **text to mutate the underlying String.
-    **text = format!("t_p = {:2.2} γ_v = {:2.2} γ_g = {:2.2}", days, velocity_gamma.value, gravitational_gamma.value);
+    **text = format!("t_p = {:2.2}  γ_v = {:2.2}  γ_g = {:2.2}  {vel_frac}", days, velocity_gamma.value, gravitational_gamma.value);
 }
 
 #[cfg(test)]
@@ -289,6 +299,44 @@ mod tests {
         let result_v_only = calculate_player_clock(dt, 2.0, 1.0, prev);
         let result_both = calculate_player_clock(dt, 2.0, 2.0, prev);
         assert!(result_v_only.value > result_both.value);
+    }
+
+    // --- format_velocity_fraction ---
+
+    #[test]
+    fn format_velocity_fraction_at_rest() {
+        let result = format_velocity_fraction(make_vel(0.0), c());
+        assert_eq!(result, "v = 0.00c");
+    }
+
+    #[test]
+    fn format_velocity_fraction_half_c() {
+        let result = format_velocity_fraction(make_vel(299_792.0 * 0.5), c());
+        assert_eq!(result, "v = 0.50c");
+    }
+
+    #[test]
+    fn format_velocity_fraction_near_c() {
+        let result = format_velocity_fraction(make_vel(299_792.0 * 0.99), c());
+        assert_eq!(result, "v = 0.99c");
+    }
+
+    #[test]
+    fn format_velocity_fraction_low_speed() {
+        let result = format_velocity_fraction(make_vel(299_792.0 * 0.42), c());
+        assert_eq!(result, "v = 0.42c");
+    }
+
+    #[test]
+    fn format_velocity_fraction_prefix_present() {
+        let result = format_velocity_fraction(make_vel(0.0), c());
+        assert!(result.starts_with("v = "));
+    }
+
+    #[test]
+    fn format_velocity_fraction_suffix_present() {
+        let result = format_velocity_fraction(make_vel(0.0), c());
+        assert!(result.ends_with('c'));
     }
 
     // --- proptest property-based tests ---

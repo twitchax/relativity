@@ -132,7 +132,7 @@ tasks:
   - id: T-008
     title: "Clean up HUD and add velocity display"
     priority: 2
-    status: todo
+    status: done
     notes: "Refactor the existing clock/gamma text displays. Add current velocity as fraction of c (e.g., 0.42c). Use bevy_ui nodes instead of raw Text entities for better layout control. Group displays logically: player clock + gamma on the left, observer clock on the right, velocity indicator near the bottom or alongside clocks."
   - id: T-009
     title: "Add camera shake on collision via bevy_trauma_shake"
@@ -431,3 +431,18 @@ This means an automated agent can implement a feature, run `cargo make uat`, and
   - UAT passed: 192 tests, 0 failures
 
 - **Constitution Compliance**: No violations. Minimal changes, new module follows Separation of Concerns. Reuses existing `calculate_gravitational_acceleration` function (DRY). Consistent with existing ECS/Gizmos patterns (trail module structure).
+
+## 2026-02-08 — T-008 Completed
+- **Task**: Clean up HUD and add velocity display
+- **Status**: ✅ Done
+- **Changes**:
+  - Added `PlayerHud` marker component to `src/game/shared/types.rs` — differentiates the HUD text entity from the player sprite entity for cleaner query filtering.
+  - Added `PlayerHud` to `PlayerClockBundle` in `src/game/player/player_clock.rs`.
+  - Added `format_velocity_fraction` pure function in `src/game/player/player_clock.rs` — formats scalar velocity as fraction of c (e.g., `v = 0.42c`).
+  - Updated `player_clock_text_update` system to query player `Velocity` from the sprite entity and include velocity display in the HUD text.
+  - Updated HUD format string: `t_p = DD.DD  γ_v = X.XX  γ_g = X.XX  v = X.XXc` — player clock, velocity gamma, gravitational gamma, and velocity as fraction of c, all on one line with consistent spacing.
+  - Updated initial HUD text in `spawn_player_clock` to match the new format.
+  - Added 6 unit tests for `format_velocity_fraction` (at rest, half c, near c, specific fraction, prefix, suffix).
+  - UAT passed: 198 tests, 0 failures
+
+- **Constitution Compliance**: No violations. Minimal changes (2 files, ~56 lines added). Consistent with existing patterns (pure function + system query pattern). No public API breakage. DRY: reuses existing `Velocity::scalar()` and `C` constant.
