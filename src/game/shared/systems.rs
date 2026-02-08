@@ -6,7 +6,7 @@ use crate::{
 use super::{
     constants::{C, DAYS_PER_SECOND_UOM, G},
     helpers::{get_translation_from_position, has_collided, length_to_pixel, planet_sprite_pixel_radius_to_scale, rocket_sprite_pixel_radius_to_scale},
-    types::{Mass, PlanetSprite, Position, Radius, RocketSprite, Velocity},
+    types::{LaunchState, Mass, PlanetSprite, Position, Radius, RocketSprite, Velocity},
 };
 use bevy::prelude::*;
 use glam::DVec2;
@@ -17,10 +17,11 @@ use uom::si::{
 
 // Escape button.
 
-pub fn exit_level_check(keyboard_input: ResMut<ButtonInput<KeyCode>>, mut app_state: ResMut<NextState<AppState>>, mut game_state: ResMut<NextState<GameState>>) {
+pub fn exit_level_check(keyboard_input: ResMut<ButtonInput<KeyCode>>, mut app_state: ResMut<NextState<AppState>>, mut game_state: ResMut<NextState<GameState>>, mut launch_state: ResMut<LaunchState>) {
     if keyboard_input.just_pressed(KeyCode::Escape) {
         app_state.set(AppState::Menu);
         game_state.set(GameState::Paused);
+        *launch_state = LaunchState::Idle;
     }
 }
 

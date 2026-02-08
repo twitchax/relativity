@@ -86,7 +86,7 @@ acceptance_tests:
   - id: uat-012
     name: "Escape key returns to menu from all GameState sub-states"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
     automated_test: "Headless gameplay test: for each GameState variant (Paused, Running, Failed, Finished), enter that state, inject Escape key press via ButtonInput<KeyCode>, run one frame, assert AppState transitions to Menu. Verify outcome overlay entities are despawned."
   - id: uat-013
     name: "Completing Level 1 advances CurrentLevel via next() and re-enters InGame"
@@ -152,7 +152,7 @@ tasks:
   - id: T-012
     title: "Ensure Escape returns to menu from all game states"
     priority: 2
-    status: todo
+    status: done
     notes: "exit_level_check already transitions to Menu on Escape. Verify it runs in all GameState sub-states (Paused, Running, Failed, Finished). Make sure outcome overlays are despawned properly on Escape."
 ---
 
@@ -458,3 +458,21 @@ This means an automated agent can implement a feature, run `cargo make uat`, and
   - UAT passed: 198 tests, 0 failures
 
 - **Constitution Compliance**: No violations. Minimal changes (3 files). Consistent with existing patterns (marker resource, `OnEnter` system). `CurrentLevel::next()` already existed from T-004 — reused (DRY). No public API breakage.
+
+## 2026-02-08 — T-012 Completed
+- **Task**: Ensure Escape returns to menu from all game states
+- **Status**: ✅ Done
+- **Changes**:
+  - Verified `exit_level_check` already runs with `.run_if(in_state(AppState::InGame))` — no `GameState` filter — so it handles Escape from all sub-states (Paused, Running, Failed, Finished).
+  - Verified outcome overlays are properly cleaned up: setting `GameState::Paused` from `Failed`/`Finished` triggers `OnExit` hooks that despawn `FailureOverlay`/`SuccessOverlay` entities.
+  - Updated `exit_level_check` in `src/game/shared/systems.rs` to also reset `LaunchState` to `Idle` on Escape, preventing stale aim/launch state when re-entering the game from menu.
+  - Added `LaunchState` import to the system's module.
+  - Created `tests/e2e_escape.rs` with 5 E2E tests:
+    - `escape_from_paused_returns_to_menu` — verifies Escape from Paused transitions to Menu.
+    - `escape_from_running_returns_to_menu` — verifies Escape from Running transitions to Menu.
+    - `escape_from_failed_returns_to_menu` — verifies Escape from Failed transitions to Menu and despawns FailureOverlay.
+    - `escape_from_finished_returns_to_menu` — verifies Escape from Finished transitions to Menu and despawns SuccessOverlay.
+    - `escape_resets_launch_state_to_idle` — verifies LaunchState is reset to Idle on Escape.
+  - UAT passed: 203 tests, 0 failures
+
+- **Constitution Compliance**: No violations. Minimal changes (2 files modified, 1 file created). Consistent with existing ECS patterns and test conventions.
