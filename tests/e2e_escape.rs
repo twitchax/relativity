@@ -17,34 +17,25 @@ use relativity::{
 
 /// Inject an Escape key press into the app and run updates to process the state transition.
 ///
-/// Bevy's `InputPlugin` clears `just_pressed` tracking in `PreUpdate`, so we inject the
-/// key press between updates using `ButtonInput::press`. The first `app.update()` clears it
-/// via `PreUpdate`, so we inject after the first update, then the second update sees it as
-/// `just_pressed` during its `Update` schedule, and the third update applies the queued state.
+/// The `exit_level_check` system starts a fade-out animation (~0.3s). It also immediately
+/// sets `GameState::Paused` to clean up overlays. The fade-out timer runs for ~18 frames at
+/// 60fps, after which `fade_update_system` applies the `AppState::Menu` transition and starts
+/// a fade-in. We run enough frames to ensure the full fade-out completes plus one extra for
+/// the queued state transition.
 fn press_escape_and_process(app: &mut App) {
-    // The key must be "just pressed" during the Update schedule.
-    // ButtonInput::press() sets both pressed and just_pressed.
-    // However, InputPlugin's PreUpdate clears just_pressed.
-    // So we press the key, then update — but we need to avoid PreUpdate clearing it.
-    //
-    // Alternative: Use run_system_once to directly invoke exit_level_check with a pressed key.
-    // Simpler: skip InputPlugin interference by pressing right before update.
     app.world_mut().resource_mut::<ButtonInput<KeyCode>>().press(KeyCode::Escape);
-    // Run only Update (not full app.update which includes PreUpdate that clears just_pressed).
-    // Actually, full app.update runs PreUpdate first which clears just_pressed before Update.
-    // We need to work around this.
 
-    // Solution: call clear_just_pressed manually AFTER the input system clears it but BEFORE our system runs.
-    // Actually, the simplest approach is to call the system directly.
+    // Directly invoke exit_level_check so the Escape key is seen as `just_pressed`.
     app.world_mut()
         .run_system_once(relativity::game::shared::systems::exit_level_check)
         .expect("exit_level_check should run");
 
-    // Now release the key to clean up.
     app.world_mut().resource_mut::<ButtonInput<KeyCode>>().release(KeyCode::Escape);
 
-    // Run update to apply the queued NextState transitions.
-    app.update();
+    // Run enough frames for the fade-out to complete (~0.3s at 60fps = 18 frames + buffer).
+    for _ in 0..25 {
+        app.update();
+    }
 }
 
 /// Read the current `AppState`.

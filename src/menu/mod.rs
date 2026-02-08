@@ -1,6 +1,10 @@
 use crate::{
-    game::{levels::CurrentLevel, shared::types::PendingNextLevel},
-    shared::state::AppState,
+    game::{
+        fade::{is_fading, FadeState},
+        levels::CurrentLevel,
+        shared::types::PendingNextLevel,
+    },
+    shared::state::{AppState, GameState},
 };
 use bevy::prelude::*;
 
@@ -96,23 +100,24 @@ fn despawn_menu(mut commands: Commands, query: Query<Entity, With<MenuScreen>>) 
 
 /// If `PendingNextLevel` is present (set by the "Next Level" button), skip the menu
 /// and transition directly to `InGame` with the already-updated `CurrentLevel`.
-fn auto_advance_to_next_level(mut commands: Commands, pending: Option<Res<PendingNextLevel>>, mut app_state: ResMut<NextState<AppState>>) {
+fn auto_advance_to_next_level(mut commands: Commands, pending: Option<Res<PendingNextLevel>>, mut fade: ResMut<FadeState>) {
     if pending.is_some() {
         commands.remove_resource::<PendingNextLevel>();
-        app_state.set(AppState::InGame);
+        fade.start_fade_out(AppState::InGame, GameState::Paused);
     }
 }
 
 #[allow(clippy::type_complexity)]
-fn menu_button_interaction(
-    interaction_query: Query<(&Interaction, &LevelButton), (Changed<Interaction>, With<Button>)>,
-    mut current_level: ResMut<CurrentLevel>,
-    mut app_state: ResMut<NextState<AppState>>,
-) {
+fn menu_button_interaction(interaction_query: Query<(&Interaction, &LevelButton), (Changed<Interaction>, With<Button>)>, mut current_level: ResMut<CurrentLevel>, mut fade: ResMut<FadeState>) {
+    // Suppress input while a fade is in progress.
+    if is_fading(&fade) {
+        return;
+    }
+
     for (interaction, level_button) in &interaction_query {
         if *interaction == Interaction::Pressed {
             *current_level = level_button.0;
-            app_state.set(AppState::InGame);
+            fade.start_fade_out(AppState::InGame, GameState::Paused);
         }
     }
 }

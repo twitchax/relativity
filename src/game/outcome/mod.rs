@@ -1,5 +1,6 @@
 use crate::{
     game::{
+        fade::{is_fading, FadeState},
         levels::CurrentLevel,
         shared::types::{FailureOverlay, FailureTimer, NextLevelButton, PendingNextLevel, SuccessOverlay},
     },
@@ -85,7 +86,7 @@ pub fn despawn_success_overlay(mut commands: Commands, query: Query<Entity, With
 /// Handle Next Level button interaction.
 ///
 /// If there is a next level, advance `CurrentLevel`, insert `PendingNextLevel` marker,
-/// and transition through Menu to trigger level despawn/respawn. The menu auto-advances
+/// and fade-transition through Menu to trigger level despawn/respawn. The menu auto-advances
 /// back to `InGame` when `PendingNextLevel` is present.
 /// If no next level, return to Menu without the marker.
 #[allow(clippy::type_complexity)]
@@ -93,9 +94,13 @@ pub fn success_button_interaction(
     mut commands: Commands,
     interaction_query: Query<&Interaction, (Changed<Interaction>, With<NextLevelButton>)>,
     mut current_level: ResMut<CurrentLevel>,
-    mut app_state: ResMut<NextState<AppState>>,
-    mut game_state: ResMut<NextState<GameState>>,
+    mut fade: ResMut<FadeState>,
 ) {
+    // Suppress input while a fade is in progress.
+    if is_fading(&fade) {
+        return;
+    }
+
     for interaction in &interaction_query {
         if *interaction == Interaction::Pressed {
             if let Some(next) = current_level.next() {
@@ -103,10 +108,9 @@ pub fn success_button_interaction(
                 commands.insert_resource(PendingNextLevel);
             }
 
-            // Transition to Menu to trigger OnExit(InGame) despawn.
+            // Trigger a fade-out that will transition to Menu.
             // If PendingNextLevel is set, the menu will auto-advance to InGame.
-            app_state.set(AppState::Menu);
-            game_state.set(GameState::Paused);
+            fade.start_fade_out(AppState::Menu, GameState::Paused);
         }
     }
 }

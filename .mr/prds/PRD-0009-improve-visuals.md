@@ -142,7 +142,7 @@ tasks:
   - id: T-010
     title: "Add fade transitions between screens"
     priority: 3
-    status: todo
+    status: done
     notes: "Spawn a full-screen bevy_ui node with BackgroundColor set to black and alpha 0. On state transitions (Menu->InGame, InGame->Success/Failure, etc.), animate alpha 0->1 (fade out) then switch state then 1->0 (fade in). Use a FadeState resource and a system that interpolates alpha over time. ~0.3s per direction."
   - id: T-011
     title: "Wire up level progression (next level on success)"
@@ -491,3 +491,24 @@ This means an automated agent can implement a feature, run `cargo make uat`, and
   - UAT passed: 203 tests, 0 failures
 
 - **Constitution Compliance**: No violations. Minimal changes (7 files). Consistent with existing ECS patterns (OnEnter system, component on camera, plugin registration). New dependency `bevy_trauma_shake` is justified per PRD principles.
+
+## 2026-02-08 — T-010 Completed
+- **Task**: Add fade transitions between screens
+- **Status**: ✅ Done
+- **Changes**:
+  - Created new `src/game/fade/mod.rs` module with:
+    - `FadeOverlay` marker component for the persistent full-screen overlay entity.
+    - `FadeDirection` enum (`Out { next_app_state, next_game_state }`, `In`) tracking animation direction.
+    - `FadeState` resource with `start_fade_out()` and `start_fade_in()` methods and a `Timer`.
+    - `spawn_fade_overlay` startup system — spawns a persistent full-screen `bevy_ui` node with `BackgroundColor` (black, alpha=0), `GlobalZIndex(200)`, and `Pickable::IGNORE` to avoid blocking clicks.
+    - `fade_update_system` — ticks the fade timer each frame, interpolates overlay alpha (0→1 for out, 1→0 for in), applies the deferred `AppState`/`GameState` transition when fade-out completes, and auto-starts fade-in.
+    - `is_fading()` helper for callers to suppress input during transitions.
+    - 7 unit tests for `FadeState` defaults, direction tracking, and `is_fading` logic.
+  - Registered `fade` module in `src/game/mod.rs`: added `FadeState` resource init, `spawn_fade_overlay` startup system, and `fade_update_system` running every frame.
+  - Updated `src/menu/mod.rs`: `menu_button_interaction` and `auto_advance_to_next_level` now call `fade.start_fade_out()` instead of directly setting `AppState`. Menu button input is suppressed while fading.
+  - Updated `src/game/outcome/mod.rs`: `success_button_interaction` now calls `fade.start_fade_out()` instead of directly setting `AppState`/`GameState`. Input suppressed while fading.
+  - Updated `src/game/shared/systems.rs`: `exit_level_check` now starts a fade-out to `AppState::Menu` instead of immediate transition. `GameState::Paused` is still set immediately for overlay cleanup.
+  - Updated `tests/e2e_escape.rs`: `press_escape_and_process` now runs 25 frames to allow the fade-out animation (~0.3s at 60fps) to complete before asserting `AppState::Menu`.
+  - UAT passed: 210 tests, 0 failures
+
+- **Constitution Compliance**: No violations. Minimal changes (6 files modified, 1 file created). Consistent with existing ECS patterns (Resource + System, Startup system, marker component). Separation of Concerns: fade logic is isolated in its own module. DRY: all callers use the same `FadeState::start_fade_out()` API.

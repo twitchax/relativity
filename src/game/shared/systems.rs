@@ -1,12 +1,11 @@
-use crate::{
-    game::{destination::Destination, object::Planet, player::shared::Player},
-    shared::state::{AppState, GameState},
-};
-
 use super::{
     constants::{C, DAYS_PER_SECOND_UOM, G},
     helpers::{get_translation_from_position, has_collided, length_to_pixel, planet_sprite_pixel_radius_to_scale, rocket_sprite_pixel_radius_to_scale},
     types::{LaunchState, Mass, PlanetSprite, Position, Radius, RocketSprite, Velocity},
+};
+use crate::{
+    game::{destination::Destination, fade::FadeState, object::Planet, player::shared::Player},
+    shared::state::{AppState, GameState},
 };
 use bevy::prelude::*;
 use glam::DVec2;
@@ -17,11 +16,14 @@ use uom::si::{
 
 // Escape button.
 
-pub fn exit_level_check(keyboard_input: ResMut<ButtonInput<KeyCode>>, mut app_state: ResMut<NextState<AppState>>, mut game_state: ResMut<NextState<GameState>>, mut launch_state: ResMut<LaunchState>) {
+pub fn exit_level_check(keyboard_input: ResMut<ButtonInput<KeyCode>>, mut fade: ResMut<FadeState>, mut game_state: ResMut<NextState<GameState>>, mut launch_state: ResMut<LaunchState>) {
     if keyboard_input.just_pressed(KeyCode::Escape) {
-        app_state.set(AppState::Menu);
+        // Reset game-internal state immediately so UI cleans up.
         game_state.set(GameState::Paused);
         *launch_state = LaunchState::Idle;
+
+        // Fade-out to menu.
+        fade.start_fade_out(AppState::Menu, GameState::Paused);
     }
 }
 

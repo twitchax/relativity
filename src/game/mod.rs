@@ -1,4 +1,5 @@
 pub mod destination;
+pub mod fade;
 pub mod gravity_grid;
 pub mod levels;
 pub mod object;
@@ -16,6 +17,7 @@ use bevy::prelude::*;
 use crate::shared::state::{AppState, GameState};
 
 use self::{
+    fade::{fade_update_system, spawn_fade_overlay, FadeState},
     gravity_grid::gravity_grid_render_system,
     levels::{despawn_level, spawn_level},
     observer::{observer_clock_text_update, observer_clock_update},
@@ -37,6 +39,11 @@ impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<GameState>()
             .init_resource::<LaunchState>()
+            .init_resource::<FadeState>()
+            // Spawn the persistent fade overlay.
+            .add_systems(Startup, spawn_fade_overlay)
+            // Fade animation runs unconditionally every frame.
+            .add_systems(Update, fade_update_system)
             // Spawn things on enter.
             .add_systems(OnEnter(AppState::InGame), spawn_level)
             // Destroy things on exit.
