@@ -51,6 +51,7 @@ All dev/CI workflows route through `cargo make`. Key tasks:
 | `changelog` | Generate CHANGELOG.md via git-cliff |
 | `release` | Full release pipeline (CI → changelog → bump → push) |
 | `github-release` | Create GitHub release with artifacts |
+| `publish-all` | Full publish pipeline (GitHub release) |
 | `clean` | Run `cargo clean` |
 
 ## Conventions for Agents

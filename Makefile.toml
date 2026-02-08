@@ -266,6 +266,34 @@ echo "Next steps:"
 echo "  1. Create GitHub release: cargo make github-release v$VERSION"
 '''
 
+[tasks.publish-all]
+cwd = "."
+workspace = false
+script_runner = "@shell"
+script = '''#!/bin/bash
+set -e
+
+TAG=${1:-}
+if [ -z "$TAG" ]; then
+    echo "❌ Error: Version tag required"
+    echo "Usage: cargo make publish-all <tag>"
+    echo "Example: cargo make publish-all v0.1.0"
+    exit 1
+fi
+shift  # Remove TAG from args, remaining args passed to github-release
+
+echo "🚀 Starting full publish pipeline for $TAG..."
+echo ""
+
+# Create GitHub release with artifacts
+echo "📦 Creating GitHub release..."
+cargo make github-release "$TAG" "$@"
+
+echo ""
+echo "✅ Full publish pipeline complete!"
+echo "   GitHub release: https://github.com/twitchax/relativity/releases/tag/$TAG"
+'''
+
 [tasks.github-release]
 cwd = "."
 workspace = false

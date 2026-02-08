@@ -47,7 +47,7 @@ acceptance_tests:
   - id: uat-006
     name: "Makefile.toml has release, github-release, and publish-all tasks"
     command: "grep -q 'tasks.release' Makefile.toml && grep -q 'tasks.github-release' Makefile.toml"
-    uat_status: unverified
+    uat_status: verified
 tasks:
   - id: T-001
     title: "Consolidate web.yml into build.yml"
@@ -77,7 +77,7 @@ tasks:
   - id: T-006
     title: "Add release, github-release, and publish-all tasks to Makefile.toml"
     priority: 2
-    status: todo
+    status: done
     notes: "Port the release automation tasks from microralph's Makefile.toml, adapting repo name and removing wasm/OCI tasks that don't apply."
   - id: T-007
     title: "Modernize GitHub Pages deploy action"
@@ -230,4 +230,15 @@ Port from microralph, adapting:
   - Pattern matches microralph's `build.yml` exactly
   - UAT passed: `cargo make uat` — 166 tests passed, 0 failed
 - **UATs Verified**: uat-005 (`grep -q mold .github/workflows/build.yml` passes)
+- **Constitution Compliance**: No violations.
+
+## 2026-02-08 — T-006 Completed
+- **Task**: Add release, github-release, and publish-all tasks to Makefile.toml
+- **Status**: ✅ Done
+- **Changes**:
+  - `release` and `github-release` tasks already existed in `Makefile.toml` (ported in earlier work)
+  - Added `publish-all` task to `Makefile.toml` — adapted from microralph by removing crates.io publishing (relativity is a game, not a library); the task creates a GitHub release only
+  - Updated `AGENTS.md` to document the new `publish-all` task in the cargo-make task table
+  - UAT passed: `cargo make uat` — 166 tests passed, 0 failed
+- **UATs Verified**: uat-006 (`grep -q 'tasks.release' Makefile.toml && grep -q 'tasks.github-release' Makefile.toml` passes)
 - **Constitution Compliance**: No violations.
