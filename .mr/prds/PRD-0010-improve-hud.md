@@ -65,7 +65,7 @@ tasks:
   - id: T-003
     title: "Build bottom-anchored HUD bar with two segmented panels"
     priority: 3
-    status: todo
+    status: done
     notes: "Use UiLayout::boundary() or window() to position a bar at the bottom of the screen. Create left panel (player stats) and right panel (observer clock). Use Sprite with 9-slice for chrome background. Semi-transparent dark background (0.1, 0.1, 0.15, 0.85) with thin cyan/white border accent."
   - id: T-004
     title: "Create or source HUD chrome sprite assets"
@@ -238,3 +238,19 @@ UiLayoutRoot (2D, camera-synced)
   - Added `UiLunexPlugins` in `src/main.rs` (not inside `GamePlugin`) so that bevy_lunex's cursor/picking systems have access to window resources from `DefaultPlugins`. This avoids panics in headless tests that use `MinimalPlugins` + `GamePlugin`.
   - UAT passed: 230 tests run, 230 passed, 0 skipped (`cargo make uat` exit code 0)
 - **Constitution Compliance**: No violations. `UiLunexPlugins` is registered in `main.rs` rather than in `HudPlugin` to respect separation of concerns — the plugin group requires `DefaultPlugins` resources, so it belongs at the app level.
+
+## 2026-02-08 — T-003 Completed
+- **Task**: Build bottom-anchored HUD bar with two segmented panels
+- **Status**: ✅ Done
+- **Changes**:
+  - Expanded `src/game/hud/mod.rs` to build the full HUD layout tree under the existing `UiLayoutRoot`:
+    - Bottom HUD bar at 88–100% screen height using `UiLayout::boundary()`
+    - Left player panel (1–59% width) with semi-transparent dark background (`srgba(0.1, 0.1, 0.15, 0.85)`)
+    - Right observer panel (64–99% width) with matching background
+    - Cyan border accent (`srgba(0.3, 0.8, 1.0, 0.7)`) top-line on each panel
+    - Placeholder text labels: `t_p`, `γ_v`, `γ_g`, `v` in left panel; `t_o` in right panel
+    - All entities marked with `GameItem` for lifecycle management
+  - Added marker components: `HudBar`, `PlayerPanel`, `ObserverPanel`
+  - Used `ChildSpawnerCommands` (Bevy 0.18 API) for helper spawn functions
+  - UAT passed: 230 tests run, 230 passed, 0 skipped (`cargo make uat` exit code 0)
+- **Constitution Compliance**: No violations. Minimal changes to single file, consistent with existing patterns.
