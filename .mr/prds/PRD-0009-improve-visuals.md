@@ -107,7 +107,7 @@ tasks:
   - id: T-003
     title: "Implement two-phase launch mechanic (angle lock + power drag)"
     priority: 1
-    status: todo
+    status: done
     notes: "Phase 1: Click sets angle (direction from player to cursor). Render a Gizmo line from player in that direction. Phase 2: Hold and drag away/toward player to set power (0-99% c). Render a power bar UI element. Release fires the player. Add a LaunchState resource (Idle, AimLocked { angle }, Launching { angle, power }) to track state machine."
   - id: T-004
     title: "Implement success screen with Next Level button"
@@ -350,3 +350,23 @@ This means an automated agent can implement a feature, run `cargo make uat`, and
   - UAT passed: 169 tests, 0 failures
 
 - **Constitution Compliance**: No violations. Minimal changes, consistent with existing Bevy ECS patterns, no public API breakage.
+
+## 2026-02-08 — T-003 Completed
+- **Task**: Implement two-phase launch mechanic (angle lock + power drag)
+- **Status**: ✅ Done
+- **Changes**:
+  - Added `LaunchState` resource enum (`Idle`, `AimLocked { angle }`, `Launching { angle, power }`) and `PowerBarUi` marker component to `src/game/shared/types.rs`.
+  - Replaced single `player_launch` system with four systems in `src/game/player/player_sprite.rs`:
+    - `launch_aim_system` — on mouse press, computes angle from player to cursor, transitions to `AimLocked`.
+    - `launch_power_system` — while mouse held, computes power from drag distance (0–1.0, scaled by 80% screen width).
+    - `launch_fire_system` — on mouse release in `Launching` state, sets velocity and transitions to `GameState::Running`. Release from `AimLocked` (no drag) cancels back to `Idle`.
+    - `launch_visual_system` — renders direction Gizmo line and spawns/despawns a power-bar `bevy_ui` overlay.
+  - Added `calculate_launch_velocity_from_angle_power` pure function for velocity computation from angle + power.
+  - Retained `calculate_launch_velocity` (gated with `#[cfg(test)]`) for backward-compatible unit tests.
+  - Updated `src/game/mod.rs`: registered `LaunchState` resource, replaced `player_launch` with four new systems in `Paused` state.
+  - Updated `tests/common/gameplay.rs`: added `bevy::gizmos::GizmoPlugin` to headless test app for `Gizmos` system param support. Updated doc comments.
+  - Updated `tests/e2e_level1_gameplay.rs`: updated doc comments to reflect new system names.
+  - Added 7 new unit tests for `calculate_launch_velocity_from_angle_power` and `LaunchState`.
+  - UAT passed: 177 tests, 0 failures
+
+- **Constitution Compliance**: No violations. Minimal changes, consistent with existing Bevy ECS patterns, no public API breakage. The old `calculate_launch_velocity` function was preserved (test-only) for backward compatibility.

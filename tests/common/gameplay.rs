@@ -6,12 +6,12 @@
 //! transition state, launch the player, and run the physics loop.
 //!
 //! Why we don't emulate a mouse click:
-//! Bevy's `player_launch` system reads `ButtonInput<MouseButton>` and cursor
+//! Bevy's launch systems read `ButtonInput<MouseButton>` and cursor
 //! position from `PrimaryWindow`.  In a headless test (no WinitPlugin), the
-//! window's `cursor_position()` always returns `None`, so the system
-//! early-returns.  We bypass input and directly set the player's Velocity,
-//! which is what `player_launch` ultimately computes from the click.  The
-//! pure function `calculate_launch_velocity` is already unit-tested separately.
+//! window's `cursor_position()` always returns `None`, so the systems
+//! early-return.  We bypass input and directly set the player's Velocity,
+//! which is what the launch systems ultimately compute from the click.  The
+//! pure functions are already unit-tested separately.
 
 use std::time::Duration;
 
@@ -42,6 +42,7 @@ pub fn build_gameplay_app() -> App {
         .add_plugins(TextPlugin)
         .add_plugins(StatesPlugin)
         .add_plugins(InputPlugin)
+        .add_plugins(bevy::gizmos::GizmoPlugin)
         .insert_resource(TimeUpdateStrategy::ManualDuration(Duration::from_secs_f64(1.0 / 60.0)))
         .insert_resource(ClearColor(Color::srgb(0.0, 0.0, 0.0)))
         .init_resource::<relativity::game::levels::CurrentLevel>()
@@ -84,7 +85,7 @@ pub fn current_game_state(app: &App) -> GameState {
 /// Set the player sprite's launch velocity (km/s) without changing position.
 ///
 /// The player stays at its default spawn location; only velocity is set.
-/// This mimics what `player_launch` does after computing velocity from a click.
+/// This mimics what the launch systems do after computing velocity from input.
 pub fn launch_player(app: &mut App, player: Entity, vel_kms: (f64, f64)) {
     let mut vel = app.world_mut().get_mut::<Velocity>(player).unwrap();
     vel.x = UomVelocity::new::<kilometer_per_second>(vel_kms.0);

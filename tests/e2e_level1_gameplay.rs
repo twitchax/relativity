@@ -2,7 +2,7 @@
 //
 // The level is spawned exactly as the real game does — the player starts at
 // the default position with zero velocity.  We then set a launch velocity
-// (mimicking what `player_launch` computes from the mouse click) and run the
+// (mimicking what the launch systems compute from mouse input) and run the
 // full physics loop to prove the level is solvable.
 //
 // UPDATE THE VELOCITIES below if you change the Level 1 layout.

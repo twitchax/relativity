@@ -4,6 +4,28 @@ use uom::si::f64::{Length as UomLength, Mass as UomMass, Time as UomTime, Veloci
 #[derive(Component, Default)]
 pub struct GameItem;
 
+/// Two-phase launch state machine.
+///
+/// - `Idle`: waiting for the player to click.
+/// - `AimLocked`: click registered; direction line rendered via Gizmos.
+/// - `Launching`: holding and dragging to set power; power bar UI visible.
+#[derive(Resource, Default, Debug, Clone, PartialEq)]
+pub enum LaunchState {
+    #[default]
+    Idle,
+    AimLocked {
+        angle: f32,
+    },
+    Launching {
+        angle: f32,
+        power: f32,
+    },
+}
+
+/// Marker for the power-bar UI overlay spawned during the Launching phase.
+#[derive(Component)]
+pub struct PowerBarUi;
+
 #[derive(Component, Default)]
 pub struct PlanetSprite;
 
