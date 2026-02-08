@@ -80,7 +80,7 @@ tasks:
   - id: T-006
     title: "Wire observer clock into right HUD panel"
     priority: 4
-    status: todo
+    status: done
     notes: "Display t_o in the right panel. Update observer_clock_text_update to target new entity."
   - id: T-007
     title: "Remove old top-positioned HUD spawn code"
@@ -279,3 +279,15 @@ UiLayoutRoot (2D, camera-synced)
   - Added imports for `Player`, `Clock`, `VelocityGamma`, `GravitationalGamma`, `Velocity`, `PlayerHud`, `C`, and `format_velocity_fraction` to the HUD module
   - UAT passed: 230 tests run, 230 passed, 0 skipped (`cargo make uat` exit code 0)
 - **Constitution Compliance**: No violations. Minimal changes, consistent with existing patterns. The old `player_clock_text_update` system remains untouched (it still updates the old `Text`-based HUD entity); removal is deferred to T-007.
+
+## 2026-02-08 — T-006 Completed
+- **Task**: Wire observer clock into right HUD panel
+- **Status**: ✅ Done
+- **Changes**:
+  - Added `HudObserverTime` marker component in `src/game/hud/mod.rs`
+  - Attached `HudObserverTime` marker to the observer label entity in `spawn_observer_labels`
+  - Added `observer_hud_text_update` system that reads `Clock` from the `Observer` entity and writes the formatted time into the `HudObserverTime` `Text2d` component using the existing `format_observer_time` pure function
+  - Registered `observer_hud_text_update` in `GamePlugin` (running after `observer_clock_update` in the `Running` state)
+  - Added imports for `Observer` and `format_observer_time` from the observer module
+  - UAT passed: 230 tests run, 230 passed, 0 skipped (`cargo make uat` exit code 0)
+- **Constitution Compliance**: No violations. Minimal changes to two files, consistent with the pattern established in T-005. The old `observer_clock_text_update` system remains untouched; removal is deferred to T-007.

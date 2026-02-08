@@ -2,6 +2,7 @@ use bevy::ecs::hierarchy::ChildSpawnerCommands;
 use bevy::prelude::*;
 use bevy_lunex::prelude::*;
 
+use crate::game::observer::{format_observer_time, Observer};
 use crate::game::player::player_clock::format_velocity_fraction;
 use crate::game::player::shared::Player;
 use crate::game::shared::constants::C;
@@ -53,6 +54,10 @@ pub struct HudGravGamma;
 /// Marker for the velocity fraction (v) HUD label.
 #[derive(Component)]
 pub struct HudVelocityFraction;
+
+/// Marker for the observer time (`t_o`) HUD label.
+#[derive(Component)]
+pub struct HudObserverTime;
 
 /// Plugin that spawns the HUD layout root.
 ///
@@ -137,6 +142,7 @@ fn spawn_observer_labels(panel: &mut ChildSpawnerCommands, font: &Handle<Font>) 
 
     panel.spawn((
         GameItem,
+        HudObserverTime,
         UiLayout::window().pos(Rl((5.0, 50.0))).anchor(Anchor::CENTER_LEFT).pack(),
         UiTextSize::from(Rh(22.0)),
         Text2d::new("t_o = 0.00"),
@@ -179,6 +185,17 @@ pub fn player_hud_text_update(
     if let Ok(mut text) = vf_query.single_mut() {
         **text = format_velocity_fraction(velocity.scalar(), *C);
     }
+}
+
+/// Updates the observer time label in the HUD with live data.
+///
+/// Reads `Clock` from the `Observer` entity, then writes the formatted
+/// value into the `HudObserverTime` `Text2d` component.
+pub fn observer_hud_text_update(data_query: Query<&Clock, With<Observer>>, mut to_query: Query<&mut Text2d, With<HudObserverTime>>) {
+    let Ok(clock) = data_query.single() else { return };
+    let Ok(mut text) = to_query.single_mut() else { return };
+
+    **text = format_observer_time(clock.value.value);
 }
 
 /// Despawns the HUD root entity on state exit.
