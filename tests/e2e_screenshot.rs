@@ -51,7 +51,7 @@ fn level1_spawn_screenshot_matches_baseline() {
     app.world_mut().resource_mut::<NextState<AppState>>().set(AppState::InGame);
 
     // Run enough frames for the scene to stabilize (spawn + render).
-    for _ in 0..10 {
+    for _ in 0..100 {
         app.update();
     }
 

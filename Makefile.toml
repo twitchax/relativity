@@ -84,7 +84,7 @@ cwd = "."
 workspace = false
 dependencies = ["install-nextest"]
 command = "cargo"
-args = ["nextest", "run"]
+args = ["nextest", "run", "--build-jobs", "8"]
 
 [tasks.test-cargo]
 # Fallback for environments without nextest.
