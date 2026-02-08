@@ -29,7 +29,7 @@ acceptance_tests:
   - id: uat-001
     name: "HUD renders at bottom of screen with chrome panels"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
   - id: uat-002
     name: "Player panel shows t_p, γ_v, γ_g, v with correct values"
     command: cargo make uat
@@ -338,3 +338,13 @@ UiLayoutRoot (2D, camera-synced)
   - No clippy or fmt issues found in the new HUD code — previous tasks maintained clean code throughout
   - No code changes required; this task is a verification-only gate
 - **Constitution Compliance**: No violations. No code changes made.
+
+## 2026-02-08 — uat-001 Verification
+- **UAT**: HUD renders at bottom of screen with chrome panels
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Created `tests/e2e_hud_structure.rs` with two tests:
+    - `hud_spawns_with_bottom_bar_and_chrome_panels`: Verifies HudRoot, HudBar, PlayerPanel (with Sprite), and ObserverPanel (with Sprite) all exist after entering InGame.
+    - `hud_hierarchy_is_correct`: Verifies HudBar is a child of HudRoot, and both PlayerPanel and ObserverPanel are children of HudBar, confirming the bottom-anchored layout hierarchy.
+  - Full UAT passed: 232 tests run, 232 passed, 0 skipped (`cargo make uat` exit code 0).
