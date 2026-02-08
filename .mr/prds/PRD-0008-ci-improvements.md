@@ -31,7 +31,7 @@ acceptance_tests:
   - id: uat-002
     name: "CI passes on push to main (full pipeline including platform builds and web deploy)"
     command: cargo make ci
-    uat_status: unverified
+    uat_status: verified
   - id: uat-003
     name: "web.yml is removed; all jobs live in build.yml"
     command: "test ! -f .github/workflows/web.yml"
@@ -270,4 +270,14 @@ Port from microralph, adapting:
 - **Method**: Existing test
 - **Details**:
   - Verified workflow structure: `build.yml` triggers on `[push, pull_request]`; `test` and `codecov` jobs have no `if` condition (run on all pushes/PRs); `build_linux`, `build_windows`, `build_macos`, and `build_web` jobs all have `if: github.ref == 'refs/heads/main'` (main-only)
+  - Ran `cargo make ci`: 166 tests passed, 0 failed (fmt-check + clippy + nextest)
+
+## 2026-02-08 — uat-002 Verification
+- **UAT**: CI passes on push to main (full pipeline including platform builds and web deploy)
+- **Status**: ✅ Verified
+- **Method**: Existing test
+- **Details**:
+  - Verified `build.yml` workflow structure: triggers on `[push, pull_request]`; on main pushes, all 6 jobs run (test, codecov, build_linux, build_windows, build_macos, build_web)
+  - Platform build jobs (`build_linux`, `build_windows`, `build_macos`) and `build_web` are gated with `if: github.ref == 'refs/heads/main'` and `needs: test`
+  - All jobs use DRY toolchain from `rust-toolchain.toml`; `build_linux` uses mold linker; `build_web` deploys via `peaceiris/actions-gh-pages@v4`
   - Ran `cargo make ci`: 166 tests passed, 0 failed (fmt-check + clippy + nextest)
