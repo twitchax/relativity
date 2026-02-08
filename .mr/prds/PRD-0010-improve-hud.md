@@ -1,7 +1,7 @@
 ---
 id: PRD-0010
 title: "Improve HUD: Bottom-Anchored Chrome with bevy_lunex"
-status: draft
+status: active
 owner: twitchax
 created: 2026-02-08
 updated: 2026-02-08
@@ -55,7 +55,7 @@ tasks:
   - id: T-001
     title: "Add bevy_lunex dependency to Cargo.toml"
     priority: 1
-    status: todo
+    status: done
     notes: "Add bevy_lunex = \"0.6\" to [dependencies]. Add wasm feature for WASM target in [target.'cfg(target_arch = \"wasm32\")'.dependencies]."
   - id: T-002
     title: "Create HUD module with bevy_lunex layout root and plugin"
@@ -216,3 +216,13 @@ UiLayoutRoot (2D, camera-synced)
 - Adding gamepad/keyboard navigation for HUD elements (HUD is display-only)
 
 # History
+
+## 2026-02-08 — T-001 Completed
+- **Task**: Add bevy_lunex dependency to Cargo.toml
+- **Status**: ✅ Done
+- **Changes**:
+  - Added `bevy_lunex = "0.6"` to `[dependencies]` in `Cargo.toml`
+  - Added `bevy_lunex = { version = "0.6", features = ["wasm"] }` to `[target.'cfg(target_arch = "wasm32")'.dependencies]` for WASM support
+  - `Cargo.lock` updated with bevy_lunex and its transitive dependencies
+  - UAT passed: 230 tests run, 230 passed, 0 skipped (`cargo make uat` exit code 0)
+- **Constitution Compliance**: No violations. Minimal change (two lines added to Cargo.toml), consistent with existing dependency style.

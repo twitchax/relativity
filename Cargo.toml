@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 bevy = "0.18"
+bevy_lunex = "0.6"
 bevy_trauma_shake = "0.7"
 uom = "0.37"
 nalgebra-spacetime = "0.5"
@@ -20,6 +21,7 @@ proptest = "1"
 # WASM support: webgl2 feature for browser compatibility
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 bevy = { version = "0.18", features = ["webgl2"] }
+bevy_lunex = { version = "0.6", features = ["wasm"] }
 console_error_panic_hook = "0.1"
 # getrandom is a transitive dependency that needs "js" feature for WASM
 getrandom = { version = "0.4", features = ["wasm_js"] }
