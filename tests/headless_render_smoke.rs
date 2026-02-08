@@ -68,6 +68,13 @@ fn spawn_offscreen_camera(mut commands: Commands, mut images: ResMut<Assets<Imag
 
 #[test]
 fn headless_app_boots_and_runs_without_panic() {
+    // cargo-make sets RUST_BACKTRACE=full by default. Any non-zero value causes
+    // wgpu/Bevy's Metal render graph to hang on macOS (backtrace symbolication
+    // contends with GPU driver internals). Disable it before Bevy initializes.
+    unsafe {
+        std::env::set_var("RUST_BACKTRACE", "0");
+    }
+
     let mut app = build_headless_app();
 
     // Complete plugin initialization before calling update().
