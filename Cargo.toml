@@ -13,6 +13,7 @@ glam = "0.31"
 
 [dev-dependencies]
 approx = "0.5"
+image = { version = "0.25", default-features = false, features = ["png"] }
 proptest = "1"
 
 # WASM support: webgl2 feature for browser compatibility
