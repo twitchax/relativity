@@ -117,7 +117,7 @@ tasks:
   - id: T-005
     title: "Implement failure screen with auto-reset delay"
     priority: 1
-    status: todo
+    status: done
     notes: "On GameState::Failed, spawn a full-screen bevy_ui overlay with FAILURE text. After ~1.5 second delay (use Timer resource), despawn overlay and reset to GameState::Paused to restart the level. Super Meat Boy style — quick flash then retry."
   - id: T-006
     title: "Add trajectory trail with gamma-based coloring"
@@ -386,3 +386,17 @@ This means an automated agent can implement a feature, run `cargo make uat`, and
   - UAT passed: 179 tests, 0 failures
 
 - **Constitution Compliance**: No violations. Minimal changes following existing patterns (menu module structure for UI, OnEnter/OnExit for lifecycle, marker components for queries). New `outcome` module follows Separation of Concerns principle.
+
+## 2026-02-08 — T-005 Completed
+- **Task**: Implement failure screen with auto-reset delay
+- **Status**: ✅ Done
+- **Changes**:
+  - Added `FailureOverlay` marker component and `FailureTimer(Timer)` resource to `src/game/shared/types.rs`.
+  - Added three systems to `src/game/outcome/mod.rs`:
+    - `spawn_failure_overlay` — spawns a full-screen semi-transparent bevy_ui overlay with "FAILURE" text (red) and inserts a 1.5s `FailureTimer` resource on `OnEnter(GameState::Failed)`.
+    - `despawn_failure_overlay` — despawns the overlay and removes the timer on `OnExit(GameState::Failed)`.
+    - `failure_auto_reset` — ticks the timer each frame; transitions to `GameState::Paused` when finished.
+  - Wired lifecycle systems (`OnEnter`/`OnExit` for `GameState::Failed`) and the auto-reset update system in `src/game/mod.rs`.
+  - UAT passed: 179 tests, 0 failures
+
+- **Constitution Compliance**: No violations. Minimal changes, consistent with existing success overlay patterns (same module, same component/lifecycle approach).

@@ -16,7 +16,7 @@ use crate::shared::state::{AppState, GameState};
 use self::{
     levels::{despawn_level, spawn_level},
     observer::{observer_clock_text_update, observer_clock_update},
-    outcome::{despawn_success_overlay, spawn_success_overlay, success_button_interaction},
+    outcome::{despawn_failure_overlay, despawn_success_overlay, failure_auto_reset, spawn_failure_overlay, spawn_success_overlay, success_button_interaction},
     player::{
         player_clock::{player_clock_text_update, player_clock_update},
         player_sprite::{launch_aim_system, launch_fire_system, launch_power_system, launch_visual_system},
@@ -40,10 +40,15 @@ impl Plugin for GamePlugin {
             // Success overlay lifecycle.
             .add_systems(OnEnter(GameState::Finished), spawn_success_overlay)
             .add_systems(OnExit(GameState::Finished), despawn_success_overlay)
+            // Failure overlay lifecycle.
+            .add_systems(OnEnter(GameState::Failed), spawn_failure_overlay)
+            .add_systems(OnExit(GameState::Failed), despawn_failure_overlay)
             // Run the scale updates always.
             .add_systems(Update, (planet_scale_update, rocket_scale_update, exit_level_check).run_if(in_state(AppState::InGame)))
             // Success overlay button interaction while finished.
             .add_systems(Update, success_button_interaction.run_if(in_state(AppState::InGame)).run_if(in_state(GameState::Finished)))
+            // Failure auto-reset timer while failed.
+            .add_systems(Update, failure_auto_reset.run_if(in_state(AppState::InGame)).run_if(in_state(GameState::Failed)))
             // Launch mechanic (aim, power, fire, visuals) while paused.
             .add_systems(
                 Update,

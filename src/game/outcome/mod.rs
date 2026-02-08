@@ -1,7 +1,7 @@
 use crate::{
     game::{
         levels::CurrentLevel,
-        shared::types::{NextLevelButton, SuccessOverlay},
+        shared::types::{FailureOverlay, FailureTimer, NextLevelButton, SuccessOverlay},
     },
     shared::state::{AppState, GameState},
 };
@@ -103,5 +103,59 @@ pub fn success_button_interaction(
             app_state.set(AppState::Menu);
             game_state.set(GameState::Paused);
         }
+    }
+}
+
+// Failure overlay systems.
+
+/// Spawn the failure overlay and insert the auto-reset timer when entering `GameState::Failed`.
+pub fn spawn_failure_overlay(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let font = asset_server.load("fonts/HackNerdFontMono-Regular.ttf");
+
+    commands.insert_resource(FailureTimer(Timer::from_seconds(1.5, TimerMode::Once)));
+
+    commands
+        .spawn((
+            FailureOverlay,
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                flex_direction: FlexDirection::Column,
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
+                position_type: PositionType::Absolute,
+                ..Default::default()
+            },
+            GlobalZIndex(100),
+            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.6)),
+        ))
+        .with_children(|parent| {
+            parent.spawn((
+                Text::new("FAILURE"),
+                TextFont {
+                    font,
+                    font_size: 72.0,
+                    ..Default::default()
+                },
+                TextColor(Color::srgba(1.0, 0.2, 0.2, 1.0)),
+            ));
+        });
+}
+
+/// Despawn the failure overlay and remove the timer when leaving `GameState::Failed`.
+pub fn despawn_failure_overlay(mut commands: Commands, query: Query<Entity, With<FailureOverlay>>) {
+    for entity in &query {
+        commands.entity(entity).despawn();
+    }
+
+    commands.remove_resource::<FailureTimer>();
+}
+
+/// Tick the failure timer and transition back to `GameState::Paused` when it finishes.
+pub fn failure_auto_reset(time: Res<Time>, mut timer: ResMut<FailureTimer>, mut game_state: ResMut<NextState<GameState>>) {
+    timer.0.tick(time.delta());
+
+    if timer.0.just_finished() {
+        game_state.set(GameState::Paused);
     }
 }

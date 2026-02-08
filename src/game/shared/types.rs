@@ -34,6 +34,14 @@ pub struct SuccessOverlay;
 #[derive(Component)]
 pub struct NextLevelButton;
 
+/// Marker for the failure overlay spawned on planet collision.
+#[derive(Component)]
+pub struct FailureOverlay;
+
+/// Timer resource that drives the auto-reset delay after failure.
+#[derive(Resource)]
+pub struct FailureTimer(pub Timer);
+
 #[derive(Component, Default)]
 pub struct PlanetSprite;
 
