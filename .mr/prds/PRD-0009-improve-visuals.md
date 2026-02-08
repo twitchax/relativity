@@ -35,7 +35,7 @@ acceptance_tests:
   - id: uat-003
     name: "Launch state machine transitions correctly (Idle → AimLocked → Launching → Running)"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
     automated_test: "Headless gameplay test: insert synthetic mouse-press input event, assert LaunchState transitions to AimLocked with correct angle. Insert drag input, assert LaunchState::Launching with power proportional to drag distance. Insert mouse-release, assert GameState transitions to Running and player Velocity matches expected angle/power."
   - id: uat-004
     name: "Launch visuals: direction line and power bar render correctly"
@@ -530,3 +530,17 @@ This means an automated agent can implement a feature, run `cargo make uat`, and
   - Created `tests/e2e_menu_buttons.rs` with test `menu_spawns_button_for_each_level_variant`.
   - Test builds a headless app with `MenuPlugin`, enters `AppState::Menu`, queries for `Button` entities, and asserts one per `CurrentLevel` variant with matching `Text` display names.
   - Ran `cargo make uat` — all 211 tests passed (including the new test).
+
+## 2026-02-08 — uat-003 Verification
+- **UAT**: Launch state machine transitions correctly (Idle → AimLocked → Launching → Running)
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Created `tests/e2e_launch_state_machine.rs` with 6 tests:
+    - `launch_state_starts_idle` — verifies LaunchState defaults to Idle on game entry.
+    - `idle_to_aim_locked` — verifies Idle → AimLocked transition with correct angle.
+    - `aim_locked_to_launching` — verifies AimLocked → Launching transition with angle and power.
+    - `launching_to_running_via_fire_system` — uses `run_system_once(launch_fire_system)` with injected mouse input to verify Launching → Running transition, LaunchState reset to Idle, and player velocity matching launch angle/power.
+    - `aim_locked_release_cancels_to_idle` — verifies that releasing mouse during AimLocked (no drag) cancels back to Idle.
+    - `full_launch_state_machine_idle_to_running` — end-to-end test of the complete Idle → AimLocked → Launching → Running flow.
+  - Ran `cargo make uat` — all 217 tests passed (including the 6 new tests).
