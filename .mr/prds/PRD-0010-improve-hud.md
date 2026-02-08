@@ -37,7 +37,7 @@ acceptance_tests:
   - id: uat-003
     name: "Observer panel shows t_o with correct values"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
   - id: uat-004
     name: "HUD adapts to different window sizes and aspect ratios"
     command: cargo make uat
@@ -359,3 +359,14 @@ UiLayoutRoot (2D, camera-synced)
     - `player_panel_shows_default_values_at_spawn`: Verifies initial `Text2d` content is `t_p = 0.00`, `γ_v = 1.00`, `γ_g = 1.00`, `v = 0.00c`.
     - `player_panel_updates_with_correct_values_after_launch`: After launching at ~0.71c, verifies t_p advances beyond 0, γ_v > 1, γ_g >= 1, and v shows a non-zero sub-luminal fraction of c — confirming the `player_hud_text_update` system writes correct formatted values.
   - Full UAT passed: 235 tests run, 235 passed, 0 skipped (`cargo make uat` exit code 0).
+
+## 2026-02-08 — uat-003 Verification
+- **UAT**: Observer panel shows t_o with correct values
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Created `tests/e2e_hud_observer_panel.rs` with three tests:
+    - `observer_panel_has_time_label`: Verifies exactly one `HudObserverTime` entity exists after entering InGame.
+    - `observer_panel_shows_default_value_at_spawn`: Verifies initial `Text2d` content is `t_o = 0.00`.
+    - `observer_panel_updates_with_correct_values_after_running`: After running several frames, verifies t_o advances beyond 0 and the formatted value is positive — confirming the `observer_hud_text_update` system writes correct formatted values.
+  - Full UAT passed: 238 tests run, 238 passed, 0 skipped (`cargo make uat` exit code 0).
