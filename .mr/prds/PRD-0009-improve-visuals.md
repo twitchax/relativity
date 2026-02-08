@@ -76,7 +76,7 @@ acceptance_tests:
   - id: uat-011
     name: "HUD displays velocity as fraction of c alongside clock/gamma"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
     automated_test: "Headless gameplay test: enter InGame, launch player at a known velocity. Query for velocity HUD text entity and assert displayed string matches expected format (e.g., '0.42c'). Screenshot baseline test: capture HUD layout during gameplay and compare against committed baseline."
     manual_note: "Visual spot-check: verify HUD layout is readable and well-positioned."
   - id: uat-012
@@ -620,3 +620,13 @@ This means an automated agent can implement a feature, run `cargo make uat`, and
   - Created `tests/e2e_fade_overlay.rs` with test:
     - `fade_overlay_animates_through_full_cycle`: enters InGame, triggers `FadeState::start_fade_out(Menu, Paused)`, asserts `FadeDirection::Out` is active, runs ~9 frames and checks mid-fade alpha is ~0.5, runs remaining frames to complete fade-out, asserts automatic transition to `FadeDirection::In` and state change to `AppState::Menu`, runs fade-in frames checking mid-alpha ~0.5, verifies fade completes with alpha back to 0 and `FadeState` inactive.
   - Ran `cargo make uat` — all 227 tests passed.
+
+## 2026-02-08 — uat-011 Verification
+- **UAT**: HUD displays velocity as fraction of c alongside clock/gamma
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Created `tests/e2e_velocity_hud.rs` with two tests:
+    - `hud_displays_velocity_fraction_of_c`: launches player at ~0.71c, runs frames, queries `PlayerHud` text entity, asserts HUD contains `t_p =`, `γ_v =`, `γ_g =`, and `v = X.XXc` with a valid numeric fraction between 0 and 1.
+    - `hud_displays_zero_velocity_at_rest`: enters Running without launching, asserts HUD shows `v = 0.00c`.
+  - Ran `cargo make uat` — all 229 tests passed.
