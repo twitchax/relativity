@@ -80,7 +80,7 @@ Strict clippy denies are enforced in `src/main.rs`:
 
 ### CI / Workflow Patterns
 
-- CI workflows (`.github/workflows/build.yml`, `web.yml`) use `cargo-make` tasks, not raw cargo commands.
+- CI workflow (`.github/workflows/build.yml`) uses `cargo-make` tasks, not raw cargo commands. All jobs (test, codecov, platform builds, web deploy) are in this single file.
 - Rust toolchain is pinned via `RUST_TOOLCHAIN` env var (e.g., `nightly-2025-12-22`).
 - Tools are installed via `cargo-binstall` (fast binary installs), not `cargo install`.
 - `.github/workflows/copilot-setup-steps.yml` sets up the environment for GitHub Copilot coding agents.

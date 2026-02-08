@@ -1,7 +1,7 @@
 ---
 id: PRD-0008
 title: "CI Improvements: Unified Pipeline, DRY Toolchain, and Mold Linker"
-status: draft
+status: active
 owner: twitchax
 created: 2026-02-08
 updated: 2026-02-08
@@ -35,7 +35,7 @@ acceptance_tests:
   - id: uat-003
     name: "web.yml is removed; all jobs live in build.yml"
     command: "test ! -f .github/workflows/web.yml"
-    uat_status: unverified
+    uat_status: verified
   - id: uat-004
     name: "Toolchain version is not hardcoded in workflow files (derived or centralized)"
     command: "! grep -q 'nightly-20' .github/workflows/build.yml"
@@ -52,7 +52,7 @@ tasks:
   - id: T-001
     title: "Consolidate web.yml into build.yml"
     priority: 1
-    status: todo
+    status: done
     notes: "Move the WASM/Trunk build and GitHub Pages deploy into build.yml as a new job gated on refs/heads/main. Delete web.yml."
   - id: T-002
     title: "DRY toolchain pinning in build.yml"
@@ -188,3 +188,14 @@ Port from microralph, adapting:
 - `wasm32-wasip2` or OCI publishing
 
 # History
+
+## 2026-02-08 — T-001 Completed
+- **Task**: Consolidate web.yml into build.yml
+- **Status**: ✅ Done
+- **Changes**:
+  - Added `build_web` job to `.github/workflows/build.yml` with `needs: test` and `if: github.ref == 'refs/heads/main'`
+  - Job uses `wasm32-unknown-unknown` target, `cargo make build-web`, and `peaceiris/actions-gh-pages@v3` for GitHub Pages deploy
+  - Deleted `.github/workflows/web.yml`
+  - UAT passed: `cargo make uat` — 166 tests passed, 0 failed
+- **UATs Verified**: uat-003 (web.yml removed; all jobs live in build.yml)
+- **Constitution Compliance**: No violations.
