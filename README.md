@@ -61,7 +61,10 @@ $ cargo make build && cargo run
 
 ### Controls
 
-The game uses standard WASD movement controls. Specific puzzle mechanics and controls are explained as you progress through the levels.
+- **Click** to lock your launch angle (from the player toward the cursor).
+- **Drag** to set launch power (longer drag = more power).
+- **Release** to fire.
+- **Escape** to return to the menu from any game state.
 
 ## Development
 

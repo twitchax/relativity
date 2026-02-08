@@ -148,7 +148,7 @@ pub fn velocity_update(mut query: Query<(&mut Velocity, Entity, &Position)>, mas
         velocity.y += total_gravitational_acceleration_y * time_elapsed;
 
         if velocity.scalar() > *C {
-            println!("AHHHHHHHHHHHHHH...fuck.");
+            // Velocity exceeds speed of light — should not happen in normal gameplay.
         }
     }
 }
@@ -166,13 +166,11 @@ pub fn collision_check(
 
     if has_collided((player_position, player_radius), (destination_position, destination_radius)) {
         game_state.set(GameState::Finished);
-        println!("success!");
     }
 
     for (planet_position, planet_radius) in &planet_query {
         if has_collided((player_position, player_radius), (planet_position, planet_radius)) {
             game_state.set(GameState::Failed);
-            println!("failed!");
         }
     }
 }
