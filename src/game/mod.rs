@@ -2,6 +2,7 @@ pub mod destination;
 pub mod levels;
 pub mod object;
 pub mod observer;
+pub mod outcome;
 pub mod player;
 pub mod shared;
 
@@ -15,6 +16,7 @@ use crate::shared::state::{AppState, GameState};
 use self::{
     levels::{despawn_level, spawn_level},
     observer::{observer_clock_text_update, observer_clock_update},
+    outcome::{despawn_success_overlay, spawn_success_overlay, success_button_interaction},
     player::{
         player_clock::{player_clock_text_update, player_clock_update},
         player_sprite::{launch_aim_system, launch_fire_system, launch_power_system, launch_visual_system},
@@ -35,8 +37,13 @@ impl Plugin for GamePlugin {
             .add_systems(OnEnter(AppState::InGame), spawn_level)
             // Destroy things on exit.
             .add_systems(OnExit(AppState::InGame), despawn_level)
+            // Success overlay lifecycle.
+            .add_systems(OnEnter(GameState::Finished), spawn_success_overlay)
+            .add_systems(OnExit(GameState::Finished), despawn_success_overlay)
             // Run the scale updates always.
             .add_systems(Update, (planet_scale_update, rocket_scale_update, exit_level_check).run_if(in_state(AppState::InGame)))
+            // Success overlay button interaction while finished.
+            .add_systems(Update, success_button_interaction.run_if(in_state(AppState::InGame)).run_if(in_state(GameState::Finished)))
             // Launch mechanic (aim, power, fire, visuals) while paused.
             .add_systems(
                 Update,

@@ -29,6 +29,15 @@ impl CurrentLevel {
     pub const fn all() -> &'static [Self] {
         &[Self::One, Self::TimeWarp]
     }
+
+    /// Returns the next level variant, or `None` if this is the last level.
+    #[must_use]
+    pub const fn next(self) -> Option<Self> {
+        match self {
+            Self::One => Some(Self::TimeWarp),
+            Self::TimeWarp => None,
+        }
+    }
 }
 
 impl fmt::Display for CurrentLevel {
@@ -245,5 +254,15 @@ mod tests {
         assert_eq!(all.len(), 2);
         assert_eq!(all[0], CurrentLevel::One);
         assert_eq!(all[1], CurrentLevel::TimeWarp);
+    }
+
+    #[test]
+    fn next_level_one_returns_time_warp() {
+        assert_eq!(CurrentLevel::One.next(), Some(CurrentLevel::TimeWarp));
+    }
+
+    #[test]
+    fn next_level_time_warp_returns_none() {
+        assert_eq!(CurrentLevel::TimeWarp.next(), None);
     }
 }

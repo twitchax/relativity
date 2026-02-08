@@ -112,7 +112,7 @@ tasks:
   - id: T-004
     title: "Implement success screen with Next Level button"
     priority: 1
-    status: todo
+    status: done
     notes: "On GameState::Finished, spawn a full-screen bevy_ui overlay with SUCCESS text and a Next Level button. Button click advances CurrentLevel to next variant and re-enters InGame. If no next level, return to menu."
   - id: T-005
     title: "Implement failure screen with auto-reset delay"
@@ -370,3 +370,19 @@ This means an automated agent can implement a feature, run `cargo make uat`, and
   - UAT passed: 177 tests, 0 failures
 
 - **Constitution Compliance**: No violations. Minimal changes, consistent with existing Bevy ECS patterns, no public API breakage. The old `calculate_launch_velocity` function was preserved (test-only) for backward compatibility.
+
+## 2026-02-08 — T-004 Completed
+- **Task**: Implement success screen with Next Level button
+- **Status**: ✅ Done
+- **Changes**:
+  - Added `next()` method to `CurrentLevel` in `src/game/levels/mod.rs` — returns `Some(next_variant)` or `None` for the last level.
+  - Added `SuccessOverlay` and `NextLevelButton` marker components to `src/game/shared/types.rs`.
+  - Created new `src/game/outcome/mod.rs` module with three systems:
+    - `spawn_success_overlay` — spawns a full-screen semi-transparent bevy_ui overlay with "SUCCESS" text and a "Next Level" (or "Menu") button on `OnEnter(GameState::Finished)`.
+    - `despawn_success_overlay` — despawns the overlay on `OnExit(GameState::Finished)`.
+    - `success_button_interaction` — handles button click: advances `CurrentLevel` if a next level exists, then transitions to `AppState::Menu` + `GameState::Paused`.
+  - Registered the `outcome` module in `src/game/mod.rs` and wired `OnEnter`/`OnExit` for `GameState::Finished` plus the button interaction system.
+  - Added 2 unit tests for `CurrentLevel::next()` in `src/game/levels/mod.rs`.
+  - UAT passed: 179 tests, 0 failures
+
+- **Constitution Compliance**: No violations. Minimal changes following existing patterns (menu module structure for UI, OnEnter/OnExit for lifecycle, marker components for queries). New `outcome` module follows Separation of Concerns principle.

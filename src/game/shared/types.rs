@@ -26,6 +26,14 @@ pub enum LaunchState {
 #[derive(Component)]
 pub struct PowerBarUi;
 
+/// Marker for the success overlay spawned when the player reaches the destination.
+#[derive(Component)]
+pub struct SuccessOverlay;
+
+/// Marker for the "Next Level" button inside the success overlay.
+#[derive(Component)]
+pub struct NextLevelButton;
+
 #[derive(Component, Default)]
 pub struct PlanetSprite;
 
