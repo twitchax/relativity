@@ -67,7 +67,7 @@ tasks:
   - id: T-004
     title: "Gate builds and deploys to main-only; PRs run test + codecov"
     priority: 1
-    status: todo
+    status: done
     notes: "Change trigger to push + pull_request. Platform builds and web deploy use if: github.ref == 'refs/heads/main'. Test and codecov run on all pushes and PRs."
   - id: T-005
     title: "Update copilot-setup-steps.yml toolchain to match"
@@ -210,3 +210,13 @@ Port from microralph, adapting:
   - UAT passed: `cargo make uat` — 166 tests passed, 0 failed
 - **UATs Verified**: uat-004 (no `nightly-20` string in build.yml)
 - **Constitution Compliance**: No violations. The read-toolchain step is repeated per job, which is necessary since GitHub Actions doesn't support workflow-level dynamic env vars from file reads. This is the minimal repetition needed to achieve DRY toolchain pinning.
+
+## 2026-02-08 — T-004 Completed
+- **Task**: Gate builds and deploys to main-only; PRs run test + codecov
+- **Status**: ✅ Done
+- **Changes**:
+  - Changed `.github/workflows/build.yml` trigger from `on: [push]` to `on: [push, pull_request]`
+  - Platform build jobs (`build_linux`, `build_windows`, `build_macos`) and `build_web` already had `if: github.ref == 'refs/heads/main'` from T-001, so no additional gating was needed
+  - `test` and `codecov` jobs have no `if` condition, so they run on all pushes and PRs
+  - UAT passed: `cargo make uat` — 166 tests passed, 0 failed
+- **Constitution Compliance**: No violations. Minimal change (single line) to achieve the goal.
