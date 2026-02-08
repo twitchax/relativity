@@ -71,8 +71,8 @@ pub fn despawn_level(mut commands: Commands, query: Query<Entity, With<GameItem>
 pub fn level1(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Spawn clocks.
 
-    spawn_player_clock(&mut commands, &asset_server);
-    spawn_observer_clock(&mut commands, &asset_server);
+    spawn_player_clock(&mut commands);
+    spawn_observer_clock(&mut commands);
 
     // Spawn player.
 
@@ -145,8 +145,8 @@ pub fn level_time_warp(mut commands: Commands, asset_server: Res<AssetServer>) {
     use uom::si::{f64::Velocity as UomVelocity, velocity::kilometer_per_second};
 
     // Spawn clocks.
-    spawn_player_clock(&mut commands, &asset_server);
-    spawn_observer_clock(&mut commands, &asset_server);
+    spawn_player_clock(&mut commands);
+    spawn_observer_clock(&mut commands);
 
     // Spawn player at slingshot starting position.
     // Position: 0.125 (12.5%) of screen width, 0.5 (50%) of screen height

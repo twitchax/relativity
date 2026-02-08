@@ -85,7 +85,7 @@ tasks:
   - id: T-007
     title: "Remove old top-positioned HUD spawn code"
     priority: 5
-    status: todo
+    status: done
     notes: "Remove spawn_player_clock and spawn_observer_clock old Node-based spawning. Keep pure functions (calculate_*, format_*) untouched."
   - id: T-008
     title: "Mark HUD entities with GameItem for lifecycle management"
@@ -291,3 +291,19 @@ UiLayoutRoot (2D, camera-synced)
   - Added imports for `Observer` and `format_observer_time` from the observer module
   - UAT passed: 230 tests run, 230 passed, 0 skipped (`cargo make uat` exit code 0)
 - **Constitution Compliance**: No violations. Minimal changes to two files, consistent with the pattern established in T-005. The old `observer_clock_text_update` system remains untouched; removal is deferred to T-007.
+
+## 2026-02-08 — T-007 Completed
+- **Task**: Remove old top-positioned HUD spawn code
+- **Status**: ✅ Done
+- **Changes**:
+  - Removed `Text` and `Node` fields from `PlayerClockBundle` in `src/game/player/player_clock.rs` — bundle is now data-only (Clock, VelocityGamma, GravitationalGamma, PlayerHud, Player, GameItem)
+  - Simplified `spawn_player_clock` to take only `&mut Commands` (no `asset_server`) and spawn just the data bundle
+  - Removed `player_clock_text_update` system from `src/game/player/player_clock.rs` (replaced by `player_hud_text_update` in `src/game/hud/mod.rs`)
+  - Removed `Text` and `Node` fields from `ObserverClockBundle` in `src/game/observer/mod.rs` — bundle is now data-only
+  - Simplified `spawn_observer_clock` to take only `&mut Commands` and spawn just the data bundle
+  - Removed `observer_clock_text_update` system from `src/game/observer/mod.rs` (replaced by `observer_hud_text_update` in `src/game/hud/mod.rs`)
+  - Updated `src/game/levels/mod.rs` to call the simplified spawn functions (no `asset_server` arg)
+  - Removed system registrations and imports for `player_clock_text_update` and `observer_clock_text_update` from `src/game/mod.rs`
+  - Updated `tests/e2e_velocity_hud.rs` to verify data components (VelocityGamma, Velocity) on the PlayerHud entity instead of querying removed `Text` component
+  - UAT passed: 230 tests run, 230 passed, 0 skipped (`cargo make uat` exit code 0)
+- **Constitution Compliance**: No violations. All pure functions (calculate_*, format_*) and clock update systems (player_clock_update, observer_clock_update) left untouched. Only Node-based UI spawning and text-update systems removed.

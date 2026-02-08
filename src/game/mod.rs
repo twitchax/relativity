@@ -22,10 +22,10 @@ use self::{
     gravity_grid::gravity_grid_render_system,
     hud::{observer_hud_text_update, player_hud_text_update, HudPlugin},
     levels::{despawn_level, spawn_level},
-    observer::{observer_clock_text_update, observer_clock_update},
+    observer::observer_clock_update,
     outcome::{apply_collision_shake, despawn_failure_overlay, despawn_success_overlay, failure_auto_reset, spawn_failure_overlay, spawn_success_overlay, success_button_interaction},
     player::{
-        player_clock::{player_clock_text_update, player_clock_update},
+        player_clock::player_clock_update,
         player_sprite::{launch_aim_system, launch_fire_system, launch_power_system, launch_visual_system},
     },
     shared::{
@@ -85,9 +85,7 @@ impl Plugin for GamePlugin {
                     trail_record_system.after(player_clock_update),
                     collision_check,
                     observer_clock_update,
-                    observer_clock_text_update.after(observer_clock_update),
                     player_clock_update,
-                    player_clock_text_update.after(player_clock_update),
                     player_hud_text_update.after(player_clock_update),
                     observer_hud_text_update.after(observer_clock_update),
                 )

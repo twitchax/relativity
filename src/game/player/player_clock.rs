@@ -8,6 +8,10 @@ use uom::si::f64::{Length as UomLength, Mass as UomMass, Time as UomTime, Veloci
 
 // Components / bundles.
 
+/// Data-only bundle that holds the player's clock, gamma factors, and HUD marker.
+///
+/// The visual HUD is rendered by `bevy_lunex` in `src/game/hud/`; this bundle
+/// only stores the authoritative data that those HUD systems read from.
 #[derive(Bundle, Default)]
 pub struct PlayerClockBundle {
     pub item: GameItem,
@@ -16,8 +20,6 @@ pub struct PlayerClockBundle {
     pub velocity_gamma: VelocityGamma,
     pub gravitational_gamma: GravitationalGamma,
     pub clock: Clock,
-    pub clock_text: Text,
-    pub node: Node,
 }
 
 // Pure functions.
@@ -68,24 +70,13 @@ pub(crate) fn format_velocity_fraction(velocity_scalar: UomVelocity, c: UomVeloc
 
 // Startup systems.
 
-pub fn spawn_player_clock(commands: &mut Commands, asset_server: &Res<AssetServer>) {
-    let clock_text = Text::new("t_p = 00.00  γ_v = 1.00  γ_g = 1.00  v = 0.00c");
-
-    let node = Node {
-        position_type: PositionType::Absolute,
-        top: Val::Px(10.0),
-        left: Val::Px(10.0),
-        ..Default::default()
-    };
-
-    commands.spawn((
-        PlayerClockBundle { clock_text, node, ..Default::default() },
-        TextFont {
-            font: asset_server.load("fonts/HackNerdFontMono-Regular.ttf"),
-            font_size: 40.0,
-            ..Default::default()
-        },
-    ));
+/// Spawns the data-only player clock entity.
+///
+/// This entity holds the authoritative `Clock`, `VelocityGamma`, and
+/// `GravitationalGamma` values. The visual HUD reads from this entity
+/// via the `PlayerHud` marker (see `src/game/hud/`).
+pub fn spawn_player_clock(commands: &mut Commands) {
+    commands.spawn(PlayerClockBundle::default());
 }
 
 // Systems.
@@ -109,17 +100,6 @@ pub fn player_clock_update(
     gravitational_gamma.value = calculate_gravitational_gamma(player_position.x, player_position.y, &other_masses);
 
     clock.value = calculate_player_clock(time_elapsed, velocity_gamma.value, gravitational_gamma.value, clock.value);
-}
-
-pub fn player_clock_text_update(mut query: Query<(&mut Text, &Clock, &VelocityGamma, &GravitationalGamma), With<PlayerHud>>, velocity_query: Query<&Velocity, With<Player>>) {
-    let Ok((mut text, clock, velocity_gamma, gravitational_gamma)) = query.single_mut() else { return };
-    let Ok(velocity) = velocity_query.single() else { return };
-
-    let days = clock.value.value / 24.0 / 3600.0;
-    let vel_frac = format_velocity_fraction(velocity.scalar(), *C);
-
-    // In Bevy 0.17, Text implements Deref<Target = String>, so we use **text to mutate the underlying String.
-    **text = format!("t_p = {:2.2}  γ_v = {:2.2}  γ_g = {:2.2}  {vel_frac}", days, velocity_gamma.value, gravitational_gamma.value);
 }
 
 #[cfg(test)]

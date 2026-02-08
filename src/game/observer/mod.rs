@@ -8,33 +8,24 @@ use super::shared::{
 #[derive(Component, Default)]
 pub struct Observer;
 
+/// Data-only bundle that holds the observer's clock.
+///
+/// The visual HUD is rendered by `bevy_lunex` in `src/game/hud/`; this bundle
+/// only stores the authoritative data that those HUD systems read from.
 #[derive(Bundle, Default)]
 pub struct ObserverClockBundle {
     pub item: GameItem,
     pub observer: Observer,
     pub clock: Clock,
-    pub clock_text: Text,
-    pub node: Node,
 }
 
-pub fn spawn_observer_clock(commands: &mut Commands, asset_server: &Res<AssetServer>) {
-    let clock_text = Text::new("t_o = 00.00");
-
-    let node = Node {
-        position_type: PositionType::Absolute,
-        top: Val::Px(10.0),
-        right: Val::Px(10.0),
-        ..Default::default()
-    };
-
-    commands.spawn((
-        ObserverClockBundle { clock_text, node, ..Default::default() },
-        TextFont {
-            font: asset_server.load("fonts/HackNerdFontMono-Regular.ttf"),
-            font_size: 40.0,
-            ..Default::default()
-        },
-    ));
+/// Spawns the data-only observer clock entity.
+///
+/// This entity holds the authoritative observer `Clock` value.
+/// The visual HUD reads from this entity via the `Observer` marker
+/// (see `src/game/hud/`).
+pub fn spawn_observer_clock(commands: &mut Commands) {
+    commands.spawn(ObserverClockBundle::default());
 }
 
 // Pure functions.
@@ -54,13 +45,6 @@ pub fn observer_clock_update(mut query: Query<&mut Clock, With<Observer>>, time:
     let Ok(mut clock) = query.single_mut() else { return };
 
     clock.value += time_elapsed;
-}
-
-pub fn observer_clock_text_update(mut query: Query<(&mut Text, &Clock), With<Observer>>) {
-    let Ok((mut text, clock)) = query.single_mut() else { return };
-
-    // In Bevy 0.17, Text implements Deref<Target = String>, so we use **text to mutate the underlying String.
-    **text = format_observer_time(clock.value.value);
 }
 
 #[cfg(test)]

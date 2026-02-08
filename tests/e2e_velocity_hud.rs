@@ -1,5 +1,11 @@
-// E2E headless test: verifies the player HUD displays velocity as a fraction
-// of c (e.g., "v = 0.42c") alongside the clock and gamma values.
+// E2E headless test: verifies the player clock data entity holds correct
+// velocity-gamma, gravitational-gamma, clock, and that the velocity on
+// the player sprite entity is consistent with the launch parameters.
+//
+// The visual HUD (bevy_lunex Text2d labels) requires UiLunexPlugins which
+// is registered only in main.rs; headless tests cannot verify rendered text.
+// The text formatting pure functions (format_velocity_fraction, etc.) are
+// already unit-tested in player_clock.rs and observer/mod.rs.
 
 #![allow(clippy::unwrap_used)]
 #![allow(clippy::pedantic)]
@@ -8,13 +14,17 @@ mod common;
 
 use bevy::prelude::*;
 use common::{build_gameplay_app, enter_game, find_player_sprite, launch_player, start_running};
-use relativity::game::shared::types::PlayerHud;
+use relativity::game::player::shared::Player;
+use relativity::game::shared::{
+    constants::C,
+    types::{PlayerHud, Velocity, VelocityGamma},
+};
 
-/// After launching at a known velocity and running a few frames, the HUD text
-/// entity (marked with `PlayerHud`) should contain a velocity string like
-/// "v = 0.71c" alongside clock and gamma values.
+/// After launching at a known velocity and running a few frames, the data
+/// entity (marked with `PlayerHud`) should contain a velocity gamma > 1
+/// and the player sprite should have non-zero velocity.
 #[test]
-fn hud_displays_velocity_fraction_of_c() {
+fn hud_data_reflects_velocity_after_launch() {
     let mut app = build_gameplay_app();
     enter_game(&mut app);
 
@@ -24,60 +34,52 @@ fn hud_displays_velocity_fraction_of_c() {
     launch_player(&mut app, player, (150_000.0, 150_000.0));
     start_running(&mut app);
 
-    // Run several frames so player_clock_update and player_clock_text_update execute.
+    // Run several frames so player_clock_update executes.
     for _ in 0..5 {
         app.update();
     }
 
-    // Query the HUD text entity.
-    let hud_text = app
+    // Query the player clock data entity.
+    let vel_gamma = app
         .world_mut()
-        .query_filtered::<&Text, With<PlayerHud>>()
+        .query_filtered::<&VelocityGamma, With<PlayerHud>>()
         .single(app.world())
-        .expect("expected a PlayerHud text entity");
+        .expect("expected a PlayerHud data entity with VelocityGamma");
 
-    let text_str: &str = hud_text;
+    // At ~0.71c, velocity gamma should be noticeably above 1.
+    assert!(vel_gamma.value > 1.0, "velocity gamma should be > 1 after launch, got: {}", vel_gamma.value);
 
-    // The HUD should contain all four readouts.
-    assert!(text_str.contains("t_p ="), "HUD should display player clock (t_p), got: {text_str}");
-    assert!(text_str.contains("γ_v ="), "HUD should display velocity gamma (γ_v), got: {text_str}");
-    assert!(text_str.contains("γ_g ="), "HUD should display gravitational gamma (γ_g), got: {text_str}");
-    assert!(text_str.contains("v ="), "HUD should display velocity fraction (v = …c), got: {text_str}");
+    // Verify the player sprite has non-zero velocity.
+    let velocity = app
+        .world_mut()
+        .query_filtered::<&Velocity, (With<Player>, Without<PlayerHud>)>()
+        .single(app.world())
+        .expect("expected a Player sprite entity with Velocity");
+    let speed_fraction = (velocity.scalar() / *C).value;
 
-    // Verify the velocity fraction format: "v = X.XXc" with a reasonable value.
-    // At ~0.71c we expect something like "v = 0.71c" (exact value depends on gravity).
-    // Use rfind to skip the "γ_v = " occurrence and find the standalone "v = ".
-    let vel_idx = text_str.rfind("v = ").expect("could not find 'v = ' in HUD text");
-    let vel_part = &text_str[vel_idx + 4..]; // skip "v = "
-    assert!(vel_part.contains('c'), "velocity display should end with 'c', got: {vel_part}");
-
-    // Parse the numeric portion to verify it's a reasonable fraction of c.
-    let numeric: f64 = vel_part.trim_end_matches('c').trim().parse().expect("could not parse velocity fraction");
-    assert!(numeric > 0.0, "velocity fraction should be positive after launch, got: {numeric}");
-    assert!(numeric < 1.0, "velocity fraction should be < 1.0 (sub-luminal), got: {numeric}");
+    assert!(speed_fraction > 0.0, "velocity fraction should be positive after launch, got: {speed_fraction}");
+    assert!(speed_fraction < 1.0, "velocity fraction should be < 1.0 (sub-luminal), got: {speed_fraction}");
 }
 
-/// At rest (before launch), the HUD should show v = 0.00c.
+/// At rest (before launch), the data entity should show velocity gamma ≈ 1.
 #[test]
-fn hud_displays_zero_velocity_at_rest() {
+fn hud_data_shows_unit_gamma_at_rest() {
     let mut app = build_gameplay_app();
     enter_game(&mut app);
 
     // Don't launch — player stays at rest. Transition to Running so the
-    // text update system executes.
+    // clock update system executes.
     start_running(&mut app);
 
     for _ in 0..3 {
         app.update();
     }
 
-    let hud_text = app
+    let vel_gamma = app
         .world_mut()
-        .query_filtered::<&Text, With<PlayerHud>>()
+        .query_filtered::<&VelocityGamma, With<PlayerHud>>()
         .single(app.world())
-        .expect("expected a PlayerHud text entity");
+        .expect("expected a PlayerHud data entity with VelocityGamma");
 
-    let text_str: &str = hud_text;
-
-    assert!(text_str.contains("v = 0.00c"), "HUD should show 'v = 0.00c' at rest, got: {text_str}");
+    assert!((vel_gamma.value - 1.0).abs() < 1e-6, "velocity gamma should be ~1.0 at rest, got: {}", vel_gamma.value);
 }
