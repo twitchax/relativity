@@ -1,89 +1,89 @@
 ---
 id: PRD-0008
-title: "CI Improvements: Unified Pipeline, DRY Toolchain, and Mold Linker"
-status: active
+title: 'CI Improvements: Unified Pipeline, DRY Toolchain, and Mold Linker'
+status: done
 owner: twitchax
 created: 2026-02-08
 updated: 2026-02-08
 principles:
-  - "Model CI after twitchax/microralph's build.yml pattern"
-  - "Single build.yml for all CI jobs (test, codecov, platform builds, web deploy)"
-  - "DRY toolchain pinning: derive from rust-toolchain.toml where possible"
-  - "Use mold linker for faster Linux release builds"
-  - "PRs and non-main pushes run test + codecov only; main runs full pipeline"
-  - "Accept system dep repetition across Linux jobs for now"
+- Model CI after twitchax/microralph's build.yml pattern
+- Single build.yml for all CI jobs (test, codecov, platform builds, web deploy)
+- 'DRY toolchain pinning: derive from rust-toolchain.toml where possible'
+- Use mold linker for faster Linux release builds
+- PRs and non-main pushes run test + codecov only; main runs full pipeline
+- Accept system dep repetition across Linux jobs for now
 references:
-  - name: "microralph build.yml (reference CI)"
-    url: "https://github.com/twitchax/microralph/blob/main/.github/workflows/build.yml"
-  - name: "microralph Makefile.toml (reference tasks)"
-    url: "https://github.com/twitchax/microralph/blob/main/Makefile.toml"
-  - name: "Current relativity build.yml"
-    url: "https://github.com/twitchax/relativity/blob/main/.github/workflows/build.yml"
-  - name: "Current relativity web.yml"
-    url: "https://github.com/twitchax/relativity/blob/main/.github/workflows/web.yml"
-  - name: "peaceiris/actions-gh-pages"
-    url: "https://github.com/peaceiris/actions-gh-pages"
+- name: microralph build.yml (reference CI)
+  url: https://github.com/twitchax/microralph/blob/main/.github/workflows/build.yml
+- name: microralph Makefile.toml (reference tasks)
+  url: https://github.com/twitchax/microralph/blob/main/Makefile.toml
+- name: Current relativity build.yml
+  url: https://github.com/twitchax/relativity/blob/main/.github/workflows/build.yml
+- name: Current relativity web.yml
+  url: https://github.com/twitchax/relativity/blob/main/.github/workflows/web.yml
+- name: peaceiris/actions-gh-pages
+  url: https://github.com/peaceiris/actions-gh-pages
 acceptance_tests:
-  - id: uat-001
-    name: "CI passes on push to non-main branch (test + codecov only)"
-    command: cargo make ci
-    uat_status: verified
-  - id: uat-002
-    name: "CI passes on push to main (full pipeline including platform builds and web deploy)"
-    command: cargo make ci
-    uat_status: verified
-  - id: uat-003
-    name: "web.yml is removed; all jobs live in build.yml"
-    command: "test ! -f .github/workflows/web.yml"
-    uat_status: verified
-  - id: uat-004
-    name: "Toolchain version is not hardcoded in workflow files (derived or centralized)"
-    command: "! grep -q 'nightly-20' .github/workflows/build.yml"
-    uat_status: verified
-  - id: uat-005
-    name: "Linux release build uses mold linker"
-    command: "grep -q mold .github/workflows/build.yml"
-    uat_status: verified
-  - id: uat-006
-    name: "Makefile.toml has release, github-release, and publish-all tasks"
-    command: "grep -q 'tasks.release' Makefile.toml && grep -q 'tasks.github-release' Makefile.toml"
-    uat_status: verified
+- id: uat-001
+  name: CI passes on push to non-main branch (test + codecov only)
+  command: cargo make ci
+  uat_status: verified
+- id: uat-002
+  name: CI passes on push to main (full pipeline including platform builds and web deploy)
+  command: cargo make ci
+  uat_status: verified
+- id: uat-003
+  name: web.yml is removed; all jobs live in build.yml
+  command: test ! -f .github/workflows/web.yml
+  uat_status: verified
+- id: uat-004
+  name: Toolchain version is not hardcoded in workflow files (derived or centralized)
+  command: '! grep -q ''nightly-20'' .github/workflows/build.yml'
+  uat_status: verified
+- id: uat-005
+  name: Linux release build uses mold linker
+  command: grep -q mold .github/workflows/build.yml
+  uat_status: verified
+- id: uat-006
+  name: Makefile.toml has release, github-release, and publish-all tasks
+  command: grep -q 'tasks.release' Makefile.toml && grep -q 'tasks.github-release' Makefile.toml
+  uat_status: verified
 tasks:
-  - id: T-001
-    title: "Consolidate web.yml into build.yml"
-    priority: 1
-    status: done
-    notes: "Move the WASM/Trunk build and GitHub Pages deploy into build.yml as a new job gated on refs/heads/main. Delete web.yml."
-  - id: T-002
-    title: "DRY toolchain pinning in build.yml"
-    priority: 1
-    status: done
-    notes: "Remove hardcoded RUST_TOOLCHAIN env var. Read toolchain from rust-toolchain.toml or use a single env var at the top derived from the file."
-  - id: T-003
-    title: "Add mold linker to Linux release build"
-    priority: 2
-    status: done
-    notes: "Install clang + mold in the build_linux job. Set RUSTFLAGS to use mold. Match microralph's pattern."
-  - id: T-004
-    title: "Gate builds and deploys to main-only; PRs run test + codecov"
-    priority: 1
-    status: done
-    notes: "Change trigger to push + pull_request. Platform builds and web deploy use if: github.ref == 'refs/heads/main'. Test and codecov run on all pushes and PRs."
-  - id: T-005
-    title: "Update copilot-setup-steps.yml toolchain to match"
-    priority: 3
-    status: done
-    notes: "Remove hardcoded toolchain date from copilot-setup-steps.yml; use same DRY approach."
-  - id: T-006
-    title: "Add release, github-release, and publish-all tasks to Makefile.toml"
-    priority: 2
-    status: done
-    notes: "Port the release automation tasks from microralph's Makefile.toml, adapting repo name and removing wasm/OCI tasks that don't apply."
-  - id: T-007
-    title: "Modernize GitHub Pages deploy action"
-    priority: 3
-    status: done
-    notes: "Evaluate peaceiris/actions-gh-pages@v3 vs v4 or GitHub's built-in pages deployment. Upgrade if appropriate."
+- id: T-001
+  title: Consolidate web.yml into build.yml
+  priority: 1
+  status: done
+  notes: Move the WASM/Trunk build and GitHub Pages deploy into build.yml as a new job gated on refs/heads/main. Delete web.yml.
+- id: T-002
+  title: DRY toolchain pinning in build.yml
+  priority: 1
+  status: done
+  notes: Remove hardcoded RUST_TOOLCHAIN env var. Read toolchain from rust-toolchain.toml or use a single env var at the top derived from the file.
+- id: T-003
+  title: Add mold linker to Linux release build
+  priority: 2
+  status: done
+  notes: Install clang + mold in the build_linux job. Set RUSTFLAGS to use mold. Match microralph's pattern.
+- id: T-004
+  title: Gate builds and deploys to main-only; PRs run test + codecov
+  priority: 1
+  status: done
+  notes: 'Change trigger to push + pull_request. Platform builds and web deploy use if: github.ref == ''refs/heads/main''. Test and codecov run on all pushes and PRs.'
+- id: T-005
+  title: Update copilot-setup-steps.yml toolchain to match
+  priority: 3
+  status: done
+  notes: Remove hardcoded toolchain date from copilot-setup-steps.yml; use same DRY approach.
+- id: T-006
+  title: Add release, github-release, and publish-all tasks to Makefile.toml
+  priority: 2
+  status: done
+  notes: Port the release automation tasks from microralph's Makefile.toml, adapting repo name and removing wasm/OCI tasks that don't apply.
+- id: T-007
+  title: Modernize GitHub Pages deploy action
+  priority: 3
+  status: done
+  notes: Evaluate peaceiris/actions-gh-pages@v3 vs v4 or GitHub's built-in pages deployment. Upgrade if appropriate.
 ---
 
 # Summary
@@ -281,3 +281,13 @@ Port from microralph, adapting:
   - Platform build jobs (`build_linux`, `build_windows`, `build_macos`) and `build_web` are gated with `if: github.ref == 'refs/heads/main'` and `needs: test`
   - All jobs use DRY toolchain from `rust-toolchain.toml`; `build_linux` uses mold linker; `build_web` deploys via `peaceiris/actions-gh-pages@v4`
   - Ran `cargo make ci`: 166 tests passed, 0 failed (fmt-check + clippy + nextest)
+
+## 2026-02-08 — PRD Finalized
+- **Status**: ✅ Finalized
+- **Tasks Completed**: 7 tasks (T-001 through T-007)
+- **Outcome**: All tasks completed, acceptance tests passed (166/166 tests)
+- **Cleanup**: None required — no temporary files, debug artifacts, or resolved TODOs from PRD-0008 work found
+- **Summary**:
+  - Unified CI into a single `build.yml` (consolidated `web.yml`, added PR triggers, gated platform builds to main-only)
+  - DRY toolchain pinning via `rust-toolchain.toml` across all workflow files (`build.yml`, `copilot-setup-steps.yml`)
+  - Added mold linker to Linux release builds, release automation tasks (`release`, `github-release`, `publish-all`) to `Makefile.toml`, and modernized GitHub Pages deploy to `peaceiris/actions-gh-pages@v4`
