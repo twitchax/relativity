@@ -2,7 +2,10 @@ use bevy::ecs::hierarchy::ChildSpawnerCommands;
 use bevy::prelude::*;
 use bevy_lunex::prelude::*;
 
-use crate::game::shared::types::GameItem;
+use crate::game::player::player_clock::format_velocity_fraction;
+use crate::game::player::shared::Player;
+use crate::game::shared::constants::C;
+use crate::game::shared::types::{Clock, GameItem, GravitationalGamma, PlayerHud, Velocity, VelocityGamma};
 use crate::shared::state::AppState;
 
 // Paths.
@@ -34,6 +37,22 @@ pub struct PlayerPanel;
 /// Marker for the observer clock panel (right).
 #[derive(Component, Default)]
 pub struct ObserverPanel;
+
+/// Marker for the player time (`t_p`) HUD label.
+#[derive(Component)]
+pub struct HudPlayerTime;
+
+/// Marker for the velocity gamma (`γ_v`) HUD label.
+#[derive(Component)]
+pub struct HudVelocityGamma;
+
+/// Marker for the gravitational gamma (`γ_g`) HUD label.
+#[derive(Component)]
+pub struct HudGravGamma;
+
+/// Marker for the velocity fraction (v) HUD label.
+#[derive(Component)]
+pub struct HudVelocityFraction;
 
 /// Plugin that spawns the HUD layout root.
 ///
@@ -82,7 +101,7 @@ fn spawn_hud_root(mut commands: Commands, asset_server: Res<AssetServer>) {
     });
 }
 
-/// Spawns placeholder labels for the player stats panel.
+/// Spawns labeled readouts for the player stats panel.
 fn spawn_player_labels(panel: &mut ChildSpawnerCommands, font: &Handle<Font>) {
     let text_font = TextFont {
         font: font.clone(),
@@ -90,18 +109,22 @@ fn spawn_player_labels(panel: &mut ChildSpawnerCommands, font: &Handle<Font>) {
         ..Default::default()
     };
 
-    let labels = [("t_p = 0.00", 15.0), ("γ_v = 1.00", 38.0), ("γ_g = 1.00", 61.0), ("v = 0.00c", 84.0)];
-
-    for (label, y_pct) in labels {
-        panel.spawn((
+    // Each label gets its own marker component for targeted text updates.
+    let base = |y_pct: f32, label: &str| {
+        (
             GameItem,
             UiLayout::window().pos(Rl((5.0, y_pct))).anchor(Anchor::CENTER_LEFT).pack(),
             UiTextSize::from(Rh(22.0)),
             Text2d::new(label),
             text_font.clone(),
             UiColor::from(TEXT_COLOR),
-        ));
-    }
+        )
+    };
+
+    panel.spawn((base(15.0, "t_p = 0.00"), HudPlayerTime));
+    panel.spawn((base(38.0, "γ_v = 1.00"), HudVelocityGamma));
+    panel.spawn((base(61.0, "γ_g = 1.00"), HudGravGamma));
+    panel.spawn((base(84.0, "v = 0.00c"), HudVelocityFraction));
 }
 
 /// Spawns placeholder label for the observer clock panel.
@@ -120,6 +143,42 @@ fn spawn_observer_labels(panel: &mut ChildSpawnerCommands, font: &Handle<Font>) 
         text_font,
         UiColor::from(TEXT_COLOR),
     ));
+}
+
+/// Updates the individual player stat labels in the HUD with live data.
+///
+/// Reads `Clock`, `VelocityGamma`, `GravitationalGamma` from the `PlayerHud`
+/// entity, and `Velocity` from the `Player` entity, then writes formatted
+/// values into the four labeled `Text2d` components.
+#[allow(clippy::type_complexity)]
+pub fn player_hud_text_update(
+    data_query: Query<(&Clock, &VelocityGamma, &GravitationalGamma), With<PlayerHud>>,
+    velocity_query: Query<&Velocity, With<Player>>,
+    mut tp_query: Query<&mut Text2d, (With<HudPlayerTime>, Without<HudVelocityGamma>, Without<HudGravGamma>, Without<HudVelocityFraction>)>,
+    mut vel_gamma_query: Query<&mut Text2d, (With<HudVelocityGamma>, Without<HudPlayerTime>, Without<HudGravGamma>, Without<HudVelocityFraction>)>,
+    mut grav_gamma_query: Query<&mut Text2d, (With<HudGravGamma>, Without<HudPlayerTime>, Without<HudVelocityGamma>, Without<HudVelocityFraction>)>,
+    mut vf_query: Query<&mut Text2d, (With<HudVelocityFraction>, Without<HudPlayerTime>, Without<HudVelocityGamma>, Without<HudGravGamma>)>,
+) {
+    let Ok((clock, velocity_gamma, gravitational_gamma)) = data_query.single() else { return };
+    let Ok(velocity) = velocity_query.single() else { return };
+
+    let days = clock.value.value / 24.0 / 3600.0;
+
+    if let Ok(mut text) = tp_query.single_mut() {
+        **text = format!("t_p = {days:2.2}");
+    }
+
+    if let Ok(mut text) = vel_gamma_query.single_mut() {
+        **text = format!("γ_v = {:2.2}", velocity_gamma.value);
+    }
+
+    if let Ok(mut text) = grav_gamma_query.single_mut() {
+        **text = format!("γ_g = {:2.2}", gravitational_gamma.value);
+    }
+
+    if let Ok(mut text) = vf_query.single_mut() {
+        **text = format_velocity_fraction(velocity.scalar(), *C);
+    }
 }
 
 /// Despawns the HUD root entity on state exit.

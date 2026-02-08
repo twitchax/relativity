@@ -75,7 +75,7 @@ tasks:
   - id: T-005
     title: "Wire player stats into left HUD panel"
     priority: 4
-    status: todo
+    status: done
     notes: "Display t_p, γ_v, γ_g, v as separate labeled readouts using Text2d + UiTextSize. Each on its own line or in a grid within the panel. Update player_clock_text_update to target new entities."
   - id: T-006
     title: "Wire observer clock into right HUD panel"
@@ -267,3 +267,15 @@ UiLayoutRoot (2D, camera-synced)
   - Added `PANEL_SPRITE` path constant and `PANEL_BORDER_PX` for 9-slice border width
   - UAT passed: 230 tests run, 230 passed, 0 skipped (`cargo make uat` exit code 0)
 - **Constitution Compliance**: No violations. Minimal changes to existing code, consistent with bevy_lunex 9-slice patterns documented in the library's README.
+
+## 2026-02-08 — T-005 Completed
+- **Task**: Wire player stats into left HUD panel
+- **Status**: ✅ Done
+- **Changes**:
+  - Added four marker components in `src/game/hud/mod.rs`: `HudPlayerTime`, `HudVelocityGamma`, `HudGravGamma`, `HudVelocityFraction`
+  - Updated `spawn_player_labels` to attach a unique marker component to each label entity (replacing the generic loop)
+  - Added `player_hud_text_update` system that reads `Clock`, `VelocityGamma`, `GravitationalGamma` from the `PlayerHud` entity and `Velocity` from the `Player` entity, then writes formatted values into the four individual `Text2d` labels
+  - Registered `player_hud_text_update` in `GamePlugin` (running after `player_clock_update` in the `Running` state)
+  - Added imports for `Player`, `Clock`, `VelocityGamma`, `GravitationalGamma`, `Velocity`, `PlayerHud`, `C`, and `format_velocity_fraction` to the HUD module
+  - UAT passed: 230 tests run, 230 passed, 0 skipped (`cargo make uat` exit code 0)
+- **Constitution Compliance**: No violations. Minimal changes, consistent with existing patterns. The old `player_clock_text_update` system remains untouched (it still updates the old `Text`-based HUD entity); removal is deferred to T-007.
