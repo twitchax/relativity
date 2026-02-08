@@ -1443,6 +1443,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_trauma_shake"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a377d1e657fa786f7dc54c1e0f7516475c3f818644818781c12c1c4f1d200702"
+dependencies = [
+ "bevy",
+ "noisy_bevy",
+]
+
+[[package]]
 name = "bevy_ui"
 version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3312,6 +3322,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "noisy_bevy"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8b1da9079489877942e9048c7185096f462f585f5aaa4364c9db4af1aca872a0"
+dependencies = [
+ "bevy",
+]
+
+[[package]]
 name = "nom"
 version = "7.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4207,6 +4226,7 @@ version = "0.1.0"
 dependencies = [
  "approx",
  "bevy",
+ "bevy_trauma_shake",
  "console_error_panic_hook",
  "getrandom 0.4.1",
  "glam 0.31.0",

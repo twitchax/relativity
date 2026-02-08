@@ -6,6 +6,7 @@ use crate::{
     shared::state::{AppState, GameState},
 };
 use bevy::prelude::*;
+use bevy_trauma_shake::Shake;
 
 // Systems.
 
@@ -111,6 +112,16 @@ pub fn success_button_interaction(
 }
 
 // Failure overlay systems.
+
+/// Apply camera shake trauma when entering `GameState::Failed`.
+///
+/// This runs as an `OnEnter` system so the shake starts immediately on collision,
+/// concurrent with the failure overlay.
+pub fn apply_collision_shake(mut shakes: Query<&mut Shake>) {
+    for mut shake in &mut shakes {
+        shake.add_trauma(0.4);
+    }
+}
 
 /// Spawn the failure overlay and insert the auto-reset timer when entering `GameState::Failed`.
 pub fn spawn_failure_overlay(mut commands: Commands, asset_server: Res<AssetServer>) {

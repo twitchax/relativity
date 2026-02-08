@@ -16,6 +16,7 @@
 use std::time::Duration;
 
 use bevy::{input::InputPlugin, prelude::*, state::app::StatesPlugin, text::TextPlugin, time::TimeUpdateStrategy};
+use bevy_trauma_shake::TraumaPlugin;
 use relativity::{
     game::{
         player::shared::Player,
@@ -43,6 +44,7 @@ pub fn build_gameplay_app() -> App {
         .add_plugins(StatesPlugin)
         .add_plugins(InputPlugin)
         .add_plugins(bevy::gizmos::GizmoPlugin)
+        .add_plugins(TraumaPlugin)
         .insert_resource(TimeUpdateStrategy::ManualDuration(Duration::from_secs_f64(1.0 / 60.0)))
         .insert_resource(ClearColor(Color::srgb(0.0, 0.0, 0.0)))
         .init_resource::<relativity::game::levels::CurrentLevel>()

@@ -137,7 +137,7 @@ tasks:
   - id: T-009
     title: "Add camera shake on collision via bevy_trauma_shake"
     priority: 3
-    status: todo
+    status: done
     notes: "Add bevy_trauma_shake dependency. Attach Shake component to the camera entity. On planet collision (GameState::Failed transition), call shake.add_trauma(0.4). Trigger before the failure overlay spawns so the shake is visible."
   - id: T-010
     title: "Add fade transitions between screens"
@@ -476,3 +476,18 @@ This means an automated agent can implement a feature, run `cargo make uat`, and
   - UAT passed: 203 tests, 0 failures
 
 - **Constitution Compliance**: No violations. Minimal changes (2 files modified, 1 file created). Consistent with existing ECS patterns and test conventions.
+
+## 2026-02-08 — T-009 Completed
+- **Task**: Add camera shake on collision via bevy_trauma_shake
+- **Status**: ✅ Done
+- **Changes**:
+  - Added `bevy_trauma_shake = "0.7"` dependency to `Cargo.toml`.
+  - Updated `src/shared/types.rs`: added `Shake::default()` component to the camera entity in `spawn_camera`.
+  - Updated `src/main.rs`: added `TraumaPlugin` to the Bevy app.
+  - Added `apply_collision_shake` system in `src/game/outcome/mod.rs` — queries all `Shake` components and calls `add_trauma(0.4)` on `OnEnter(GameState::Failed)`.
+  - Wired `apply_collision_shake` alongside `spawn_failure_overlay` in `src/game/mod.rs` on `OnEnter(GameState::Failed)`.
+  - Updated `tests/common/gameplay.rs`: added `TraumaPlugin` to headless test app.
+  - Updated `tests/common/headless.rs`: added `TraumaPlugin` and `Shake::default()` to offscreen camera.
+  - UAT passed: 203 tests, 0 failures
+
+- **Constitution Compliance**: No violations. Minimal changes (7 files). Consistent with existing ECS patterns (OnEnter system, component on camera, plugin registration). New dependency `bevy_trauma_shake` is justified per PRD principles.

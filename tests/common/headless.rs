@@ -17,6 +17,7 @@ use bevy::{
     window::ExitCondition,
     winit::WinitPlugin,
 };
+use bevy_trauma_shake::{Shake, TraumaPlugin};
 use relativity::{
     game::{levels::CurrentLevel, GamePlugin},
     menu::MenuPlugin,
@@ -65,6 +66,7 @@ pub fn build_headless_render_app() -> App {
         )
         .add_plugins(MenuPlugin)
         .add_plugins(GamePlugin)
+        .add_plugins(TraumaPlugin)
         .init_state::<AppState>()
         .add_systems(Startup, spawn_offscreen_camera);
 
@@ -126,5 +128,11 @@ fn spawn_offscreen_camera(mut commands: Commands, mut images: ResMut<Assets<Imag
         height,
     });
 
-    commands.spawn((Camera2d, Camera::default(), RenderTarget::Image(image_handle.into()), Transform::from_xyz(640.0, 360.0, 0.0)));
+    commands.spawn((
+        Camera2d,
+        Camera::default(),
+        RenderTarget::Image(image_handle.into()),
+        Transform::from_xyz(640.0, 360.0, 0.0),
+        Shake::default(),
+    ));
 }

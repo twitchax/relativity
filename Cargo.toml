@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 bevy = "0.18"
+bevy_trauma_shake = "0.7"
 uom = "0.37"
 nalgebra-spacetime = "0.5"
 glam = "0.31"

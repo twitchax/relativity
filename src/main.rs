@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_trauma_shake::TraumaPlugin;
 use relativity::{
     game::{levels::CurrentLevel, GamePlugin},
     menu::MenuPlugin,
@@ -25,6 +26,7 @@ fn main() {
             }),
             ..default()
         }))
+        .add_plugins(TraumaPlugin)
         .add_plugins(MenuPlugin)
         .add_plugins(GamePlugin)
         .init_state::<AppState>()
