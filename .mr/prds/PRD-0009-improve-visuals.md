@@ -87,7 +87,7 @@ acceptance_tests:
   - id: uat-013
     name: "Completing Level 1 advances CurrentLevel via next() and re-enters InGame"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
     automated_test: "Headless gameplay test: set CurrentLevel to Level 1, trigger destination collision → GameState::Finished. Simulate Next Level button click (or directly call next()), assert CurrentLevel resource advances to the next variant. Assert AppState re-enters InGame and new level entities are spawned."
 tasks:
   - id: T-001
@@ -630,3 +630,16 @@ This means an automated agent can implement a feature, run `cargo make uat`, and
     - `hud_displays_velocity_fraction_of_c`: launches player at ~0.71c, runs frames, queries `PlayerHud` text entity, asserts HUD contains `t_p =`, `γ_v =`, `γ_g =`, and `v = X.XXc` with a valid numeric fraction between 0 and 1.
     - `hud_displays_zero_velocity_at_rest`: enters Running without launching, asserts HUD shows `v = 0.00c`.
   - Ran `cargo make uat` — all 229 tests passed.
+
+## 2026-02-08 — uat-013 Verification
+- **UAT**: Completing Level 1 advances CurrentLevel via next() and re-enters InGame
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Created `tests/e2e_level_advance.rs` with test `completing_level1_advances_to_next_level_and_reenters_ingame`:
+    - Builds gameplay app with `MenuPlugin`, enters InGame on Level 1.
+    - Transitions to `GameState::Finished` (simulating level completion).
+    - Exercises `CurrentLevel::next()` to advance to `TimeWarp` and inserts `PendingNextLevel`, mirroring `success_button_interaction` logic.
+    - Kicks off fade-out to Menu; runs frames through fade transitions.
+    - Asserts `CurrentLevel` is `TimeWarp`, `AppState` is `InGame`, and `PendingNextLevel` is consumed.
+  - Ran `cargo make uat` — all 230 tests passed.
