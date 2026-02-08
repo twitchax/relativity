@@ -72,7 +72,7 @@ tasks:
   - id: T-005
     title: "Update copilot-setup-steps.yml toolchain to match"
     priority: 3
-    status: todo
+    status: done
     notes: "Remove hardcoded toolchain date from copilot-setup-steps.yml; use same DRY approach."
   - id: T-006
     title: "Add release, github-release, and publish-all tasks to Makefile.toml"
@@ -241,4 +241,15 @@ Port from microralph, adapting:
   - Updated `AGENTS.md` to document the new `publish-all` task in the cargo-make task table
   - UAT passed: `cargo make uat` — 166 tests passed, 0 failed
 - **UATs Verified**: uat-006 (`grep -q 'tasks.release' Makefile.toml && grep -q 'tasks.github-release' Makefile.toml` passes)
+- **Constitution Compliance**: No violations.
+
+## 2026-02-08 — T-005 Completed
+- **Task**: Update copilot-setup-steps.yml toolchain to match
+- **Status**: ✅ Done
+- **Changes**:
+  - Replaced hardcoded `toolchain: nightly-2025-12-22` in `.github/workflows/copilot-setup-steps.yml` with the same DRY approach used in `build.yml`
+  - Added "Read toolchain" step that extracts the channel from `rust-toolchain.toml` and passes it to `dtolnay/rust-toolchain`
+  - `rust-toolchain.toml` is now the single source of truth for all workflow files
+  - Updated `AGENTS.md` CI/Workflow Patterns section to reflect the new DRY toolchain approach
+  - UAT passed: `cargo make uat` — exit code 0
 - **Constitution Compliance**: No violations.

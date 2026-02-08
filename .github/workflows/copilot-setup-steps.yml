@@ -24,10 +24,13 @@ jobs:
       - name: Install system dependencies
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev portaudio19-dev build-essential libpulse-dev libdbus-1-dev libudev-dev libwayland-dev libxkbcommon-dev
 
+      - name: Read toolchain
+        id: read-toolchain
+        run: echo "channel=$(grep '^channel' rust-toolchain.toml | sed 's/.*= *\"\(.*\)\"/\1/')" >> "$GITHUB_OUTPUT"
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@nightly
         with:
-          toolchain: nightly-2025-12-22
+          toolchain: ${{ steps.read-toolchain.outputs.channel }}
           components: rustfmt, clippy
 
       - uses: cargo-bins/cargo-binstall@main
