@@ -5,12 +5,15 @@ use bevy_lunex::prelude::*;
 use crate::game::shared::types::GameItem;
 use crate::shared::state::AppState;
 
+// Paths.
+
+/// 9-slice panel background sprite (dark with cyan border glow).
+const PANEL_SPRITE: &str = "sprites/hud/panel.png";
+/// Border pixel width in the panel sprite (must match the asset).
+const PANEL_BORDER_PX: f32 = 4.0;
+
 // Colors.
 
-/// Semi-transparent dark panel background.
-const PANEL_BG: Color = Color::srgba(0.1, 0.1, 0.15, 0.85);
-/// Thin cyan border accent.
-const BORDER_ACCENT: Color = Color::srgba(0.3, 0.8, 1.0, 0.7);
 /// Soft white text color.
 const TEXT_COLOR: Color = Color::srgba(0.9, 0.95, 1.0, 1.0);
 
@@ -49,49 +52,34 @@ impl Plugin for HudPlugin {
 /// with player stats (left) and observer clock (right) panels.
 fn spawn_hud_root(mut commands: Commands, asset_server: Res<AssetServer>) {
     let font = asset_server.load("fonts/HackNerdFontMono-Regular.ttf");
+    let panel_image: Handle<Image> = asset_server.load(PANEL_SPRITE);
+
+    let panel_sprite = || Sprite {
+        image: panel_image.clone(),
+        image_mode: SpriteImageMode::Sliced(TextureSlicer {
+            border: BorderRect::all(PANEL_BORDER_PX),
+            ..Default::default()
+        }),
+        ..Default::default()
+    };
 
     commands.spawn((GameItem, HudRoot, UiLayoutRoot::new_2d(), UiFetchFromCamera::<0>)).with_children(|root| {
         // Bottom HUD bar: occupies bottom 12% of screen.
         root.spawn((GameItem, HudBar, UiLayout::boundary().pos1(Rl((0.0, 88.0))).pos2(Rl(100.0)).pack(), UiDepth::Add(900.0)))
             .with_children(|bar| {
                 // Left panel — player stats (left 60%, with margin).
-                bar.spawn((
-                    GameItem,
-                    PlayerPanel,
-                    UiLayout::boundary().pos1(Rl((1.0, 4.0))).pos2(Rl((59.0, 96.0))).pack(),
-                    UiColor::from(PANEL_BG),
-                    Sprite::default(),
-                ))
-                .with_children(|panel| {
-                    spawn_panel_border(panel);
-                    spawn_player_labels(panel, &font);
-                });
+                bar.spawn((GameItem, PlayerPanel, UiLayout::boundary().pos1(Rl((1.0, 4.0))).pos2(Rl((59.0, 96.0))).pack(), panel_sprite()))
+                    .with_children(|panel| {
+                        spawn_player_labels(panel, &font);
+                    });
 
                 // Right panel — observer clock (right 35%, with margin).
-                bar.spawn((
-                    GameItem,
-                    ObserverPanel,
-                    UiLayout::boundary().pos1(Rl((64.0, 4.0))).pos2(Rl((99.0, 96.0))).pack(),
-                    UiColor::from(PANEL_BG),
-                    Sprite::default(),
-                ))
-                .with_children(|panel| {
-                    spawn_panel_border(panel);
-                    spawn_observer_labels(panel, &font);
-                });
+                bar.spawn((GameItem, ObserverPanel, UiLayout::boundary().pos1(Rl((64.0, 4.0))).pos2(Rl((99.0, 96.0))).pack(), panel_sprite()))
+                    .with_children(|panel| {
+                        spawn_observer_labels(panel, &font);
+                    });
             });
     });
-}
-
-/// Spawns a thin border accent rectangle inside a panel.
-fn spawn_panel_border(panel: &mut ChildSpawnerCommands) {
-    // Top border line.
-    panel.spawn((
-        GameItem,
-        UiLayout::boundary().pos1(Rl((0.0, 0.0))).pos2(Rl((100.0, 2.0))).pack(),
-        UiColor::from(BORDER_ACCENT),
-        Sprite::default(),
-    ));
 }
 
 /// Spawns placeholder labels for the player stats panel.

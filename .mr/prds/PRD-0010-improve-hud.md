@@ -70,7 +70,7 @@ tasks:
   - id: T-004
     title: "Create or source HUD chrome sprite assets"
     priority: 3
-    status: todo
+    status: done
     notes: "Create minimal panel background sprites for 9-slice rendering (dark panel with border glow). Place in assets/sprites/hud/. Can be simple programmatic textures or hand-crafted PNGs."
   - id: T-005
     title: "Wire player stats into left HUD panel"
@@ -254,3 +254,16 @@ UiLayoutRoot (2D, camera-synced)
   - Used `ChildSpawnerCommands` (Bevy 0.18 API) for helper spawn functions
   - UAT passed: 230 tests run, 230 passed, 0 skipped (`cargo make uat` exit code 0)
 - **Constitution Compliance**: No violations. Minimal changes to single file, consistent with existing patterns.
+
+## 2026-02-08 — T-004 Completed
+- **Task**: Create or source HUD chrome sprite assets
+- **Status**: ✅ Done
+- **Changes**:
+  - Created `assets/sprites/hud/panel.png` — a 48×48 programmatic 9-slice sprite with dark interior (`rgba(26, 26, 38, 217)`) and cyan border glow (`rgba(77, 204, 255, 179)`) with 4px border region
+  - Created `assets/sprites/hud/border_accent.png` — an 8×8 solid cyan accent sprite (available for future use)
+  - Updated `src/game/hud/mod.rs` to load `panel.png` and render panel backgrounds using `SpriteImageMode::Sliced(TextureSlicer { border: BorderRect::all(4.0), .. })` instead of plain `Sprite::default()` with `UiColor`
+  - Removed separate `spawn_panel_border` function — the border is now baked into the 9-slice panel sprite
+  - Removed unused `PANEL_BG` and `BORDER_ACCENT` color constants
+  - Added `PANEL_SPRITE` path constant and `PANEL_BORDER_PX` for 9-slice border width
+  - UAT passed: 230 tests run, 230 passed, 0 skipped (`cargo make uat` exit code 0)
+- **Constitution Compliance**: No violations. Minimal changes to existing code, consistent with bevy_lunex 9-slice patterns documented in the library's README.
