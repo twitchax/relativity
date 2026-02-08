@@ -70,7 +70,7 @@ acceptance_tests:
   - id: uat-010
     name: "Fade overlay animates on state transitions"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
     automated_test: "Headless gameplay test: trigger a state transition (e.g., Menu → InGame). Assert FadeState resource transitions through FadeOut → state change → FadeIn. Query the fade overlay entity and assert BackgroundColor alpha interpolates from 0 → 1 → 0 over the expected frame count (~0.3s per direction). Screenshot baseline test: capture mid-fade frame and verify overlay alpha is approximately 0.5."
     manual_note: "Visual spot-check: verify fade looks smooth and does not feel sluggish."
   - id: uat-011
@@ -611,3 +611,12 @@ This means an automated agent can implement a feature, run `cargo make uat`, and
   - Created `tests/e2e_camera_shake.rs` with test:
     - `camera_shake_trauma_applied_on_failed`: spawns a camera with `Shake::default()`, enters game, transitions to `GameState::Failed`, and asserts that the `Shake` component's `trauma` field is > 0.3 (expected ~0.4) using Bevy's Reflect API to read the private field.
   - Ran `cargo make uat` — all 226 tests passed.
+
+## 2026-02-08 — uat-010 Verification
+- **UAT**: Fade overlay animates on state transitions
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Created `tests/e2e_fade_overlay.rs` with test:
+    - `fade_overlay_animates_through_full_cycle`: enters InGame, triggers `FadeState::start_fade_out(Menu, Paused)`, asserts `FadeDirection::Out` is active, runs ~9 frames and checks mid-fade alpha is ~0.5, runs remaining frames to complete fade-out, asserts automatic transition to `FadeDirection::In` and state change to `AppState::Menu`, runs fade-in frames checking mid-alpha ~0.5, verifies fade completes with alpha back to 0 and `FadeState` inactive.
+  - Ran `cargo make uat` — all 227 tests passed.
