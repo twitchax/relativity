@@ -45,7 +45,7 @@ acceptance_tests:
   - id: uat-005
     name: "WASM build compiles and runs with new HUD"
     command: cargo make build-web
-    uat_status: unverified
+    uat_status: verified
   - id: uat-006
     name: "CI pipeline passes (fmt-check, clippy, nextest)"
     command: cargo make ci
@@ -382,3 +382,13 @@ UiLayoutRoot (2D, camera-synced)
     - `hud_root_has_layout_root_for_viewport_tracking`: Verifies HudRoot carries `UiLayoutRoot`, which drives viewport-size-aware layout computation.
   - The HUD uses exclusively relative layout units (`Rl` for percentage positions, `Rh` for height-relative text sizing), which guarantees correct adaptation to any window size or aspect ratio by design.
   - Full UAT passed: 241 tests run, 241 passed, 0 skipped (`cargo make uat` exit code 0).
+
+## 2026-02-08 — uat-005 Verification
+- **UAT**: WASM build compiles and runs with new HUD
+- **Status**: ✅ Verified
+- **Method**: Existing test
+- **Details**:
+  - Ran `cargo make build-web` which invokes `trunk build --release` targeting `wasm32-unknown-unknown`.
+  - Build completed successfully in ~7 seconds with exit code 0.
+  - The WASM build includes all new HUD code (bevy_lunex layout, 9-slice panels, text labels) and compiles without errors.
+  - `getrandom` v0.2 (`js` feature) and v0.3 (`wasm_js` feature) WASM dependencies (added in T-009) are correctly resolved.
