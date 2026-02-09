@@ -1,7 +1,7 @@
 ---
 id: PRD-0011
 title: "Warped Euclidean Gravity Grid"
-status: draft
+status: active
 owner: twitchax
 created: 2026-02-09
 updated: 2026-02-09
@@ -50,7 +50,7 @@ tasks:
   - id: T-001
     title: "Replace vector-field rendering with warped Euclidean grid vertex computation"
     priority: 1
-    status: todo
+    status: done
     notes: "Build a 41x25 vertex grid (40x24 cells). For each vertex, compute uniform screen position, then apply displacement toward masses using compute_field_at_point. Use log-scaled displacement with a tunable max displacement cap."
   - id: T-002
     title: "Render grid as connected horizontal and vertical line segments between displaced vertices"
@@ -171,3 +171,19 @@ Alpha is also modulated by displacement strength (faint in flat regions, brighte
 - Subdivision or Bézier smoothing of line segments between vertices.
 
 # History
+
+## 2026-02-09 — T-001 Completed
+- **Task**: Replace vector-field rendering with warped Euclidean grid vertex computation
+- **Status**: ✅ Done
+- **Changes**:
+  - Replaced the vector-field (disconnected arrows) rendering in `src/game/gravity_grid/mod.rs` with a warped Euclidean grid
+  - Updated `GRID_COLS` from 20→40 and `GRID_ROWS` from 12→24 for 40×24 cell grid (41×25 = 1,025 vertices)
+  - Added `VERTEX_COLS`/`VERTEX_ROWS` constants for clarity
+  - Added `MAX_DISPLACEMENT_PX` (60px) and `DISPLACEMENT_SCALE` (12.0) tuning constants
+  - Extracted pure function `compute_displaced_vertex` for per-vertex displacement computation using log-scaled `compute_field_at_point` output
+  - `gravity_grid_render_system` now builds a flat Vec of displaced positions and draws horizontal/vertical line segments between adjacent vertices
+  - Added `curvature_color` function implementing heat-map gradient: blue (flat) → purple → red/orange (strong curvature) with alpha modulation
+  - Updated screenshot baseline `tests/baselines/level1_spawn.png` to reflect new grid appearance
+  - `compute_field_at_point` and all existing unit tests are unchanged and passing
+  - UAT: 241/241 tests pass including screenshot baseline
+- **Constitution Compliance**: No violations. Changes are minimal and focused on the gravity grid module only. `compute_field_at_point` public API is unchanged.

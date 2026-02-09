@@ -11,14 +11,23 @@ use crate::game::shared::{
     types::{Mass, Position},
 };
 
-/// Number of grid columns (horizontal sample points).
-const GRID_COLS: u32 = 20;
+/// Number of grid columns (cells, not vertices).
+const GRID_COLS: u32 = 40;
 
-/// Number of grid rows (vertical sample points).
-const GRID_ROWS: u32 = 12;
+/// Number of grid rows (cells, not vertices).
+const GRID_ROWS: u32 = 24;
 
-/// Maximum length (in pixels) of a field-direction line at the strongest field strength.
-const MAX_LINE_LENGTH_PX: f32 = 20.0;
+/// Number of vertices per row (one more than columns).
+const VERTEX_COLS: u32 = GRID_COLS + 1;
+
+/// Number of vertices per column (one more than rows).
+const VERTEX_ROWS: u32 = GRID_ROWS + 1;
+
+/// Maximum displacement (in pixels) a vertex can be shifted toward a mass.
+const MAX_DISPLACEMENT_PX: f32 = 60.0;
+
+/// Scale factor applied to log-scaled field magnitude before capping.
+const DISPLACEMENT_SCALE: f32 = 12.0;
 
 // Pure functions.
 
@@ -48,78 +57,104 @@ pub(crate) fn compute_field_at_point(point_x: UomLength, point_y: UomLength, mas
     (mag, dir)
 }
 
+/// Compute the displaced screen position and displacement magnitude for a single grid vertex.
+///
+/// Returns `(displaced_position, displacement_magnitude)`.
+#[must_use]
+#[allow(clippy::cast_possible_truncation)]
+fn compute_displaced_vertex(frac_x: f64, frac_y: f64, masses: &[(UomLength, UomLength, uom::si::f64::Mass)]) -> (Vec2, f32) {
+    let world_x = *SCREEN_WIDTH_UOM * frac_x;
+    let world_y = *SCREEN_HEIGHT_UOM * frac_y;
+
+    let (mag, dir) = compute_field_at_point(world_x, world_y, masses);
+
+    let base_pos = get_translation_from_percentage(frac_x, frac_y).truncate();
+
+    if mag < 1e-30 {
+        return (base_pos, 0.0);
+    }
+
+    let displacement = ((1.0 + mag).ln() as f32 * DISPLACEMENT_SCALE).min(MAX_DISPLACEMENT_PX);
+    let displaced_pos = base_pos + dir * displacement;
+
+    (displaced_pos, displacement)
+}
+
 // Systems.
 
-/// Render a grid of short lines showing gravitational field direction and strength.
+/// Render a warped Euclidean grid showing spacetime curvature near massive objects.
 ///
-/// Runs during all `InGame` sub-states. Each grid point samples the combined gravitational
-/// acceleration from all `Mass` entities and draws a Gizmo line in the field direction,
-/// with length proportional to log-scaled field strength.
+/// Builds a vertex grid and displaces each vertex toward nearby masses using
+/// `compute_field_at_point`. Draws connected horizontal and vertical line segments
+/// between displaced vertices, colored by local curvature strength.
 pub fn gravity_grid_render_system(mass_query: Query<(&Position, &Mass)>, mut gizmos: Gizmos) {
-    // Collect mass data to avoid repeated queries.
     let masses: Vec<_> = mass_query.iter().map(|(pos, mass)| (pos.x, pos.y, mass.value)).collect();
 
     if masses.is_empty() {
         return;
     }
 
-    // Pre-compute field magnitudes to find the max for normalization.
-    let mut samples: Vec<(Vec3, f64, Vec2)> = Vec::with_capacity((GRID_COLS * GRID_ROWS) as usize);
+    // Build the displaced vertex grid (row-major order).
+    let total_vertices = (VERTEX_ROWS * VERTEX_COLS) as usize;
+    let mut positions: Vec<Vec2> = Vec::with_capacity(total_vertices);
+    let mut displacements: Vec<f32> = Vec::with_capacity(total_vertices);
 
-    for row in 0..GRID_ROWS {
+    for row in 0..VERTEX_ROWS {
+        for col in 0..VERTEX_COLS {
+            let frac_x = f64::from(col) / f64::from(GRID_COLS);
+            let frac_y = f64::from(row) / f64::from(GRID_ROWS);
+
+            let (pos, disp) = compute_displaced_vertex(frac_x, frac_y, &masses);
+            positions.push(pos);
+            displacements.push(disp);
+        }
+    }
+
+    // Find max displacement for color normalization.
+    let max_disp = displacements.iter().copied().fold(0.0_f32, f32::max);
+    let safe_max = if max_disp < 1e-6 { 1.0 } else { max_disp };
+
+    // Draw horizontal line segments: vertex[row][col] → vertex[row][col+1].
+    for row in 0..VERTEX_ROWS {
         for col in 0..GRID_COLS {
-            // Map grid cell to world percentage (centered in each cell).
-            let frac_x = (f64::from(col) + 0.5) / f64::from(GRID_COLS);
-            let frac_y = (f64::from(row) + 0.5) / f64::from(GRID_ROWS);
+            let idx_a = (row * VERTEX_COLS + col) as usize;
+            let idx_b = (row * VERTEX_COLS + col + 1) as usize;
 
-            let world_x = *SCREEN_WIDTH_UOM * frac_x;
-            let world_y = *SCREEN_HEIGHT_UOM * frac_y;
-
-            let (mag, dir) = compute_field_at_point(world_x, world_y, &masses);
-
-            if mag < 1e-30 {
-                continue;
-            }
-
-            let screen_pos = get_translation_from_percentage(frac_x, frac_y);
-            samples.push((screen_pos, mag, dir));
+            let color = curvature_color(displacements[idx_a], displacements[idx_b], safe_max);
+            gizmos.line_2d(positions[idx_a], positions[idx_b], color);
         }
     }
 
-    if samples.is_empty() {
-        return;
-    }
+    // Draw vertical line segments: vertex[row][col] → vertex[row+1][col].
+    for row in 0..GRID_ROWS {
+        for col in 0..VERTEX_COLS {
+            let idx_a = (row * VERTEX_COLS + col) as usize;
+            let idx_b = ((row + 1) * VERTEX_COLS + col) as usize;
 
-    // Find max magnitude for normalization (use log scale for better visual range).
-    let max_mag = samples.iter().map(|(_, m, _)| *m).fold(0.0_f64, f64::max);
-
-    if max_mag < 1e-30 {
-        return;
-    }
-
-    let ln_max_magnitude = max_mag.ln();
-
-    for (screen_pos, mag, dir) in &samples {
-        // Log-scale normalization: stronger fields are longer, but the range is compressed.
-        let ln_magnitude = mag.ln();
-        #[allow(clippy::cast_possible_truncation)]
-        let strength = ((ln_magnitude / ln_max_magnitude).clamp(0.0, 1.0)) as f32;
-
-        // Skip very faint lines.
-        if strength < 0.05 {
-            continue;
+            let color = curvature_color(displacements[idx_a], displacements[idx_b], safe_max);
+            gizmos.line_2d(positions[idx_a], positions[idx_b], color);
         }
-
-        let start = screen_pos.truncate();
-        let line_len = MAX_LINE_LENGTH_PX * strength;
-        let end = start + *dir * line_len;
-
-        // Modulate alpha by strength.
-        let alpha = 0.1 + strength * 0.4;
-        let color = Color::srgba(0.6, 0.7, 0.9, alpha);
-
-        gizmos.line_2d(start, end, color);
     }
+}
+
+/// Map average endpoint displacement to a heat-map color (blue → purple → red/orange).
+#[must_use]
+fn curvature_color(disp_a: f32, disp_b: f32, max_disp: f32) -> Color {
+    let t = ((disp_a + disp_b) * 0.5 / max_disp).clamp(0.0, 1.0);
+
+    // Interpolate: blue (0.2,0.4,1.0) → purple (0.6,0.2,0.8) → orange/red (1.0,0.4,0.1).
+    let (r, g, b) = if t < 0.5 {
+        let s = t * 2.0;
+        (0.2 + s * 0.4, 0.4 - s * 0.2, 1.0 - s * 0.2)
+    } else {
+        let s = (t - 0.5) * 2.0;
+        (0.6 + s * 0.4, 0.2 + s * 0.2, 0.8 - s * 0.7)
+    };
+
+    // Modulate alpha: faint in flat regions, brighter near masses.
+    let alpha = 0.08 + t * 0.45;
+
+    Color::srgba(r, g, b, alpha)
 }
 
 #[cfg(test)]
