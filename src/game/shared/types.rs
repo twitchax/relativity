@@ -51,6 +51,11 @@ pub struct FailureTimer(pub Timer);
 #[derive(Resource)]
 pub struct PendingNextLevel;
 
+/// Marker resource inserted when the failure timer finishes to signal
+/// that the level should be despawned and respawned on the next `Paused` entry.
+#[derive(Resource)]
+pub struct PendingLevelReset;
+
 /// Ring buffer of recent player positions with gamma-based colors for trajectory trail rendering.
 ///
 /// Each frame during `Running`, the current screen position and a color derived from

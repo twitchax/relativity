@@ -10,7 +10,7 @@ use super::{
     shared::{
         constants::{MASS_OF_EARTH, MASS_OF_SUN, UNIT_RADIUS},
         helpers::get_position_from_percentage,
-        types::{GameItem, Mass, Radius, Velocity},
+        types::{GameItem, LaunchState, Mass, PendingLevelReset, Radius, Velocity},
     },
 };
 
@@ -63,6 +63,38 @@ pub fn despawn_level(mut commands: Commands, query: Query<Entity, With<GameItem>
         // Bevy 0.18: despawn() recursively despawns children.
         commands.entity(entity).despawn();
     }
+}
+
+/// Reset the level when `PendingLevelReset` is present.
+///
+/// Despawns all `GameItem` entities and respawns the current level, returning
+/// the player and all objects to their starting positions. Also resets the
+/// launch state machine to `Idle`.
+pub fn reset_level_on_pending(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    current_level: Res<CurrentLevel>,
+    query: Query<Entity, With<GameItem>>,
+    pending: Option<Res<PendingLevelReset>>,
+    mut launch_state: ResMut<LaunchState>,
+) {
+    if pending.is_none() {
+        return;
+    }
+
+    // Despawn all game items.
+    for entity in &query {
+        commands.entity(entity).despawn();
+    }
+
+    // Respawn the level.
+    spawn_level(commands.reborrow(), asset_server, current_level);
+
+    // Reset launch state.
+    *launch_state = LaunchState::Idle;
+
+    // Remove the marker.
+    commands.remove_resource::<PendingLevelReset>();
 }
 
 // Levels.

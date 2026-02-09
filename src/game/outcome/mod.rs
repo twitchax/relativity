@@ -2,7 +2,7 @@ use crate::{
     game::{
         fade::{is_fading, FadeState},
         levels::CurrentLevel,
-        shared::types::{FailureOverlay, FailureTimer, NextLevelButton, PendingNextLevel, SuccessOverlay},
+        shared::types::{FailureOverlay, FailureTimer, NextLevelButton, PendingLevelReset, PendingNextLevel, SuccessOverlay},
     },
     shared::state::{AppState, GameState},
 };
@@ -171,10 +171,14 @@ pub fn despawn_failure_overlay(mut commands: Commands, query: Query<Entity, With
 }
 
 /// Tick the failure timer and transition back to `GameState::Paused` when it finishes.
-pub fn failure_auto_reset(time: Res<Time>, mut timer: ResMut<FailureTimer>, mut game_state: ResMut<NextState<GameState>>) {
+///
+/// Inserts `PendingLevelReset` so that the `OnEnter(GameState::Paused)` reset system
+/// will despawn and respawn the entire level, returning everything to its starting state.
+pub fn failure_auto_reset(mut commands: Commands, time: Res<Time>, mut timer: ResMut<FailureTimer>, mut game_state: ResMut<NextState<GameState>>) {
     timer.0.tick(time.delta());
 
     if timer.0.just_finished() {
+        commands.insert_resource(PendingLevelReset);
         game_state.set(GameState::Paused);
     }
 }

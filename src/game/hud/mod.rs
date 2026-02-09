@@ -6,8 +6,8 @@ use crate::game::observer::{format_observer_time, Observer};
 use crate::game::player::player_clock::format_velocity_fraction;
 use crate::game::player::shared::Player;
 use crate::game::shared::constants::C;
-use crate::game::shared::types::{Clock, GameItem, GravitationalGamma, PlayerHud, Velocity, VelocityGamma};
-use crate::shared::state::AppState;
+use crate::game::shared::types::{Clock, GameItem, GravitationalGamma, PendingLevelReset, PlayerHud, Velocity, VelocityGamma};
+use crate::shared::state::{AppState, GameState};
 use crate::shared::{SCREEN_HEIGHT_PX, SCREEN_WIDTH_PX};
 
 // Paths.
@@ -71,7 +71,9 @@ impl Plugin for HudPlugin {
     fn build(&self, app: &mut App) {
         // No explicit OnExit despawn needed: the HudRoot has GameItem,
         // and despawn_level recursively cleans up all children.
-        app.add_systems(OnEnter(AppState::InGame), spawn_hud_root);
+        app.add_systems(OnEnter(AppState::InGame), spawn_hud_root)
+            // Respawn the HUD after a level reset (PendingLevelReset despawns all GameItem entities).
+            .add_systems(OnEnter(GameState::Paused), spawn_hud_root.run_if(resource_exists::<PendingLevelReset>));
     }
 }
 
