@@ -37,7 +37,7 @@ acceptance_tests:
   - id: uat-004
     name: "Grid is uniform and evenly spaced in regions with no gravitational influence"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
   - id: uat-005
     name: "Larger gravity wells produce more dramatic funneling than smaller ones"
     command: cargo make uat
@@ -273,3 +273,15 @@ Alpha is also modulated by displacement strength (faint in flat regions, brighte
     - `curvature_color_gradient_blue_purple_red` — verifies the full gradient ordering: red increases monotonically and blue decreases monotonically from low → mid → high displacement
   - Pre-existing tests `curvature_color_low_displacement_is_blue`, `curvature_color_high_displacement_is_warm`, and `curvature_color_alpha_increases_with_displacement` also support this criterion
   - UAT: 255/255 tests pass
+
+## 2026-02-09 — uat-004 Verification
+- **UAT**: Grid is uniform and evenly spaced in regions with no gravitational influence
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Added `grid_uniform_and_evenly_spaced_without_masses` test in `src/game/gravity_grid/mod.rs`
+  - Verifies all 1,025 vertices match their undisplaced base positions when no masses are present (zero displacement)
+  - Verifies uniform horizontal spacing: all horizontal gaps within each row are equal
+  - Verifies uniform vertical spacing: all vertical gaps within each column are equal
+  - Pre-existing test `displaced_vertex_no_masses_returns_zero_displacement` also supports this criterion (single-vertex check)
+  - UAT: 256/256 tests pass

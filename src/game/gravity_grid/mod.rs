@@ -300,6 +300,61 @@ mod tests {
         );
     }
 
+    // --- grid uniform with no masses (uat-004) ---
+
+    #[test]
+    fn grid_uniform_and_evenly_spaced_without_masses() {
+        // With no masses, every vertex should sit at its undisplaced base position
+        // and the spacing between adjacent vertices should be uniform.
+        let masses: Vec<(UomLength, UomLength, UomMass)> = vec![];
+        let positions = build_vertex_grid(&masses);
+
+        // Verify every vertex matches its expected base position (zero displacement).
+        for row in 0..VERTEX_ROWS {
+            for col in 0..VERTEX_COLS {
+                let idx = (row * VERTEX_COLS + col) as usize;
+                let frac_x = f64::from(col) / f64::from(GRID_COLS);
+                let frac_y = f64::from(row) / f64::from(GRID_ROWS);
+                let expected = get_translation_from_percentage(frac_x, frac_y).truncate();
+                let actual = positions[idx];
+                assert!(
+                    (actual - expected).length() < 1e-3,
+                    "vertex ({row},{col}) should be at base position: expected {expected}, got {actual}"
+                );
+            }
+        }
+
+        // Verify uniform horizontal spacing: all horizontal gaps in a row should be equal.
+        for row in 0..VERTEX_ROWS {
+            let first_a = (row * VERTEX_COLS) as usize;
+            let first_b = (row * VERTEX_COLS + 1) as usize;
+            let expected_gap = (positions[first_b].x - positions[first_a].x).abs();
+            assert!(expected_gap > 1e-3, "horizontal gap should be positive");
+
+            for col in 1..GRID_COLS {
+                let idx_a = (row * VERTEX_COLS + col) as usize;
+                let idx_b = (row * VERTEX_COLS + col + 1) as usize;
+                let gap = (positions[idx_b].x - positions[idx_a].x).abs();
+                assert!((gap - expected_gap).abs() < 1e-2, "row {row}: horizontal gap at col {col} should be {expected_gap}, got {gap}");
+            }
+        }
+
+        // Verify uniform vertical spacing: all vertical gaps in a column should be equal.
+        for col in 0..VERTEX_COLS {
+            let first_a = col as usize;
+            let first_b = (VERTEX_COLS + col) as usize;
+            let expected_gap = (positions[first_b].y - positions[first_a].y).abs();
+            assert!(expected_gap > 1e-3, "vertical gap should be positive");
+
+            for row in 1..GRID_ROWS {
+                let idx_a = (row * VERTEX_COLS + col) as usize;
+                let idx_b = ((row + 1) * VERTEX_COLS + col) as usize;
+                let gap = (positions[idx_b].y - positions[idx_a].y).abs();
+                assert!((gap - expected_gap).abs() < 1e-2, "col {col}: vertical gap at row {row} should be {expected_gap}, got {gap}");
+            }
+        }
+    }
+
     // --- displacement proportional to field strength (uat-002) ---
 
     #[test]
