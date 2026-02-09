@@ -10,6 +10,7 @@ use crate::game::shared::{
     systems::calculate_gravitational_acceleration,
     types::{Mass, Position},
 };
+use crate::shared::{SCREEN_HEIGHT_PX, SCREEN_WIDTH_PX};
 
 /// Number of grid columns (cells, not vertices).
 const GRID_COLS: u32 = 40;
@@ -24,10 +25,20 @@ const VERTEX_COLS: u32 = GRID_COLS + 1;
 const VERTEX_ROWS: u32 = GRID_ROWS + 1;
 
 /// Maximum displacement (in pixels) a vertex can be shifted toward a mass.
-const MAX_DISPLACEMENT_PX: f32 = 80.0;
+const MAX_DISPLACEMENT_PX: f32 = 40.0;
 
 /// Scale factor applied to log-scaled normalized field magnitude before capping.
-const DISPLACEMENT_SCALE: f32 = 18.0;
+const DISPLACEMENT_SCALE: f32 = 10.0;
+
+/// Minimum fraction of the original cell spacing preserved between adjacent vertices.
+///
+/// Prevents grid lines from crossing while still allowing vertices to converge near
+/// masses, creating a funnel effect rather than crossed distortions.
+const MIN_SPACING_FRACTION: f32 = 0.05;
+
+/// Maximum fraction of the screen-space distance to the nearest mass that a vertex
+/// can be displaced.  Prevents vertices from overshooting past mass centers.
+const MAX_PROXIMITY_FRACTION: f32 = 0.75;
 
 /// Reference field strength (m/s²) used to normalize magnitudes before log scaling.
 ///
@@ -77,14 +88,92 @@ fn compute_displaced_vertex(frac_x: f64, frac_y: f64, masses: &[(UomLength, UomL
 
     let base_pos = get_translation_from_percentage(frac_x, frac_y).truncate();
 
-    if mag < 1e-30 {
+    // Guard against NaN/infinity (e.g. vertex coincident with a mass) or zero field.
+    if mag < 1e-30 || !dir.x.is_finite() || !dir.y.is_finite() {
         return (base_pos, 0.0);
     }
 
-    let displacement = ((1.0 + mag / REFERENCE_FIELD_STRENGTH).ln() as f32 * DISPLACEMENT_SCALE).min(MAX_DISPLACEMENT_PX);
+    let mut displacement = ((1.0 + mag / REFERENCE_FIELD_STRENGTH).ln() as f32 * DISPLACEMENT_SCALE).min(MAX_DISPLACEMENT_PX);
+
+    // Cap displacement to a fraction of the screen-space distance to the nearest
+    // mass so that vertices converge *toward* a mass but never overshoot past it.
+    let nearest_mass_dist = masses
+        .iter()
+        .map(|&(mx, my, _)| {
+            let mass_frac_x = (mx / *SCREEN_WIDTH_UOM).value;
+            let mass_frac_y = (my / *SCREEN_HEIGHT_UOM).value;
+            let mass_px = Vec2::new((SCREEN_WIDTH_PX * mass_frac_x) as f32, (SCREEN_HEIGHT_PX * mass_frac_y) as f32);
+            (base_pos - mass_px).length()
+        })
+        .fold(f32::MAX, f32::min);
+
+    displacement = displacement.min(nearest_mass_dist * MAX_PROXIMITY_FRACTION);
+
     let displaced_pos = base_pos + dir * displacement;
 
     (displaced_pos, displacement)
+}
+
+/// Enforce grid topology by ensuring adjacent vertices maintain minimum spacing.
+///
+/// After displacement, vertices near a mass can converge and potentially cross
+/// their neighbors.  This function performs bidirectional sweeps along both axes
+/// to guarantee a minimum gap between every pair of adjacent vertices, preserving
+/// the grid's topological ordering.
+#[allow(clippy::cast_possible_truncation)]
+fn enforce_grid_topology(positions: &mut [Vec2]) {
+    let cell_width = SCREEN_WIDTH_PX as f32 / f32::from(GRID_COLS as u16);
+    let cell_height = SCREEN_HEIGHT_PX as f32 / f32::from(GRID_ROWS as u16);
+    let min_gap_x = cell_width * MIN_SPACING_FRACTION;
+    let min_gap_y = cell_height * MIN_SPACING_FRACTION;
+
+    // Horizontal: forward pass (left → right).
+    for row in 0..VERTEX_ROWS {
+        for col in 1..VERTEX_COLS {
+            let prev = (row * VERTEX_COLS + col - 1) as usize;
+            let curr = (row * VERTEX_COLS + col) as usize;
+
+            if positions[curr].x < positions[prev].x + min_gap_x {
+                positions[curr].x = positions[prev].x + min_gap_x;
+            }
+        }
+    }
+
+    // Horizontal: backward pass (right → left).
+    for row in 0..VERTEX_ROWS {
+        for col in (0..VERTEX_COLS - 1).rev() {
+            let curr = (row * VERTEX_COLS + col) as usize;
+            let next = (row * VERTEX_COLS + col + 1) as usize;
+
+            if positions[curr].x > positions[next].x - min_gap_x {
+                positions[curr].x = positions[next].x - min_gap_x;
+            }
+        }
+    }
+
+    // Vertical: forward pass (increasing y / row index).
+    for col in 0..VERTEX_COLS {
+        for row in 1..VERTEX_ROWS {
+            let prev = ((row - 1) * VERTEX_COLS + col) as usize;
+            let curr = (row * VERTEX_COLS + col) as usize;
+
+            if positions[curr].y < positions[prev].y + min_gap_y {
+                positions[curr].y = positions[prev].y + min_gap_y;
+            }
+        }
+    }
+
+    // Vertical: backward pass (decreasing y / row index).
+    for col in 0..VERTEX_COLS {
+        for row in (0..VERTEX_ROWS - 1).rev() {
+            let curr = (row * VERTEX_COLS + col) as usize;
+            let next = ((row + 1) * VERTEX_COLS + col) as usize;
+
+            if positions[curr].y > positions[next].y - min_gap_y {
+                positions[curr].y = positions[next].y - min_gap_y;
+            }
+        }
+    }
 }
 
 // Systems.
@@ -116,6 +205,9 @@ pub fn gravity_grid_render_system(mass_query: Query<(&Position, &Mass)>, mut giz
             displacements.push(disp);
         }
     }
+
+    // Prevent grid lines from crossing: enforce minimum spacing between neighbors.
+    enforce_grid_topology(&mut positions);
 
     // Find max displacement for color normalization.
     let max_disp = displacements.iter().copied().fold(0.0_f32, f32::max);
@@ -401,7 +493,8 @@ mod tests {
 
     // --- grid connectivity (uat-001) ---
 
-    /// Build the displaced vertex grid the same way the render system does.
+    /// Build the displaced vertex grid the same way the render system does,
+    /// including topology enforcement.
     fn build_vertex_grid(masses: &[(UomLength, UomLength, UomMass)]) -> Vec<Vec2> {
         let mut positions = Vec::with_capacity((VERTEX_ROWS * VERTEX_COLS) as usize);
         for row in 0..VERTEX_ROWS {
@@ -412,7 +505,46 @@ mod tests {
                 positions.push(pos);
             }
         }
+        enforce_grid_topology(&mut positions);
         positions
+    }
+
+    #[test]
+    fn topology_preserved_under_strong_mass() {
+        // Place a very strong mass between vertex positions (avoid singularity)
+        // and verify that no pair of adjacent vertices has crossed ordering.
+        let masses = vec![(*SCREEN_WIDTH_UOM * 0.53, *SCREEN_HEIGHT_UOM * 0.47, UomMass::new::<kilogram>(1.0e37))];
+        let positions = build_vertex_grid(&masses);
+
+        // Horizontal: x must be strictly increasing within each row.
+        for row in 0..VERTEX_ROWS {
+            for col in 1..VERTEX_COLS {
+                let prev = (row * VERTEX_COLS + col - 1) as usize;
+                let curr = (row * VERTEX_COLS + col) as usize;
+                assert!(
+                    positions[curr].x > positions[prev].x,
+                    "row {row}: vertex col {col} x ({}) should be > col {} x ({})",
+                    positions[curr].x,
+                    col - 1,
+                    positions[prev].x
+                );
+            }
+        }
+
+        // Vertical: y must be strictly increasing within each column.
+        for col in 0..VERTEX_COLS {
+            for row in 1..VERTEX_ROWS {
+                let prev = ((row - 1) * VERTEX_COLS + col) as usize;
+                let curr = (row * VERTEX_COLS + col) as usize;
+                assert!(
+                    positions[curr].y > positions[prev].y,
+                    "col {col}: vertex row {row} y ({}) should be > row {} y ({})",
+                    positions[curr].y,
+                    row - 1,
+                    positions[prev].y
+                );
+            }
+        }
     }
 
     #[test]
