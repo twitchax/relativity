@@ -41,7 +41,7 @@ acceptance_tests:
   - id: uat-005
     name: "Larger gravity wells produce more dramatic funneling than smaller ones"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
   - id: uat-006
     name: "Existing unit tests for compute_field_at_point continue to pass"
     command: cargo make uat
@@ -284,4 +284,14 @@ Alpha is also modulated by displacement strength (faint in flat regions, brighte
   - Verifies uniform horizontal spacing: all horizontal gaps within each row are equal
   - Verifies uniform vertical spacing: all vertical gaps within each column are equal
   - Pre-existing test `displaced_vertex_no_masses_returns_zero_displacement` also supports this criterion (single-vertex check)
+  - UAT: 256/256 tests pass
+
+## 2026-02-09 — uat-005 Verification
+- **UAT**: Larger gravity wells produce more dramatic funneling than smaller ones
+- **Status**: ✅ Verified
+- **Method**: Existing test
+- **Details**:
+  - `displaced_vertex_proportional_to_field_strength` in `src/game/gravity_grid/mod.rs` — verifies a heavier mass (1e36 kg) produces more displacement than a lighter mass (1e35 kg) at the same vertex position
+  - `displaced_vertex_direction_toward_mass_proportional` in `src/game/gravity_grid/mod.rs` — verifies a stronger mass (5e36 kg) pulls vertices closer than a weaker mass (5e34 kg), confirming both direction and proportionality
+  - Both tests directly validate that larger gravity wells produce more dramatic funneling
   - UAT: 256/256 tests pass
