@@ -1,77 +1,77 @@
 ---
 id: PRD-0011
-title: "Warped Euclidean Gravity Grid"
-status: active
+title: Warped Euclidean Gravity Grid
+status: done
 owner: twitchax
 created: 2026-02-09
 updated: 2026-02-09
 principles:
-  - "Visual-only change: do not alter game physics or the compute_field_at_point logic"
-  - "Reuse existing gravitational field computation for displacement calculations"
-  - "Displacement-based warping with smooth falloff for organic curvature appearance"
-  - "Grid density 40x24 for smooth visual fidelity"
-  - "Curvature heat-map coloring: blue (flat) → purple → red/orange (strong curvature)"
-  - "Dramatic but reasonable funneling proportional to gravity well strength"
+- 'Visual-only change: do not alter game physics or the compute_field_at_point logic'
+- Reuse existing gravitational field computation for displacement calculations
+- Displacement-based warping with smooth falloff for organic curvature appearance
+- Grid density 40x24 for smooth visual fidelity
+- 'Curvature heat-map coloring: blue (flat) → purple → red/orange (strong curvature)'
+- Dramatic but reasonable funneling proportional to gravity well strength
 references:
-  - name: "Current gravity grid implementation"
-    url: "src/game/gravity_grid/mod.rs"
-  - name: "Gravitational acceleration helper"
-    url: "src/game/shared/systems.rs"
-  - name: "Screen coordinate helpers"
-    url: "src/game/shared/helpers.rs"
-  - name: "Game constants (screen dimensions)"
-    url: "src/game/shared/constants.rs"
+- name: Current gravity grid implementation
+  url: src/game/gravity_grid/mod.rs
+- name: Gravitational acceleration helper
+  url: src/game/shared/systems.rs
+- name: Screen coordinate helpers
+  url: src/game/shared/helpers.rs
+- name: Game constants (screen dimensions)
+  url: src/game/shared/constants.rs
 acceptance_tests:
-  - id: uat-001
-    name: "Grid renders as connected horizontal and vertical lines (not disconnected arrows)"
-    command: cargo make uat
-    uat_status: verified
-  - id: uat-002
-    name: "Grid vertices are displaced toward massive objects proportional to field strength"
-    command: cargo make uat
-    uat_status: verified
-  - id: uat-003
-    name: "Grid lines change color based on local curvature (blue → purple → red/orange)"
-    command: cargo make uat
-    uat_status: verified
-  - id: uat-004
-    name: "Grid is uniform and evenly spaced in regions with no gravitational influence"
-    command: cargo make uat
-    uat_status: verified
-  - id: uat-005
-    name: "Larger gravity wells produce more dramatic funneling than smaller ones"
-    command: cargo make uat
-    uat_status: verified
-  - id: uat-006
-    name: "Existing unit tests for compute_field_at_point continue to pass"
-    command: cargo make uat
-    uat_status: verified
+- id: uat-001
+  name: Grid renders as connected horizontal and vertical lines (not disconnected arrows)
+  command: cargo make uat
+  uat_status: verified
+- id: uat-002
+  name: Grid vertices are displaced toward massive objects proportional to field strength
+  command: cargo make uat
+  uat_status: verified
+- id: uat-003
+  name: Grid lines change color based on local curvature (blue → purple → red/orange)
+  command: cargo make uat
+  uat_status: verified
+- id: uat-004
+  name: Grid is uniform and evenly spaced in regions with no gravitational influence
+  command: cargo make uat
+  uat_status: verified
+- id: uat-005
+  name: Larger gravity wells produce more dramatic funneling than smaller ones
+  command: cargo make uat
+  uat_status: verified
+- id: uat-006
+  name: Existing unit tests for compute_field_at_point continue to pass
+  command: cargo make uat
+  uat_status: verified
 tasks:
-  - id: T-001
-    title: "Replace vector-field rendering with warped Euclidean grid vertex computation"
-    priority: 1
-    status: done
-    notes: "Build a 41x25 vertex grid (40x24 cells). For each vertex, compute uniform screen position, then apply displacement toward masses using compute_field_at_point. Use log-scaled displacement with a tunable max displacement cap."
-  - id: T-002
-    title: "Render grid as connected horizontal and vertical line segments between displaced vertices"
-    priority: 1
-    status: done
-    notes: "Use gizmos.line_2d to draw lines between adjacent displaced vertices — horizontal lines along rows, vertical lines along columns."
-  - id: T-003
-    title: "Implement curvature-based heat-map coloring for grid lines"
-    priority: 2
-    status: done
-    notes: "Color each line segment based on the average displacement magnitude of its two endpoints. Map from blue (flat space, low displacement) through purple to red/orange (strong curvature, high displacement)."
-  - id: T-004
-    title: "Tune displacement magnitude and falloff for visible but reasonable funneling"
-    priority: 2
-    status: done
-    notes: "Use log-scaled displacement with a smooth inverse-square falloff. Add a MAX_DISPLACEMENT_PX constant to cap warping. Ensure stronger gravity wells produce proportionally more funneling."
-  - id: T-005
-    title: "Update or add unit tests for grid vertex displacement logic"
-    priority: 3
-    status: done
-    notes: "Test that displacement is zero when no masses are present, displacement increases near masses, and displacement is capped at the maximum."
+- id: T-001
+  title: Replace vector-field rendering with warped Euclidean grid vertex computation
+  priority: 1
+  status: done
+  notes: Build a 41x25 vertex grid (40x24 cells). For each vertex, compute uniform screen position, then apply displacement toward masses using compute_field_at_point. Use log-scaled displacement with a tunable max displacement cap.
+- id: T-002
+  title: Render grid as connected horizontal and vertical line segments between displaced vertices
+  priority: 1
+  status: done
+  notes: Use gizmos.line_2d to draw lines between adjacent displaced vertices — horizontal lines along rows, vertical lines along columns.
+- id: T-003
+  title: Implement curvature-based heat-map coloring for grid lines
+  priority: 2
+  status: done
+  notes: Color each line segment based on the average displacement magnitude of its two endpoints. Map from blue (flat space, low displacement) through purple to red/orange (strong curvature, high displacement).
+- id: T-004
+  title: Tune displacement magnitude and falloff for visible but reasonable funneling
+  priority: 2
+  status: done
+  notes: Use log-scaled displacement with a smooth inverse-square falloff. Add a MAX_DISPLACEMENT_PX constant to cap warping. Ensure stronger gravity wells produce proportionally more funneling.
+- id: T-005
+  title: Update or add unit tests for grid vertex displacement logic
+  priority: 3
+  status: done
+  notes: Test that displacement is zero when no masses are present, displacement increases near masses, and displacement is capped at the maximum.
 ---
 
 # Summary
@@ -308,3 +308,14 @@ Alpha is also modulated by displacement strength (faint in flat regions, brighte
     - `field_direction_points_toward_mass` — direction vector correctness from multiple positions
     - `field_from_two_masses_is_superposition` — symmetric cancellation at midpoint
   - UAT: 256/256 tests pass
+
+## 2026-02-09 — PRD Finalized
+- **Status**: ✅ Finalized
+- **Tasks Completed**: 5 tasks (T-001 through T-005)
+- **Outcome**: All tasks completed, acceptance tests passed (256/256 tests)
+- **Cleanup**: None required — no temporary files, debug statements, or stale TODOs found
+- **Summary**:
+  - Replaced vector-field gravity visualization with a warped Euclidean grid (40×24 cells, 1,025 vertices) that deforms near massive objects using log-scaled displacement
+  - Implemented curvature heat-map coloring (blue → purple → red/orange) with alpha modulation based on local gravitational field strength
+  - Added 19 new unit tests covering vertex displacement, color gradient, grid connectivity, spacing uniformity, and proportional funneling
+  - All 6 UAT acceptance criteria verified; existing `compute_field_at_point` tests unchanged and passing
