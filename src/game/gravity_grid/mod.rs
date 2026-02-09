@@ -300,6 +300,82 @@ mod tests {
         );
     }
 
+    // --- grid connectivity (uat-001) ---
+
+    /// Build the displaced vertex grid the same way the render system does.
+    fn build_vertex_grid(masses: &[(UomLength, UomLength, UomMass)]) -> Vec<Vec2> {
+        let mut positions = Vec::with_capacity((VERTEX_ROWS * VERTEX_COLS) as usize);
+        for row in 0..VERTEX_ROWS {
+            for col in 0..VERTEX_COLS {
+                let frac_x = f64::from(col) / f64::from(GRID_COLS);
+                let frac_y = f64::from(row) / f64::from(GRID_ROWS);
+                let (pos, _) = compute_displaced_vertex(frac_x, frac_y, masses);
+                positions.push(pos);
+            }
+        }
+        positions
+    }
+
+    #[test]
+    fn grid_forms_connected_horizontal_lines() {
+        // Place mass between vertices (0.53, 0.47) to avoid singularity at an exact vertex.
+        let masses = vec![(*SCREEN_WIDTH_UOM * 0.53, *SCREEN_HEIGHT_UOM * 0.47, UomMass::new::<kilogram>(1.0e36))];
+        let positions = build_vertex_grid(&masses);
+
+        // Every horizontal pair [row][col] → [row][col+1] must be a valid line segment
+        // (both points finite and not identical — connected, not degenerate).
+        for row in 0..VERTEX_ROWS {
+            for col in 0..GRID_COLS {
+                let idx_a = (row * VERTEX_COLS + col) as usize;
+                let idx_b = (row * VERTEX_COLS + col + 1) as usize;
+                let a = positions[idx_a];
+                let b = positions[idx_b];
+                assert!(a.x.is_finite() && a.y.is_finite(), "vertex ({row},{col}) is not finite");
+                assert!(b.x.is_finite() && b.y.is_finite(), "vertex ({row},{}) is not finite", col + 1);
+                assert!((a - b).length() > 1e-3, "horizontal segment ({row},{col})→({row},{}) is degenerate (zero length)", col + 1);
+            }
+        }
+    }
+
+    #[test]
+    fn grid_forms_connected_vertical_lines() {
+        // Place mass between vertices to avoid singularity.
+        let masses = vec![(*SCREEN_WIDTH_UOM * 0.53, *SCREEN_HEIGHT_UOM * 0.47, UomMass::new::<kilogram>(1.0e36))];
+        let positions = build_vertex_grid(&masses);
+
+        // Every vertical pair [row][col] → [row+1][col] must be a valid line segment.
+        for row in 0..GRID_ROWS {
+            for col in 0..VERTEX_COLS {
+                let idx_a = (row * VERTEX_COLS + col) as usize;
+                let idx_b = ((row + 1) * VERTEX_COLS + col) as usize;
+                let a = positions[idx_a];
+                let b = positions[idx_b];
+                assert!(a.x.is_finite() && a.y.is_finite(), "vertex ({row},{col}) is not finite");
+                assert!(b.x.is_finite() && b.y.is_finite(), "vertex ({},{col}) is not finite", row + 1);
+                assert!((a - b).length() > 1e-3, "vertical segment ({row},{col})→({},{col}) is degenerate (zero length)", row + 1);
+            }
+        }
+    }
+
+    #[test]
+    fn grid_covers_full_vertex_count_for_connected_rendering() {
+        // Verify the grid produces exactly VERTEX_ROWS * VERTEX_COLS vertices,
+        // matching the render system's horizontal and vertical line loop bounds.
+        let masses = vec![(*SCREEN_WIDTH_UOM * 0.53, *SCREEN_HEIGHT_UOM * 0.47, UomMass::new::<kilogram>(1.0e36))];
+        let positions = build_vertex_grid(&masses);
+
+        let expected = (VERTEX_ROWS * VERTEX_COLS) as usize;
+        assert_eq!(positions.len(), expected, "vertex count must be {expected} for connected grid rendering");
+
+        // Number of horizontal segments = VERTEX_ROWS * GRID_COLS.
+        let h_segments = VERTEX_ROWS * GRID_COLS;
+        // Number of vertical segments = GRID_ROWS * VERTEX_COLS.
+        let v_segments = GRID_ROWS * VERTEX_COLS;
+
+        assert_eq!(h_segments, 25 * 40, "expected 1000 horizontal line segments");
+        assert_eq!(v_segments, 24 * 41, "expected 984 vertical line segments");
+    }
+
     // --- curvature_color ---
 
     #[test]

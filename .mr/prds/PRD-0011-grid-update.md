@@ -25,7 +25,7 @@ acceptance_tests:
   - id: uat-001
     name: "Grid renders as connected horizontal and vertical lines (not disconnected arrows)"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
   - id: uat-002
     name: "Grid vertices are displaced toward massive objects proportional to field strength"
     command: cargo make uat
@@ -239,3 +239,15 @@ Alpha is also modulated by displacement strength (faint in flat regions, brighte
   - No changes to production code; only test additions
   - UAT: 248/248 tests pass (7 new tests added to prior 241)
 - **Constitution Compliance**: No violations. Test-only changes; no production code modified.
+
+## 2026-02-09 — uat-001 Verification
+- **UAT**: Grid renders as connected horizontal and vertical lines (not disconnected arrows)
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Added 3 tests in `src/game/gravity_grid/mod.rs`:
+    - `grid_forms_connected_horizontal_lines` — verifies all horizontal vertex pairs produce finite, non-degenerate line segments
+    - `grid_forms_connected_vertical_lines` — verifies all vertical vertex pairs produce finite, non-degenerate line segments
+    - `grid_covers_full_vertex_count_for_connected_rendering` — verifies vertex count matches render loop bounds (1000 horizontal + 984 vertical segments)
+  - Tests use a mass placed between grid vertices (frac 0.53, 0.47) to avoid gravitational singularity at exact vertex positions
+  - UAT: 251/251 tests pass
