@@ -33,7 +33,7 @@ acceptance_tests:
   - id: uat-003
     name: "Grid lines change color based on local curvature (blue → purple → red/orange)"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
   - id: uat-004
     name: "Grid is uniform and evenly spaced in regions with no gravitational influence"
     command: cargo make uat
@@ -262,3 +262,14 @@ Alpha is also modulated by displacement strength (faint in flat regions, brighte
     - `displaced_vertex_direction_toward_mass_proportional` — verifies a stronger mass pulls vertices closer to it than a weaker mass (5e34 vs 5e36 kg), confirming both direction and proportionality
   - Pre-existing tests `displaced_vertex_increases_near_mass` and `displaced_vertex_shifts_toward_mass` also support this criterion
   - UAT: 253/253 tests pass
+
+## 2026-02-09 — uat-003 Verification
+- **UAT**: Grid lines change color based on local curvature (blue → purple → red/orange)
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Added 2 tests in `src/game/gravity_grid/mod.rs`:
+    - `curvature_color_mid_displacement_is_purple` — verifies that at 50% displacement the color is purple (r≈0.6, g≈0.2, b≈0.8)
+    - `curvature_color_gradient_blue_purple_red` — verifies the full gradient ordering: red increases monotonically and blue decreases monotonically from low → mid → high displacement
+  - Pre-existing tests `curvature_color_low_displacement_is_blue`, `curvature_color_high_displacement_is_warm`, and `curvature_color_alpha_increases_with_displacement` also support this criterion
+  - UAT: 255/255 tests pass

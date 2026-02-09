@@ -441,6 +441,32 @@ mod tests {
     }
 
     #[test]
+    fn curvature_color_mid_displacement_is_purple() {
+        // At 50% displacement, color should be purple (r≈0.6, g≈0.2, b≈0.8).
+        let color = curvature_color(0.5, 0.5, 1.0);
+        let srgba = color.to_srgba();
+        assert!((srgba.red - 0.6).abs() < 0.05, "red channel should be ~0.6, got {}", srgba.red);
+        assert!((srgba.green - 0.2).abs() < 0.05, "green channel should be ~0.2, got {}", srgba.green);
+        assert!((srgba.blue - 0.8).abs() < 0.05, "blue channel should be ~0.8, got {}", srgba.blue);
+    }
+
+    #[test]
+    fn curvature_color_gradient_blue_purple_red() {
+        // Verify the full gradient ordering: blue (low) → purple (mid) → red/orange (high).
+        let low = curvature_color(0.0, 0.0, 1.0).to_srgba();
+        let mid = curvature_color(0.5, 0.5, 1.0).to_srgba();
+        let high = curvature_color(1.0, 1.0, 1.0).to_srgba();
+
+        // Red channel should increase monotonically: low < mid < high.
+        assert!(low.red < mid.red, "red should increase from low to mid: {}<{}", low.red, mid.red);
+        assert!(mid.red < high.red, "red should increase from mid to high: {}<{}", mid.red, high.red);
+
+        // Blue channel should decrease monotonically: low > mid > high.
+        assert!(low.blue > mid.blue, "blue should decrease from low to mid: {}>{}", low.blue, mid.blue);
+        assert!(mid.blue > high.blue, "blue should decrease from mid to high: {}>{}", mid.blue, high.blue);
+    }
+
+    #[test]
     fn curvature_color_alpha_increases_with_displacement() {
         let color_low = curvature_color(0.0, 0.0, 1.0);
         let color_high = curvature_color(1.0, 1.0, 1.0);
