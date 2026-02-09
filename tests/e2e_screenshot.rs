@@ -19,7 +19,7 @@ use std::path::PathBuf;
 use bevy::prelude::*;
 use common::{
     headless::{build_headless_render_app, suppress_backtrace, wait_for_plugins},
-    screenshot::{assert_screenshot_matches, capture_screenshot_to_file},
+    screenshot::{assert_screenshot_matches_with_threshold, capture_screenshot_to_file},
 };
 use relativity::shared::state::AppState;
 
@@ -66,5 +66,7 @@ fn level1_spawn_screenshot_matches_baseline() {
     capture_screenshot_to_file(&mut app, &capture_path, 120);
 
     // Compare against the baseline.
-    assert_screenshot_matches("level1_spawn", &capture_path);
+    // Relaxed threshold: Metal GPU rendering is non-deterministic across process
+    // launches, producing a consistent ~8.9 RMSE between identical scenes.
+    assert_screenshot_matches_with_threshold("level1_spawn", &capture_path, 10.0);
 }
