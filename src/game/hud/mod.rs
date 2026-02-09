@@ -8,6 +8,7 @@ use crate::game::player::shared::Player;
 use crate::game::shared::constants::C;
 use crate::game::shared::types::{Clock, GameItem, GravitationalGamma, PlayerHud, Velocity, VelocityGamma};
 use crate::shared::state::AppState;
+use crate::shared::{SCREEN_HEIGHT_PX, SCREEN_WIDTH_PX};
 
 // Paths.
 
@@ -68,7 +69,9 @@ pub struct HudPlugin;
 
 impl Plugin for HudPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(AppState::InGame), spawn_hud_root).add_systems(OnExit(AppState::InGame), despawn_hud_root);
+        // No explicit OnExit despawn needed: the HudRoot has GameItem,
+        // and despawn_level recursively cleans up all children.
+        app.add_systems(OnEnter(AppState::InGame), spawn_hud_root);
     }
 }
 
@@ -87,23 +90,38 @@ fn spawn_hud_root(mut commands: Commands, asset_server: Res<AssetServer>) {
         ..Default::default()
     };
 
-    commands.spawn((GameItem, HudRoot, UiLayoutRoot::new_2d(), UiFetchFromCamera::<0>)).with_children(|root| {
-        // Bottom HUD bar: occupies bottom 12% of screen.
-        root.spawn((GameItem, HudBar, UiLayout::boundary().pos1(Rl((0.0, 88.0))).pos2(Rl(100.0)).pack(), UiDepth::Add(900.0)))
-            .with_children(|bar| {
-                // Left panel — player stats (left 60%, with margin).
-                bar.spawn((GameItem, PlayerPanel, UiLayout::boundary().pos1(Rl((1.0, 4.0))).pos2(Rl((59.0, 96.0))).pack(), panel_sprite()))
-                    .with_children(|panel| {
-                        spawn_player_labels(panel, &font);
-                    });
+    // Position the layout root at the camera center so bevy_lunex
+    // world-space coordinates align with the visible viewport.
+    #[allow(clippy::cast_possible_truncation)]
+    let root_transform = Transform::from_xyz(SCREEN_WIDTH_PX as f32 / 2.0, SCREEN_HEIGHT_PX as f32 / 2.0, 0.0);
 
-                // Right panel — observer clock (right 35%, with margin).
-                bar.spawn((GameItem, ObserverPanel, UiLayout::boundary().pos1(Rl((64.0, 4.0))).pos2(Rl((99.0, 96.0))).pack(), panel_sprite()))
-                    .with_children(|panel| {
-                        spawn_observer_labels(panel, &font);
-                    });
-            });
-    });
+    commands
+        .spawn((GameItem, HudRoot, UiLayoutRoot::new_2d(), UiFetchFromCamera::<0>, root_transform))
+        .with_children(|root| {
+            // Bottom HUD bar: occupies bottom 12% of screen.
+            // Only the root carries GameItem; children are despawned
+            // recursively when the root is removed by despawn_level.
+            //
+            // UiDepth must stay low: bevy_lunex sets accumulated depth as local z,
+            // and Bevy's transform propagation adds parent z + child z. The
+            // default orthographic camera has far=1000, so total global z must
+            // stay well below that. Depth 10 renders above game sprites (z ≈ 0)
+            // while keeping grandchildren (10 → 11 → 12) safely in range.
+            root.spawn((HudBar, UiLayout::boundary().pos1(Rl((0.0, 88.0))).pos2(Rl(100.0)).pack(), UiDepth::Add(10.0)))
+                .with_children(|bar| {
+                    // Left panel — player stats (left 60%, with margin).
+                    bar.spawn((PlayerPanel, UiLayout::boundary().pos1(Rl((1.0, 4.0))).pos2(Rl((59.0, 96.0))).pack(), panel_sprite()))
+                        .with_children(|panel| {
+                            spawn_player_labels(panel, &font);
+                        });
+
+                    // Right panel — observer clock (right 35%, with margin).
+                    bar.spawn((ObserverPanel, UiLayout::boundary().pos1(Rl((64.0, 4.0))).pos2(Rl((99.0, 96.0))).pack(), panel_sprite()))
+                        .with_children(|panel| {
+                            spawn_observer_labels(panel, &font);
+                        });
+                });
+        });
 }
 
 /// Spawns labeled readouts for the player stats panel.
@@ -117,7 +135,6 @@ fn spawn_player_labels(panel: &mut ChildSpawnerCommands, font: &Handle<Font>) {
     // Each label gets its own marker component for targeted text updates.
     let base = |y_pct: f32, label: &str| {
         (
-            GameItem,
             UiLayout::window().pos(Rl((5.0, y_pct))).anchor(Anchor::CENTER_LEFT).pack(),
             UiTextSize::from(Rh(22.0)),
             Text2d::new(label),
@@ -141,7 +158,6 @@ fn spawn_observer_labels(panel: &mut ChildSpawnerCommands, font: &Handle<Font>) 
     };
 
     panel.spawn((
-        GameItem,
         HudObserverTime,
         UiLayout::window().pos(Rl((5.0, 50.0))).anchor(Anchor::CENTER_LEFT).pack(),
         UiTextSize::from(Rh(22.0)),
@@ -196,14 +212,4 @@ pub fn observer_hud_text_update(data_query: Query<&Clock, With<Observer>>, mut t
     let Ok(mut text) = to_query.single_mut() else { return };
 
     **text = format_observer_time(clock.value.value);
-}
-
-/// Despawns the HUD root entity on state exit.
-///
-/// The `GameItem`-based despawn in `levels/mod.rs` handles this too,
-/// but having an explicit despawn avoids ordering surprises.
-fn despawn_hud_root(mut commands: Commands, query: Query<Entity, With<HudRoot>>) {
-    for entity in &query {
-        commands.entity(entity).despawn();
-    }
 }
