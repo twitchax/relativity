@@ -45,7 +45,7 @@ acceptance_tests:
   - id: uat-006
     name: "Existing unit tests for compute_field_at_point continue to pass"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
 tasks:
   - id: T-001
     title: "Replace vector-field rendering with warped Euclidean grid vertex computation"
@@ -294,4 +294,17 @@ Alpha is also modulated by displacement strength (faint in flat regions, brighte
   - `displaced_vertex_proportional_to_field_strength` in `src/game/gravity_grid/mod.rs` — verifies a heavier mass (1e36 kg) produces more displacement than a lighter mass (1e35 kg) at the same vertex position
   - `displaced_vertex_direction_toward_mass_proportional` in `src/game/gravity_grid/mod.rs` — verifies a stronger mass (5e36 kg) pulls vertices closer than a weaker mass (5e34 kg), confirming both direction and proportionality
   - Both tests directly validate that larger gravity wells produce more dramatic funneling
+  - UAT: 256/256 tests pass
+
+## 2026-02-09 — uat-006 Verification
+- **UAT**: Existing unit tests for compute_field_at_point continue to pass
+- **Status**: ✅ Verified
+- **Method**: Existing test
+- **Details**:
+  - 5 existing unit tests for `compute_field_at_point` in `src/game/gravity_grid/mod.rs`:
+    - `field_at_mass_center_returns_zero` — non-zero magnitude far from mass, direction toward mass
+    - `field_with_no_masses_returns_zero` — zero magnitude and direction with no masses
+    - `field_strength_decreases_with_distance` — inverse-square falloff verified
+    - `field_direction_points_toward_mass` — direction vector correctness from multiple positions
+    - `field_from_two_masses_is_superposition` — symmetric cancellation at midpoint
   - UAT: 256/256 tests pass
