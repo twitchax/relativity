@@ -60,7 +60,7 @@ tasks:
   - id: T-003
     title: "Implement curvature-based heat-map coloring for grid lines"
     priority: 2
-    status: todo
+    status: done
     notes: "Color each line segment based on the average displacement magnitude of its two endpoints. Map from blue (flat space, low displacement) through purple to red/orange (strong curvature, high displacement)."
   - id: T-004
     title: "Tune displacement magnitude and falloff for visible but reasonable funneling"
@@ -197,3 +197,15 @@ Alpha is also modulated by displacement strength (faint in flat regions, brighte
   - Regenerated screenshot baseline `tests/baselines/level1_spawn.png` for current environment
   - UAT: 241/241 tests pass
 - **Constitution Compliance**: No violations. The screenshot threshold fix addresses a pre-existing infrastructure issue and follows Root Cause Resolution (rule 6).
+
+## 2026-02-09 — T-003 Completed
+- **Task**: Implement curvature-based heat-map coloring for grid lines
+- **Status**: ✅ Done
+- **Changes**:
+  - No code changes needed — T-001 already fully implemented the `curvature_color` function in `src/game/gravity_grid/mod.rs` (lines 141-158) matching all T-003 requirements:
+    - Average displacement of both endpoints used for color mapping (line 143)
+    - Blue `(0.2, 0.4, 1.0)` → purple `(0.6, 0.2, 0.8)` → red/orange `(1.0, 0.4, 0.1)` gradient (lines 146-152)
+    - Alpha modulation: faint in flat regions (`0.08`), brighter near masses (`0.08 + t * 0.45`) (line 155)
+  - Color function is already applied to every horizontal and vertical line segment in the rendering loops (lines 123, 134)
+  - UAT: 241/241 tests pass
+- **Constitution Compliance**: No violations. No code changes required; T-003 was already satisfied by T-001's implementation.
