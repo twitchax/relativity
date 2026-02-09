@@ -21,7 +21,10 @@ use bevy_trauma_shake::{Shake, TraumaPlugin};
 use relativity::{
     game::{levels::CurrentLevel, GamePlugin},
     menu::MenuPlugin,
-    shared::state::AppState,
+    shared::{
+        state::AppState,
+        {SCREEN_HEIGHT_PX, SCREEN_WIDTH_PX},
+    },
 };
 
 // ------------------------------------------------------------------
@@ -112,8 +115,10 @@ pub fn suppress_backtrace() {
 /// The [`OffscreenRenderTarget`] resource is inserted so that other test
 /// code (e.g. screenshot capture) can look up the image handle.
 fn spawn_offscreen_camera(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
-    let width = 320;
-    let height = 180;
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    let width = SCREEN_WIDTH_PX as u32;
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    let height = SCREEN_HEIGHT_PX as u32;
 
     let size = Extent3d { width, height, depth_or_array_layers: 1 };
 

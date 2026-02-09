@@ -29,9 +29,9 @@ use relativity::shared::state::GameState;
 ///   SUN2:        (0.80, 0.70)  — secondary star
 ///   Destination: (0.90, 0.90)  — large radius (4× UNIT_RADIUS), mass 0.6× SUN
 ///
-/// The launch velocity is aimed to the upper-right, arcing above the SUN.
-/// Gravity bends the trajectory toward the destination.  This proves the
-/// level is solvable from the default starting position.
+/// The launch velocity is aimed above the SUN to arc over it.
+/// Gravity bends the trajectory back down toward the destination.
+/// This proves the level is solvable from the default starting position.
 #[test]
 fn level1_is_solvable() {
     let mut app = build_gameplay_app();
@@ -40,10 +40,10 @@ fn level1_is_solvable() {
     let player = find_player_sprite(&mut app);
     let player_clock = find_player_clock(&mut app);
 
-    // Launch diagonally toward the upper-right.  From (0.3, 0.3) this aims
-    // roughly at the SUN (0.5, 0.5), but at ~0.7c gravity deflects the path
-    // around the SUN and toward the destination at (0.9, 0.9).
-    launch_player(&mut app, player, (150_000.0, 150_000.0));
+    // Launch toward the upper-right, angled above the SUN at (0.5, 0.5).
+    // From (0.3, 0.3), gravity from the SUN curves the trajectory back
+    // downward toward the destination at (0.9, 0.9).
+    launch_player(&mut app, player, (100_000.0, 200_000.0));
 
     start_running(&mut app);
 

@@ -36,20 +36,29 @@ const DISPLACEMENT_SCALE: f32 = 10.0;
 /// masses, creating a funnel effect rather than crossed distortions.
 const MIN_SPACING_FRACTION: f32 = 0.05;
 
-/// Maximum fraction of the screen-space distance to the nearest mass that a vertex
-/// can be displaced.  Prevents vertices from overshooting past mass centers.
-const MAX_PROXIMITY_FRACTION: f32 = 0.75;
+/// Softening radius (in pixels) controlling how quickly vertex displacement
+/// ramps up away from a mass center.  At this distance from the nearest mass,
+/// the displacement reaches 50% of its field-derived value.  Prevents vertices
+/// from overshooting past mass centers while producing a smooth funnel shape
+/// instead of a hard-edged polygon artifact.
+const SOFTENING_RADIUS_PX: f32 = 40.0;
 
 /// Reference field strength (m/s²) used to normalize magnitudes before log scaling.
 ///
 /// Chosen so that `ln(1 + mag / REF)` spans a useful range across the game's
-/// gravity wells (Earth-mass objects produce subtle warping while solar-mass
-/// objects produce dramatic funneling).
-const REFERENCE_FIELD_STRENGTH: f64 = 50.0;
+/// gravity wells.  Because in-game masses are scaled by `MASS_FACTOR` (1e8),
+/// field magnitudes are enormous even at screen-edge distances (~1500 m/s²).
+/// A reference of 5000 ensures that far-field vertices get only a few pixels
+/// of displacement while vertices one cell from a solar mass saturate the cap,
+/// producing a smooth funnel gradient rather than uniform max-displacement.
+const REFERENCE_FIELD_STRENGTH: f64 = 5_000.0;
 
 // Pure functions.
 
 /// Compute the total gravitational field vector at a world-space point.
+///
+/// Uses the softened gravitational acceleration function so the grid and gameplay
+/// physics are consistent — both see the same field shape.
 ///
 /// Returns the magnitude (in raw UOM value) and the normalized 2D direction.
 #[must_use]
@@ -95,8 +104,10 @@ fn compute_displaced_vertex(frac_x: f64, frac_y: f64, masses: &[(UomLength, UomL
 
     let mut displacement = ((1.0 + mag / REFERENCE_FIELD_STRENGTH).ln() as f32 * DISPLACEMENT_SCALE).min(MAX_DISPLACEMENT_PX);
 
-    // Cap displacement to a fraction of the screen-space distance to the nearest
-    // mass so that vertices converge *toward* a mass but never overshoot past it.
+    // Smooth proximity blend: displacement scales from 0 at a mass center to full
+    // strength at several softening radii away.  This prevents vertices from
+    // overshooting past masses while producing a smooth funnel gradient rather
+    // than a hard-edged polygon artifact from a sharp cap.
     let nearest_mass_dist = masses
         .iter()
         .map(|&(mx, my, _)| {
@@ -107,7 +118,7 @@ fn compute_displaced_vertex(frac_x: f64, frac_y: f64, masses: &[(UomLength, UomL
         })
         .fold(f32::MAX, f32::min);
 
-    displacement = displacement.min(nearest_mass_dist * MAX_PROXIMITY_FRACTION);
+    displacement *= nearest_mass_dist / (nearest_mass_dist + SOFTENING_RADIUS_PX);
 
     let displaced_pos = base_pos + dir * displacement;
 

@@ -25,6 +25,18 @@ const SCREEN_HEIGHT_KM: f64 = SCREEN_WIDTH_KM * SCREEN_HEIGHT_PX / SCREEN_WIDTH_
 const C_KMS: f64 = 299_792.0f64; // Speed of light in km/s.
 const MAX_PLAYER_VELOCITY_KMS: f64 = 0.99 * C_KMS; // 99% of c.
 
+/// Gravitational softening length (km).
+///
+/// Prevents the 1/r² singularity from producing infinite acceleration when two
+/// bodies are very close.  The softened acceleration is:
+///
+///   a = G·M / (r² + ε²)
+///
+/// At distances r >> ε the field is pure Newtonian; at r → 0 it caps at G·M/ε².
+/// Chosen to be roughly the size of the smallest game object (a fraction of
+/// `UNIT_RADIUS`) so that it doesn't affect trajectories at gameplay distances.
+const SOFTENING_LENGTH_KM: f64 = 10_000_000.0; // 10 million km ≈ 1/6 of UNIT_RADIUS
+
 pub static DAYS_PER_SECOND_UOM: LazyLock<UomTime> = LazyLock::new(|| UomTime::new::<day>(DAYS_PER_SECOND));
 pub static UNIT_RADIUS: LazyLock<UomLength> = LazyLock::new(|| UomLength::new::<kilometer>(UNIT_RADIUS_KM));
 pub static MASS_OF_SUN: LazyLock<UomMass> = LazyLock::new(|| UomMass::new::<kilogram>(MASS_OF_SUN_KG));
@@ -32,6 +44,7 @@ pub static MASS_OF_EARTH: LazyLock<UomMass> = LazyLock::new(|| UomMass::new::<ki
 pub static SCREEN_WIDTH_UOM: LazyLock<UomLength> = LazyLock::new(|| UomLength::new::<kilometer>(SCREEN_WIDTH_KM));
 pub static SCREEN_HEIGHT_UOM: LazyLock<UomLength> = LazyLock::new(|| UomLength::new::<kilometer>(SCREEN_HEIGHT_KM));
 pub static C: LazyLock<UomVelocity> = LazyLock::new(|| UomVelocity::new::<kilometer_per_second>(C_KMS));
+pub static SOFTENING_LENGTH: LazyLock<UomLength> = LazyLock::new(|| UomLength::new::<kilometer>(SOFTENING_LENGTH_KM));
 
 // TODO: Fix this insanity, lol.
 #[allow(clippy::type_complexity)]
@@ -126,6 +139,12 @@ mod tests {
     fn max_player_launch_velocity_initializes() {
         let val = MAX_PLAYER_LAUNCH_VELOCITY.get::<kps_unit>();
         assert!(val > 0.0, "MAX_PLAYER_LAUNCH_VELOCITY should be positive");
+    }
+
+    #[test]
+    fn softening_length_initializes_and_is_positive() {
+        let val = SOFTENING_LENGTH.get::<km_unit>();
+        assert!(val > 0.0, "SOFTENING_LENGTH should be positive");
     }
 
     // --- Physical constant validation ---

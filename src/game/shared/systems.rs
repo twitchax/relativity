@@ -1,5 +1,5 @@
 use super::{
-    constants::{C, DAYS_PER_SECOND_UOM, G},
+    constants::{C, DAYS_PER_SECOND_UOM, G, SOFTENING_LENGTH},
     helpers::{get_translation_from_position, has_collided, length_to_pixel, planet_sprite_pixel_radius_to_scale, rocket_sprite_pixel_radius_to_scale},
     types::{LaunchState, Mass, PlanetSprite, Position, Radius, RocketSprite, Velocity},
 };
@@ -85,9 +85,17 @@ pub fn translation_update(mut query: Query<(&mut Transform, &Position)>) {
 
 // Pure functions.
 
-/// Compute the gravitational acceleration (x, y) exerted on a body at `pos` by a single mass at `other_pos`.
+/// Compute the gravitational acceleration (x, y) exerted on a body at `pos` by
+/// a single mass at `other_pos`, using Plummer gravitational softening.
 ///
-/// Includes a relativistic adjustment factor that reduces acceleration near the Schwarzschild radius.
+/// The softened acceleration is:
+///
+///   a = G·M / (r² + ε²)
+///
+/// where ε = `SOFTENING_LENGTH`.  At distances r >> ε this is pure Newtonian
+/// inverse-square gravity.  At r → 0 it caps at G·M / ε² instead of diverging,
+/// providing numerical stability without the physically incorrect behaviour of
+/// zeroing out gravity near massive bodies.
 #[must_use]
 pub(crate) fn calculate_gravitational_acceleration(pos_x: UomLength, pos_y: UomLength, other_pos_x: UomLength, other_pos_y: UomLength, other_mass: UomMass) -> (UomAcceleration, UomAcceleration) {
     let direction = DVec2::new((other_pos_x - pos_x).value, (other_pos_y - pos_y).value);
@@ -96,30 +104,14 @@ pub(crate) fn calculate_gravitational_acceleration(pos_x: UomLength, pos_y: UomL
     let delta_x = pos_x - other_pos_x;
     let delta_y = pos_y - other_pos_y;
     let distance_squared = delta_x * delta_x + delta_y * delta_y;
-    let distance = distance_squared.sqrt();
+    let softened_denominator = distance_squared + *SOFTENING_LENGTH * *SOFTENING_LENGTH;
 
-    let gravitational_acceleration = (*G * other_mass) / distance_squared;
+    let gravitational_acceleration = (*G * other_mass) / softened_denominator;
 
-    let relativistic_adjustment = calculate_relativistic_adjustment(other_mass, distance);
-
-    let accel_x = direction.x * gravitational_acceleration * relativistic_adjustment;
-    let accel_y = direction.y * gravitational_acceleration * relativistic_adjustment;
+    let accel_x = direction.x * gravitational_acceleration;
+    let accel_y = direction.y * gravitational_acceleration;
 
     (accel_x, accel_y)
-}
-
-/// Compute the relativistic adjustment factor for gravitational acceleration.
-///
-/// Returns a value in `[0.0, 1.0]` that reduces acceleration near the Schwarzschild radius.
-#[must_use]
-pub(crate) fn calculate_relativistic_adjustment(mass: UomMass, distance: UomLength) -> f64 {
-    let adjustment = 1.0 - (2.0 * *G * mass / (*C * *C * distance)).value;
-
-    if adjustment <= 0.0 {
-        0.0
-    } else {
-        adjustment
-    }
 }
 
 pub fn velocity_update(mut query: Query<(&mut Velocity, Entity, &Position)>, masses: Query<(Entity, &Position, &Mass)>, time: Res<Time>) {
@@ -147,8 +139,13 @@ pub fn velocity_update(mut query: Query<(&mut Velocity, Entity, &Position)>, mas
         velocity.x += total_gravitational_acceleration_x * time_elapsed;
         velocity.y += total_gravitational_acceleration_y * time_elapsed;
 
-        if velocity.scalar() > *C {
-            // Velocity exceeds speed of light — should not happen in normal gameplay.
+        // Clamp velocity to just below the speed of light to prevent NaN in
+        // Lorentz gamma calculations and preserve relativistic consistency.
+        let speed = velocity.scalar();
+        if speed > *C {
+            let scale = (*C * 0.9999 / speed).value;
+            velocity.x = scale * velocity.x;
+            velocity.y = scale * velocity.y;
         }
     }
 }
@@ -190,52 +187,7 @@ mod tests {
         UomMass::new::<kilogram>(v)
     }
 
-    // --- calculate_relativistic_adjustment ---
-
-    #[test]
-    fn relativistic_adjustment_far_from_mass_is_near_one() {
-        let mass = kg(1.989e30);
-        let distance = km(1_000_000_000.0);
-        let adj = calculate_relativistic_adjustment(mass, distance);
-        assert!(adj > 0.99, "far from mass, adjustment should be near 1.0, got {adj}");
-        assert!(adj <= 1.0);
-    }
-
-    #[test]
-    fn relativistic_adjustment_clamps_at_zero() {
-        // Extremely massive body at tiny distance triggers the clamp.
-        let mass = kg(1.0e60);
-        let distance = km(1.0);
-        let adj = calculate_relativistic_adjustment(mass, distance);
-        assert_relative_eq!(adj, 0.0);
-    }
-
-    #[test]
-    fn relativistic_adjustment_is_between_zero_and_one() {
-        let mass = kg(1.989e38);
-        let distance = km(500_000_000.0);
-        let adj = calculate_relativistic_adjustment(mass, distance);
-        assert!(adj >= 0.0);
-        assert!(adj <= 1.0);
-    }
-
-    #[test]
-    fn relativistic_adjustment_closer_means_smaller() {
-        let mass = kg(1.989e38);
-        let adj_far = calculate_relativistic_adjustment(mass, km(1_000_000_000.0));
-        let adj_close = calculate_relativistic_adjustment(mass, km(100_000_000.0));
-        assert!(adj_far > adj_close, "closer should reduce the adjustment");
-    }
-
-    #[test]
-    fn relativistic_adjustment_more_mass_means_smaller() {
-        let distance = km(500_000_000.0);
-        let adj_light = calculate_relativistic_adjustment(kg(1.0e30), distance);
-        let adj_heavy = calculate_relativistic_adjustment(kg(1.0e38), distance);
-        assert!(adj_light > adj_heavy, "more mass should reduce the adjustment");
-    }
-
-    // --- calculate_gravitational_acceleration ---
+    // --- calculate_gravitational_acceleration (with softening) ---
 
     #[test]
     fn gravitational_acceleration_points_toward_mass() {
@@ -271,13 +223,14 @@ mod tests {
     #[test]
     fn gravitational_acceleration_inverse_square_distance() {
         let mass = kg(1.989e30);
-        let (ax_close, _) = calculate_gravitational_acceleration(km(0.0), km(0.0), km(500_000.0), km(0.0), mass);
-        let (ax_far, _) = calculate_gravitational_acceleration(km(0.0), km(0.0), km(1_000_000.0), km(0.0), mass);
+        // Use distances well beyond softening length (10M km) so softening is negligible.
+        let (ax_close, _) = calculate_gravitational_acceleration(km(0.0), km(0.0), km(100_000_000.0), km(0.0), mass);
+        let (ax_far, _) = calculate_gravitational_acceleration(km(0.0), km(0.0), km(200_000_000.0), km(0.0), mass);
         // Closer should produce much greater acceleration (roughly 4x for 2x distance).
         assert!(ax_close.get::<meter_per_second_squared>() > ax_far.get::<meter_per_second_squared>());
 
         let ratio = ax_close.get::<meter_per_second_squared>() / ax_far.get::<meter_per_second_squared>();
-        // At far distances where relativistic adjustment ≈ 1, ratio should be close to 4.
+        // At far distances (well beyond softening length), ratio should be close to 4.
         assert!(ratio > 3.5, "inverse-square: ratio should be near 4, got {ratio}");
         assert!(ratio < 4.5, "inverse-square: ratio should be near 4, got {ratio}");
     }
@@ -305,11 +258,57 @@ mod tests {
     }
 
     #[test]
-    fn gravitational_acceleration_with_strong_relativistic_clamp() {
-        // Extremely massive body at small distance — should not panic, acceleration should be zero due to clamp.
+    fn gravitational_acceleration_with_extreme_mass_at_tiny_distance_is_finite() {
+        // Extremely massive body at small distance — softening prevents singularity.
+        // Acceleration should be finite and positive (pointing toward mass), not zero.
         let (ax, ay) = calculate_gravitational_acceleration(km(0.0), km(0.0), km(1.0), km(0.0), kg(1.0e60));
-        assert_relative_eq!(ax.get::<meter_per_second_squared>(), 0.0);
-        assert_relative_eq!(ay.get::<meter_per_second_squared>(), 0.0);
+        assert!(ax.get::<meter_per_second_squared>().is_finite(), "acceleration should be finite");
+        assert!(ax.get::<meter_per_second_squared>() > 0.0, "acceleration should still point toward mass");
+        assert_relative_eq!(ay.get::<meter_per_second_squared>(), 0.0, epsilon = 1e-20);
+    }
+
+    // --- gravitational softening ---
+
+    #[test]
+    fn softening_caps_acceleration_at_zero_distance() {
+        // At r=0 (body on top of mass), acceleration should be capped at G·M/ε²,
+        // not diverge to infinity.  Direction is undefined (NaN), so we test that
+        // the function doesn't panic and the magnitude is finite.
+        // We test near-zero instead of exactly zero to avoid normalize-of-zero.
+        let mass = kg(1.989e38);
+        let (ax, _) = calculate_gravitational_acceleration(km(0.0), km(0.0), km(0.01), km(0.0), mass);
+        assert!(ax.get::<meter_per_second_squared>().is_finite(), "should be finite at near-zero distance");
+        assert!(ax.get::<meter_per_second_squared>() > 0.0, "should still attract toward mass");
+    }
+
+    #[test]
+    fn softening_has_negligible_effect_at_large_distance() {
+        // At distances far beyond the softening length (10M km), the softened
+        // acceleration should be very close to pure Newtonian: G·M / r².
+        let mass = kg(1.989e30);
+        let distance = km(500_000_000.0); // 500M km >> 10M km softening length
+
+        let (ax, _) = calculate_gravitational_acceleration(km(0.0), km(0.0), distance, km(0.0), mass);
+
+        // Pure Newtonian: G·M / r²
+        let expected = (*G * mass / (distance * distance)).get::<meter_per_second_squared>();
+        let actual = ax.get::<meter_per_second_squared>();
+
+        // Softening should change the result by less than 0.1%.
+        assert_relative_eq!(actual, expected, max_relative = 1e-3);
+    }
+
+    #[test]
+    fn softening_makes_closer_stronger_monotonically() {
+        // Even with softening, closer should always mean stronger acceleration.
+        let mass = kg(1.989e38);
+        let (ax_close, _) = calculate_gravitational_acceleration(km(0.0), km(0.0), km(100_000.0), km(0.0), mass);
+        let (ax_far, _) = calculate_gravitational_acceleration(km(0.0), km(0.0), km(1_000_000.0), km(0.0), mass);
+
+        assert!(
+            ax_close.get::<meter_per_second_squared>() > ax_far.get::<meter_per_second_squared>(),
+            "closer should produce greater acceleration even with softening"
+        );
     }
 
     // --- calculate_rocket_rotation ---
