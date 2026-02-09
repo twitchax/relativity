@@ -70,7 +70,7 @@ tasks:
   - id: T-005
     title: "Update or add unit tests for grid vertex displacement logic"
     priority: 3
-    status: todo
+    status: done
     notes: "Test that displacement is zero when no masses are present, displacement increases near masses, and displacement is capped at the maximum."
 ---
 
@@ -222,3 +222,20 @@ Alpha is also modulated by displacement strength (faint in flat regions, brighte
   - All existing `compute_field_at_point` unit tests continue to pass (function untouched)
   - UAT: 241/241 tests pass
 - **Constitution Compliance**: No violations. Changes are minimal and focused solely on tuning constants and the displacement formula in `compute_displaced_vertex`. Public API (`compute_field_at_point`) is unchanged.
+
+## 2026-02-09 — T-005 Completed
+- **Task**: Update or add unit tests for grid vertex displacement logic
+- **Status**: ✅ Done
+- **Changes**:
+  - Added 7 new unit tests to the `#[cfg(test)]` module in `src/game/gravity_grid/mod.rs`:
+    - `displaced_vertex_no_masses_returns_zero_displacement` — verifies zero displacement and unchanged position with no masses
+    - `displaced_vertex_increases_near_mass` — verifies displacement is larger closer to a mass
+    - `displaced_vertex_is_capped_at_max` — verifies displacement does not exceed `MAX_DISPLACEMENT_PX`
+    - `displaced_vertex_shifts_toward_mass` — verifies displaced position moves toward the mass
+    - `curvature_color_low_displacement_is_blue` — verifies blue color at zero displacement
+    - `curvature_color_high_displacement_is_warm` — verifies orange/red color at max displacement
+    - `curvature_color_alpha_increases_with_displacement` — verifies alpha modulation
+  - Tests use appropriately scaled masses (1e36–1e37 kg) to produce meaningful displacement at the game's screen-scale distances (6 billion km), while staying below the relativistic clamp threshold
+  - No changes to production code; only test additions
+  - UAT: 248/248 tests pass (7 new tests added to prior 241)
+- **Constitution Compliance**: No violations. Test-only changes; no production code modified.

@@ -233,4 +233,100 @@ mod tests {
         // x component should be approximately zero due to symmetry.
         assert!(dir.x.abs() < 0.01, "x component should be ~0 at midpoint, got {}", dir.x);
     }
+
+    // --- compute_displaced_vertex ---
+
+    #[test]
+    fn displaced_vertex_no_masses_returns_zero_displacement() {
+        let masses: Vec<(UomLength, UomLength, UomMass)> = vec![];
+        let (pos, disp) = compute_displaced_vertex(0.5, 0.5, &masses);
+
+        assert!(disp.abs() < 1e-6, "displacement should be zero with no masses, got {disp}");
+
+        // Position should equal the base (undisplaced) position.
+        let base = get_translation_from_percentage(0.5, 0.5).truncate();
+        assert!((pos - base).length() < 1e-3, "position should match base when no masses present");
+    }
+
+    #[test]
+    fn displaced_vertex_increases_near_mass() {
+        // Use a very large mass so displacement is measurable at screen-scale distances.
+        let masses = vec![(*SCREEN_WIDTH_UOM * 0.0, *SCREEN_HEIGHT_UOM * 0.0, UomMass::new::<kilogram>(1.0e36))];
+
+        // A vertex close to the mass should have more displacement than one far away.
+        let (_, disp_close) = compute_displaced_vertex(0.1, 0.0, &masses);
+        let (_, disp_far) = compute_displaced_vertex(0.9, 0.0, &masses);
+
+        assert!(disp_close > 0.0, "close vertex should have positive displacement");
+        assert!(disp_far > 0.0, "far vertex should have positive displacement");
+        assert!(disp_close > disp_far, "displacement should be larger closer to mass: close={disp_close}, far={disp_far}");
+    }
+
+    #[test]
+    fn displaced_vertex_is_capped_at_max() {
+        // Use a very large mass that stays below the relativistic clamp threshold
+        // at this distance, but produces enough field to saturate the displacement cap.
+        //
+        // At frac 0.51 vs mass at frac 0.5, distance ≈ 0.01 * 6e9 km = 6e7 km = 6e10 m.
+        // Relativistic clamp: M < c²d/(2G) = 9e16 * 6e10 / (2 * 6.674e-11) ≈ 4e37 kg.
+        let masses = vec![(*SCREEN_WIDTH_UOM * 0.5, *SCREEN_HEIGHT_UOM * 0.5, UomMass::new::<kilogram>(1.0e37))];
+
+        let (_, disp) = compute_displaced_vertex(0.51, 0.5, &masses);
+
+        assert!(disp <= MAX_DISPLACEMENT_PX, "displacement {disp} should not exceed MAX_DISPLACEMENT_PX ({MAX_DISPLACEMENT_PX})");
+        assert!(disp > 0.0, "displacement should be positive near a mass");
+    }
+
+    #[test]
+    fn displaced_vertex_shifts_toward_mass() {
+        // Use a very large mass to produce visible displacement at screen scale.
+        let mass_x = *SCREEN_WIDTH_UOM * 0.5;
+        let mass_y = *SCREEN_HEIGHT_UOM * 0.5;
+        let masses = vec![(mass_x, mass_y, UomMass::new::<kilogram>(1.0e36))];
+
+        // Vertex to the right of the mass.
+        let base = get_translation_from_percentage(0.8, 0.5).truncate();
+        let (displaced, disp) = compute_displaced_vertex(0.8, 0.5, &masses);
+
+        assert!(disp > 0.0, "displacement should be positive");
+
+        // Displaced position should be closer to the mass (at center) than the base.
+        let mass_screen = get_translation_from_percentage(0.5, 0.5).truncate();
+        let dist_base = (base - mass_screen).length();
+        let dist_displaced = (displaced - mass_screen).length();
+        assert!(
+            dist_displaced < dist_base,
+            "displaced vertex should be closer to mass: base_dist={dist_base}, displaced_dist={dist_displaced}"
+        );
+    }
+
+    // --- curvature_color ---
+
+    #[test]
+    fn curvature_color_low_displacement_is_blue() {
+        let color = curvature_color(0.0, 0.0, 1.0);
+        // At zero displacement, color should be blue (r=0.2, g=0.4, b=1.0).
+        let srgba = color.to_srgba();
+        assert!((srgba.blue - 1.0).abs() < 0.01, "blue channel should be ~1.0, got {}", srgba.blue);
+        assert!((srgba.red - 0.2).abs() < 0.01, "red channel should be ~0.2, got {}", srgba.red);
+    }
+
+    #[test]
+    fn curvature_color_high_displacement_is_warm() {
+        let color = curvature_color(1.0, 1.0, 1.0);
+        // At max displacement, color should be orange/red (r=1.0, g=0.4, b=0.1).
+        let srgba = color.to_srgba();
+        assert!((srgba.red - 1.0).abs() < 0.01, "red channel should be ~1.0, got {}", srgba.red);
+        assert!(srgba.blue < 0.2, "blue channel should be low, got {}", srgba.blue);
+    }
+
+    #[test]
+    fn curvature_color_alpha_increases_with_displacement() {
+        let color_low = curvature_color(0.0, 0.0, 1.0);
+        let color_high = curvature_color(1.0, 1.0, 1.0);
+        let alpha_low = color_low.to_srgba().alpha;
+        let alpha_high = color_high.to_srgba().alpha;
+
+        assert!(alpha_high > alpha_low, "alpha should increase with displacement: low={alpha_low}, high={alpha_high}");
+    }
 }
