@@ -300,6 +300,50 @@ mod tests {
         );
     }
 
+    // --- displacement proportional to field strength (uat-002) ---
+
+    #[test]
+    fn displaced_vertex_proportional_to_field_strength() {
+        // A heavier mass should produce more displacement at the same vertex position,
+        // confirming displacement is proportional to gravitational field strength.
+        let small_mass = vec![(*SCREEN_WIDTH_UOM * 0.5, *SCREEN_HEIGHT_UOM * 0.5, UomMass::new::<kilogram>(1.0e35))];
+        let large_mass = vec![(*SCREEN_WIDTH_UOM * 0.5, *SCREEN_HEIGHT_UOM * 0.5, UomMass::new::<kilogram>(1.0e36))];
+
+        let (_, disp_small) = compute_displaced_vertex(0.8, 0.5, &small_mass);
+        let (_, disp_large) = compute_displaced_vertex(0.8, 0.5, &large_mass);
+
+        assert!(disp_small > 0.0, "small mass should still produce positive displacement");
+        assert!(disp_large > disp_small, "larger mass should produce more displacement: small={disp_small}, large={disp_large}");
+    }
+
+    #[test]
+    fn displaced_vertex_direction_toward_mass_proportional() {
+        // Two masses of different strengths: the displaced vertex should move toward
+        // each mass, and the stronger mass should pull it closer (larger shift).
+        let mass_pos_x = *SCREEN_WIDTH_UOM * 0.3;
+        let mass_pos_y = *SCREEN_HEIGHT_UOM * 0.5;
+
+        let weak = vec![(mass_pos_x, mass_pos_y, UomMass::new::<kilogram>(5.0e34))];
+        let strong = vec![(mass_pos_x, mass_pos_y, UomMass::new::<kilogram>(5.0e36))];
+
+        let base = get_translation_from_percentage(0.7, 0.5).truncate();
+        let mass_screen = get_translation_from_percentage(0.3, 0.5).truncate();
+
+        let (displaced_weak, _) = compute_displaced_vertex(0.7, 0.5, &weak);
+        let (displaced_strong, _) = compute_displaced_vertex(0.7, 0.5, &strong);
+
+        // Both should move toward the mass.
+        let dist_base = (base - mass_screen).length();
+        let dist_weak = (displaced_weak - mass_screen).length();
+        let dist_strong = (displaced_strong - mass_screen).length();
+
+        assert!(dist_weak < dist_base, "weak mass should still pull vertex closer");
+        assert!(
+            dist_strong < dist_weak,
+            "stronger mass should pull vertex closer than weak: weak_dist={dist_weak}, strong_dist={dist_strong}"
+        );
+    }
+
     // --- grid connectivity (uat-001) ---
 
     /// Build the displaced vertex grid the same way the render system does.

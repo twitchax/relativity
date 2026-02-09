@@ -29,7 +29,7 @@ acceptance_tests:
   - id: uat-002
     name: "Grid vertices are displaced toward massive objects proportional to field strength"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
   - id: uat-003
     name: "Grid lines change color based on local curvature (blue → purple → red/orange)"
     command: cargo make uat
@@ -251,3 +251,14 @@ Alpha is also modulated by displacement strength (faint in flat regions, brighte
     - `grid_covers_full_vertex_count_for_connected_rendering` — verifies vertex count matches render loop bounds (1000 horizontal + 984 vertical segments)
   - Tests use a mass placed between grid vertices (frac 0.53, 0.47) to avoid gravitational singularity at exact vertex positions
   - UAT: 251/251 tests pass
+
+## 2026-02-09 — uat-002 Verification
+- **UAT**: Grid vertices are displaced toward massive objects proportional to field strength
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Added 2 tests in `src/game/gravity_grid/mod.rs`:
+    - `displaced_vertex_proportional_to_field_strength` — verifies a heavier mass produces more displacement at the same vertex position (1e35 vs 1e36 kg)
+    - `displaced_vertex_direction_toward_mass_proportional` — verifies a stronger mass pulls vertices closer to it than a weaker mass (5e34 vs 5e36 kg), confirming both direction and proportionality
+  - Pre-existing tests `displaced_vertex_increases_near_mass` and `displaced_vertex_shifts_toward_mass` also support this criterion
+  - UAT: 253/253 tests pass
