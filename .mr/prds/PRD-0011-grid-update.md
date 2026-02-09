@@ -65,7 +65,7 @@ tasks:
   - id: T-004
     title: "Tune displacement magnitude and falloff for visible but reasonable funneling"
     priority: 2
-    status: todo
+    status: done
     notes: "Use log-scaled displacement with a smooth inverse-square falloff. Add a MAX_DISPLACEMENT_PX constant to cap warping. Ensure stronger gravity wells produce proportionally more funneling."
   - id: T-005
     title: "Update or add unit tests for grid vertex displacement logic"
@@ -209,3 +209,16 @@ Alpha is also modulated by displacement strength (faint in flat regions, brighte
   - Color function is already applied to every horizontal and vertical line segment in the rendering loops (lines 123, 134)
   - UAT: 241/241 tests pass
 - **Constitution Compliance**: No violations. No code changes required; T-003 was already satisfied by T-001's implementation.
+
+## 2026-02-09 — T-004 Completed
+- **Task**: Tune displacement magnitude and falloff for visible but reasonable funneling
+- **Status**: ✅ Done
+- **Changes**:
+  - Added `REFERENCE_FIELD_STRENGTH` constant (50.0 m/s²) in `src/game/gravity_grid/mod.rs` to normalize field magnitudes before log scaling — this provides much better differentiation across the dynamic range of the game's gravity wells
+  - Updated displacement formula from `ln(1 + mag) * SCALE` to `ln(1 + mag / REFERENCE_FIELD_STRENGTH) * SCALE`, ensuring Earth-mass objects produce subtle warping while solar-mass objects produce dramatic funneling
+  - Increased `MAX_DISPLACEMENT_PX` from 60.0 to 80.0 to allow stronger gravity wells more dramatic visual funneling
+  - Increased `DISPLACEMENT_SCALE` from 12.0 to 18.0 to compensate for the normalized log scaling and produce visible warping at moderate distances
+  - Regenerated screenshot baseline `tests/baselines/level1_spawn.png` for new grid appearance
+  - All existing `compute_field_at_point` unit tests continue to pass (function untouched)
+  - UAT: 241/241 tests pass
+- **Constitution Compliance**: No violations. Changes are minimal and focused solely on tuning constants and the displacement formula in `compute_displaced_vertex`. Public API (`compute_field_at_point`) is unchanged.

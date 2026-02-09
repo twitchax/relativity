@@ -24,10 +24,17 @@ const VERTEX_COLS: u32 = GRID_COLS + 1;
 const VERTEX_ROWS: u32 = GRID_ROWS + 1;
 
 /// Maximum displacement (in pixels) a vertex can be shifted toward a mass.
-const MAX_DISPLACEMENT_PX: f32 = 60.0;
+const MAX_DISPLACEMENT_PX: f32 = 80.0;
 
-/// Scale factor applied to log-scaled field magnitude before capping.
-const DISPLACEMENT_SCALE: f32 = 12.0;
+/// Scale factor applied to log-scaled normalized field magnitude before capping.
+const DISPLACEMENT_SCALE: f32 = 18.0;
+
+/// Reference field strength (m/s²) used to normalize magnitudes before log scaling.
+///
+/// Chosen so that `ln(1 + mag / REF)` spans a useful range across the game's
+/// gravity wells (Earth-mass objects produce subtle warping while solar-mass
+/// objects produce dramatic funneling).
+const REFERENCE_FIELD_STRENGTH: f64 = 50.0;
 
 // Pure functions.
 
@@ -74,7 +81,7 @@ fn compute_displaced_vertex(frac_x: f64, frac_y: f64, masses: &[(UomLength, UomL
         return (base_pos, 0.0);
     }
 
-    let displacement = ((1.0 + mag).ln() as f32 * DISPLACEMENT_SCALE).min(MAX_DISPLACEMENT_PX);
+    let displacement = ((1.0 + mag / REFERENCE_FIELD_STRENGTH).ln() as f32 * DISPLACEMENT_SCALE).min(MAX_DISPLACEMENT_PX);
     let displaced_pos = base_pos + dir * displacement;
 
     (displaced_pos, displacement)
