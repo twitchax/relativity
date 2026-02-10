@@ -1,0 +1,159 @@
+---
+id: PRD-0012
+title: "Hotkeys: Pause, Simulation Speed, and Grid Toggle"
+status: draft
+owner: twitchax
+created: 2026-02-10
+updated: 2026-02-10
+principles:
+  - Minimal changes to existing systems; new behavior is additive
+  - Use Bevy resources and run conditions rather than modifying core physics math
+  - Follow existing HUD patterns (marker components, targeted queries)
+  - Hotkeys only affect gameplay state during InGame; no effect on menus
+references:
+  - name: "Bevy Time / Virtual Time docs"
+    url: "https://docs.rs/bevy/latest/bevy/time/struct.Virtual.html"
+  - name: "PRD-0010 HUD implementation"
+    url: ".mr/prds/PRD-0010-improve-hud.md"
+  - name: "PRD-0011 Gravity Grid"
+    url: ".mr/prds/PRD-0011-warped-euclidean-gravity-grid.md"
+acceptance_tests:
+  - id: uat-001
+    name: "Pressing Space while Running pauses simulation; pressing again resumes"
+    command: cargo make uat
+    uat_status: unverified
+  - id: uat-002
+    name: "Plus key increases sim rate by 0.25x (clamped to 2.00x)"
+    command: cargo make uat
+    uat_status: unverified
+  - id: uat-003
+    name: "Minus key decreases sim rate by 0.25x (clamped to 0.25x)"
+    command: cargo make uat
+    uat_status: unverified
+  - id: uat-004
+    name: "HUD displays current simulation rate in right panel (always visible)"
+    command: cargo make uat
+    uat_status: unverified
+  - id: uat-005
+    name: "Sim rate resets to 1.00x on level start / re-launch"
+    command: cargo make uat
+    uat_status: unverified
+  - id: uat-006
+    name: "Pressing G toggles gravity grid visibility on/off"
+    command: cargo make uat
+    uat_status: unverified
+  - id: uat-007
+    name: "Speed controls only apply while GameState::Running"
+    command: cargo make uat
+    uat_status: unverified
+tasks:
+  - id: T-001
+    title: "Add SimPaused game state variant and Space toggle system"
+    priority: 1
+    status: todo
+    notes: "Add GameState::SimPaused variant. System listens for Space key, toggles between Running and SimPaused. Physics/clock systems must not run during SimPaused."
+  - id: T-002
+    title: "Add SimRate resource and +/- hotkey system"
+    priority: 1
+    status: todo
+    notes: "SimRate(f64) resource, default 1.0. System listens for +/- (NumpadAdd/NumpadSubtract or Equals/Minus), steps by 0.25, clamps [0.25, 2.00]. Only active when GameState::Running."
+  - id: T-003
+    title: "Apply SimRate scaling to physics and clock systems"
+    priority: 1
+    status: todo
+    notes: "Multiply time.delta_secs() by SimRate in velocity_update, position_update, player_clock_system, and observer_clock_system. Alternatively, use Bevy Virtual time relative_speed."
+  - id: T-004
+    title: "Reset SimRate to 1.0 on level start / re-launch"
+    priority: 2
+    status: todo
+    notes: "Reset in spawn_level or when transitioning to GameState::Running from Paused (launch fire)."
+  - id: T-005
+    title: "Add sim rate HUD label in right (observer) panel"
+    priority: 2
+    status: todo
+    notes: "New HudSimRate marker component. Display as 'r = 1.00×'. Spawn in observer panel labels. Add update system."
+  - id: T-006
+    title: "Add GridVisible resource and G toggle system"
+    priority: 2
+    status: todo
+    notes: "GridVisible(bool) resource, default true. System listens for G key, toggles value. gravity_grid_render_system early-returns when GridVisible is false."
+  - id: T-007
+    title: "Verify clippy, fmt, and existing tests pass"
+    priority: 3
+    status: todo
+    notes: "Run cargo make ci to ensure no regressions."
+---
+
+# Summary
+
+Add keyboard hotkeys for pausing the simulation (Space), adjusting simulation speed (+/− keys with a HUD rate indicator), and toggling the gravity grid (G). These controls give players finer control over the game experience and aid in understanding relativistic effects by letting them slow down or speed up time.
+
+# Problem
+
+The game currently has no way to pause mid-flight, adjust simulation speed, or hide the gravity grid. Players watching relativistic effects unfold have no control over pacing, and the grid (while helpful) can be visually distracting. These are standard quality-of-life controls expected in simulation-style games.
+
+# Goals
+
+1. **Pause/Resume** — Space key toggles between running and paused states during flight, freezing all physics and clocks.
+2. **Simulation Speed** — +/− keys adjust a speed multiplier from 0.25× to 2.00× in 0.25× increments, applied to all time-dependent systems.
+3. **Rate HUD** — A persistent indicator in the right HUD panel shows the current simulation rate (e.g., `r = 1.00×`).
+4. **Grid Toggle** — G key shows/hides the gravity grid.
+
+# Technical Approach
+
+## Pause (Space)
+
+Add a `GameState::SimPaused` variant. A new `sim_pause_toggle` system (running in `AppState::InGame`) listens for `KeyCode::Space` `just_pressed` and toggles between `GameState::Running` and `GameState::SimPaused`. All physics and clock update systems already gate on `GameState::Running`, so they will automatically freeze when `SimPaused` is active.
+
+```
+Running ──[Space]──▶ SimPaused
+SimPaused ──[Space]──▶ Running
+```
+
+## Simulation Speed (+/−)
+
+Introduce a `SimRate` resource (`f64`, default 1.0). A `sim_rate_adjust` system listens for `+`/`-` keys (both numpad and standard keyboard) and steps by 0.25, clamping to `[0.25, 2.00]`. The preferred approach is to use Bevy's `Time<Virtual>` `relative_speed` so all systems that read `Time` automatically respect the rate without manual multiplication. If `Time<Virtual>` is not viable (e.g., it affects menu transitions), then manually multiply `time.delta_secs()` by `sim_rate.0` in the four core systems: `velocity_update`, `position_update`, `player_clock_system`, `observer_clock_system`.
+
+The rate resets to 1.0 when the player fires (transition from `Paused` → `Running` in `launch_fire_system`).
+
+## Rate HUD
+
+Add a `HudSimRate` marker component. Spawn a new label in the observer panel (`spawn_observer_labels`) with initial text `r = 1.00×`. An `sim_rate_hud_update` system reads `Res<SimRate>` and updates the text each frame.
+
+## Grid Toggle (G)
+
+Add a `GridVisible(bool)` resource (default `true`). A `grid_toggle` system listens for `KeyCode::KeyG` `just_pressed` and flips the bool. The existing `gravity_grid_render_system` adds an early return when `GridVisible` is `false`.
+
+# Assumptions
+
+- Bevy's `Time<Virtual>` `relative_speed` is available and suitable for scaling game time without affecting UI/menu transitions. If not, manual delta scaling is the fallback.
+- The existing `GameState` enum can accommodate a new `SimPaused` variant without breaking state transition logic.
+- The observer panel in the HUD has room for one additional label.
+
+# Constraints
+
+- Pause and speed controls must not interfere with the Escape-to-menu flow.
+- Speed changes must not apply during the launch/aim phase (`GameState::Paused`).
+- The grid toggle must not affect grid state across level reloads (reset to default on level spawn).
+- All changes must pass `cargo make ci` (clippy pedantic, fmt, nextest).
+
+# References to Code
+
+- `src/game/shared/systems.rs` — `velocity_update`, `position_update`, `exit_level_check` (keyboard input pattern)
+- `src/game/player/player_clock.rs` — `player_clock_system` (time-dependent)
+- `src/game/player/player_sprite.rs` — `launch_fire_system` (state transitions)
+- `src/game/hud/mod.rs` — HUD spawn and update systems, marker components
+- `src/game/gravity_grid/mod.rs` — `gravity_grid_render_system` (grid rendering)
+- `src/game/mod.rs` — System registration and run conditions
+- `src/shared/state.rs` — `GameState`, `AppState` enums
+
+# Non-Goals (MVP)
+
+- Pause overlay or pause menu UI (just freeze the simulation)
+- Configurable keybindings
+- Speed values outside 0.25×–2.00× range
+- Per-system speed control (all systems use the same rate)
+- Persisting grid visibility preference across sessions
+
+# History
+
