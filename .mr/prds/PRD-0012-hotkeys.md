@@ -33,7 +33,7 @@ acceptance_tests:
   - id: uat-004
     name: "HUD displays current simulation rate in right panel (always visible)"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
   - id: uat-005
     name: "Sim rate resets to 1.00x on level start / re-launch"
     command: cargo make uat
@@ -273,3 +273,14 @@ Add a `GridVisible(bool)` resource (default `true`). A `grid_toggle` system list
     - `minus_key_clamps_at_min` — verifies SimRate clamps at 0.25x after repeated presses
     - `numpad_subtract_also_decreases_sim_rate` — verifies NumpadSubtract works identically to Minus
   - All 269 tests passed via `cargo make uat`
+
+## 2026-02-10 — uat-004 Verification
+- **UAT**: HUD displays current simulation rate in right panel (always visible)
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Created `tests/e2e_hud_sim_rate.rs` with three tests:
+    - `observer_panel_has_sim_rate_label` — verifies exactly one `HudSimRate` entity exists after entering InGame
+    - `sim_rate_label_shows_default_value` — verifies initial text is `r = 1.00×`
+    - `sim_rate_label_updates_when_rate_changes` — verifies HUD updates to `r = 1.50×` after changing SimRate resource
+  - All 272 tests passed via `cargo make uat`
