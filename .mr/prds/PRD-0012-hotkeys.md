@@ -45,7 +45,7 @@ acceptance_tests:
   - id: uat-007
     name: "Speed controls only apply while GameState::Running"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
 tasks:
   - id: T-001
     title: "Add SimPaused game state variant and Space toggle system"
@@ -305,3 +305,15 @@ Add a `GridVisible(bool)` resource (default `true`). A `grid_toggle` system list
     - `g_toggles_grid_visibility_off_then_on` — verifies G key toggles GridVisible from true → false → true
     - `g_toggle_works_during_running_state` — verifies G toggle works during GameState::Running
   - All 277 tests passed via `cargo make uat`
+
+## 2026-02-10 — uat-007 Verification
+- **UAT**: Speed controls only apply while GameState::Running
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Created `tests/e2e_speed_controls_state_gate.rs` with three tests:
+    - `speed_controls_ignored_during_paused_state` — verifies +/- keys do not change SimRate during GameState::Paused (launch-aim)
+    - `speed_controls_ignored_during_sim_paused_state` — verifies +/- keys do not change SimRate during GameState::SimPaused
+    - `speed_controls_work_during_running_state` — verifies +/- keys correctly change SimRate during GameState::Running
+  - Tests use `Messages<KeyboardInput>` to send proper key events through the full Bevy schedule (respecting run conditions), rather than `run_system_once` which bypasses state gating
+  - All 280 tests passed via `cargo make uat`
