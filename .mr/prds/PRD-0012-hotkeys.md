@@ -25,7 +25,7 @@ acceptance_tests:
   - id: uat-002
     name: "Plus key increases sim rate by 0.25x (clamped to 2.00x)"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
   - id: uat-003
     name: "Minus key decreases sim rate by 0.25x (clamped to 0.25x)"
     command: cargo make uat
@@ -251,3 +251,14 @@ Add a `GridVisible(bool)` resource (default `true`). A `grid_toggle` system list
     - `space_pauses_running_and_resumes` — verifies Space toggles Running → SimPaused → Running
     - `space_does_nothing_in_paused_state` — verifies Space has no effect during launch-aim (GameState::Paused)
   - All 263 tests passed via `cargo make uat`
+
+## 2026-02-10 — uat-002 Verification
+- **UAT**: Plus key increases sim rate by 0.25x (clamped to 2.00x)
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Created `tests/e2e_sim_rate_adjust_plus.rs` with three tests:
+    - `plus_key_increases_sim_rate_by_quarter` — verifies Equal key increases SimRate from 1.0 → 1.25 → 1.50
+    - `plus_key_clamps_at_max` — verifies SimRate clamps at 2.00x after repeated presses
+    - `numpad_add_also_increases_sim_rate` — verifies NumpadAdd works identically to Equal
+  - All 266 tests passed via `cargo make uat`
