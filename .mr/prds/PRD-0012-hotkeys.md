@@ -80,7 +80,7 @@ tasks:
   - id: T-007
     title: "Verify clippy, fmt, and existing tests pass"
     priority: 3
-    status: todo
+    status: done
     notes: "Run cargo make ci to ensure no regressions."
 ---
 
@@ -233,3 +233,11 @@ Add a `GridVisible(bool)` resource (default `true`). A `grid_toggle` system list
   - UAT: `cargo make uat` passed — 261 tests, 261 passed, 0 skipped
 - **Constitution Compliance**: No violations.
 
+## 2026-02-10 — T-007 Completed
+- **Task**: Verify clippy, fmt, and existing tests pass
+- **Status**: ✅ Done
+- **Changes**:
+  - Ran `cargo make ci` (fmt-check + clippy + nextest)
+  - All checks passed: 261 tests run, 261 passed, 0 skipped
+  - No code changes required — all previous tasks left the codebase in a clean state
+- **Constitution Compliance**: No violations.
