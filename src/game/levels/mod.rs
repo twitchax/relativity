@@ -10,7 +10,7 @@ use super::{
     shared::{
         constants::{MASS_OF_EARTH, MASS_OF_SUN, UNIT_RADIUS},
         helpers::get_position_from_percentage,
-        types::{GameItem, LaunchState, Mass, PendingLevelReset, Radius, SimRate, Velocity},
+        types::{GameItem, GridVisible, LaunchState, Mass, PendingLevelReset, Radius, SimRate, Velocity},
     },
 };
 
@@ -70,6 +70,7 @@ pub fn despawn_level(mut commands: Commands, query: Query<Entity, With<GameItem>
 /// Despawns all `GameItem` entities and respawns the current level, returning
 /// the player and all objects to their starting positions. Also resets the
 /// launch state machine to `Idle`.
+#[allow(clippy::too_many_arguments)]
 pub fn reset_level_on_pending(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -78,6 +79,7 @@ pub fn reset_level_on_pending(
     pending: Option<Res<PendingLevelReset>>,
     mut launch_state: ResMut<LaunchState>,
     mut sim_rate: ResMut<SimRate>,
+    mut grid_visible: ResMut<GridVisible>,
 ) {
     if pending.is_none() {
         return;
@@ -91,12 +93,10 @@ pub fn reset_level_on_pending(
     // Respawn the level.
     spawn_level(commands.reborrow(), asset_server, current_level);
 
-    // Reset launch state and sim rate.
+    // Reset launch state, sim rate, and grid visibility.
     *launch_state = LaunchState::Idle;
     sim_rate.0 = 1.0;
-
-    // Reset launch state.
-    *launch_state = LaunchState::Idle;
+    grid_visible.0 = true;
 
     // Remove the marker.
     commands.remove_resource::<PendingLevelReset>();

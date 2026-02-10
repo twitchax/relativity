@@ -1,7 +1,7 @@
 use super::{
     constants::{C, DAYS_PER_SECOND_UOM, G, SOFTENING_LENGTH},
     helpers::{get_translation_from_position, has_collided, length_to_pixel, planet_sprite_pixel_radius_to_scale, rocket_sprite_pixel_radius_to_scale},
-    types::{LaunchState, Mass, PlanetSprite, Position, Radius, RocketSprite, SimRate, Velocity},
+    types::{GridVisible, LaunchState, Mass, PlanetSprite, Position, Radius, RocketSprite, SimRate, Velocity},
 };
 use crate::{
     game::{destination::Destination, fade::FadeState, object::Planet, player::shared::Player},
@@ -56,6 +56,18 @@ pub fn sim_rate_adjust(keyboard_input: Res<ButtonInput<KeyCode>>, mut sim_rate: 
     } else if decrease {
         sim_rate.0 = (sim_rate.0 - SimRate::STEP).max(SimRate::MIN);
     }
+}
+
+// Grid visibility toggle (G).
+
+pub fn grid_toggle(keyboard_input: Res<ButtonInput<KeyCode>>, mut grid_visible: ResMut<GridVisible>) {
+    if keyboard_input.just_pressed(KeyCode::KeyG) {
+        grid_visible.0 = !grid_visible.0;
+    }
+}
+
+pub fn reset_grid_visible(mut grid_visible: ResMut<GridVisible>) {
+    grid_visible.0 = true;
 }
 
 // Basic scale / velocity / position.

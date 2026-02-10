@@ -8,7 +8,7 @@ use crate::game::shared::{
     constants::{SCREEN_HEIGHT_UOM, SCREEN_WIDTH_UOM},
     helpers::get_translation_from_percentage,
     systems::calculate_gravitational_acceleration,
-    types::{Mass, Position},
+    types::{GridVisible, Mass, Position},
 };
 use crate::shared::{SCREEN_HEIGHT_PX, SCREEN_WIDTH_PX};
 
@@ -194,7 +194,11 @@ fn enforce_grid_topology(positions: &mut [Vec2]) {
 /// Builds a vertex grid and displaces each vertex toward nearby masses using
 /// `compute_field_at_point`. Draws connected horizontal and vertical line segments
 /// between displaced vertices, colored by local curvature strength.
-pub fn gravity_grid_render_system(mass_query: Query<(&Position, &Mass)>, mut gizmos: Gizmos) {
+pub fn gravity_grid_render_system(grid_visible: Res<GridVisible>, mass_query: Query<(&Position, &Mass)>, mut gizmos: Gizmos) {
+    if !grid_visible.0 {
+        return;
+    }
+
     let masses: Vec<_> = mass_query.iter().map(|(pos, mass)| (pos.x, pos.y, mass.value)).collect();
 
     if masses.is_empty() {

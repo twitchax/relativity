@@ -133,6 +133,18 @@ impl SimRate {
     pub const STEP: f64 = 0.25;
 }
 
+/// Controls whether the gravity grid overlay is rendered.
+///
+/// Default `true`. Toggled by the G key.
+#[derive(Resource)]
+pub struct GridVisible(pub bool);
+
+impl Default for GridVisible {
+    fn default() -> Self {
+        Self(true)
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
@@ -230,5 +242,13 @@ mod tests {
         assert_relative_eq!(SimRate::MIN, 0.25);
         assert_relative_eq!(SimRate::MAX, 2.0);
         assert_relative_eq!(SimRate::STEP, 0.25);
+    }
+
+    // --- GridVisible ---
+
+    #[test]
+    fn grid_visible_default_is_true() {
+        let gv = GridVisible::default();
+        assert!(gv.0);
     }
 }

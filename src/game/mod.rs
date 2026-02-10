@@ -30,10 +30,10 @@ use self::{
     },
     shared::{
         systems::{
-            collision_check, exit_level_check, planet_scale_update, position_update, reset_sim_rate, rocket_rotation_update, rocket_scale_update, sim_pause_toggle, sim_rate_adjust,
-            translation_update, velocity_update,
+            collision_check, exit_level_check, grid_toggle, planet_scale_update, position_update, reset_grid_visible, reset_sim_rate, rocket_rotation_update, rocket_scale_update, sim_pause_toggle,
+            sim_rate_adjust, translation_update, velocity_update,
         },
-        types::{LaunchState, SimRate},
+        types::{GridVisible, LaunchState, SimRate},
     },
     trail::{trail_clear_system, trail_record_system, trail_render_system},
 };
@@ -47,12 +47,13 @@ impl Plugin for GamePlugin {
             .init_resource::<LaunchState>()
             .init_resource::<FadeState>()
             .init_resource::<SimRate>()
+            .init_resource::<GridVisible>()
             // Spawn the persistent fade overlay.
             .add_systems(Startup, spawn_fade_overlay)
             // Fade animation runs unconditionally every frame.
             .add_systems(Update, fade_update_system)
             // Spawn things on enter.
-            .add_systems(OnEnter(AppState::InGame), (spawn_level, reset_sim_rate))
+            .add_systems(OnEnter(AppState::InGame), (spawn_level, reset_sim_rate, reset_grid_visible))
             // Destroy things on exit.
             .add_systems(OnExit(AppState::InGame), despawn_level)
             // Success overlay lifecycle.
@@ -64,7 +65,7 @@ impl Plugin for GamePlugin {
             // Run the scale updates always.
             .add_systems(
                 Update,
-                (planet_scale_update, rocket_scale_update, exit_level_check, sim_pause_toggle).run_if(in_state(AppState::InGame)),
+                (planet_scale_update, rocket_scale_update, exit_level_check, sim_pause_toggle, grid_toggle).run_if(in_state(AppState::InGame)),
             )
             // Success overlay button interaction while finished.
             .add_systems(Update, success_button_interaction.run_if(in_state(AppState::InGame)).run_if(in_state(GameState::Finished)))

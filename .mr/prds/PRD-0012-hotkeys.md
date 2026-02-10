@@ -75,7 +75,7 @@ tasks:
   - id: T-006
     title: "Add GridVisible resource and G toggle system"
     priority: 2
-    status: todo
+    status: done
     notes: "GridVisible(bool) resource, default true. System listens for G key, toggles value. gravity_grid_render_system early-returns when GridVisible is false."
   - id: T-007
     title: "Verify clippy, fmt, and existing tests pass"
@@ -216,5 +216,20 @@ Add a `GridVisible(bool)` resource (default `true`). A `grid_toggle` system list
   - Exported `sim_rate_hud_update` from `hud` module and imported in `game/mod.rs`
   - UAT: `cargo make uat` passed — 260 tests, 260 passed, 0 skipped
   - Opportunistic UAT check: uat-004 ("HUD displays current simulation rate in right panel") is now implementable but deferred to the UAT verification loop
+- **Constitution Compliance**: No violations.
+
+## 2026-02-10 — T-006 Completed
+- **Task**: Add GridVisible resource and G toggle system
+- **Status**: ✅ Done
+- **Changes**:
+  - Added `GridVisible(bool)` resource to `src/game/shared/types.rs` — default `true`, with unit test
+  - Added `grid_toggle` system in `src/game/shared/systems.rs` — listens for `KeyCode::KeyG` and flips `GridVisible`
+  - Added `reset_grid_visible` system in `src/game/shared/systems.rs` — resets to `true`
+  - Updated `gravity_grid_render_system` in `src/game/gravity_grid/mod.rs` — accepts `Res<GridVisible>`, early-returns when `false`
+  - Registered `GridVisible` as init resource in `GamePlugin` (`src/game/mod.rs`)
+  - Registered `grid_toggle` in `AppState::InGame` system set (works across all sub-states)
+  - Registered `reset_grid_visible` on `OnEnter(AppState::InGame)` alongside `reset_sim_rate`
+  - Added `GridVisible` reset in `reset_level_on_pending` (`src/game/levels/mod.rs`) with `#[allow(clippy::too_many_arguments)]`
+  - UAT: `cargo make uat` passed — 261 tests, 261 passed, 0 skipped
 - **Constitution Compliance**: No violations.
 
