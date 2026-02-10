@@ -29,7 +29,7 @@ acceptance_tests:
   - id: uat-003
     name: "Minus key decreases sim rate by 0.25x (clamped to 0.25x)"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
   - id: uat-004
     name: "HUD displays current simulation rate in right panel (always visible)"
     command: cargo make uat
@@ -262,3 +262,14 @@ Add a `GridVisible(bool)` resource (default `true`). A `grid_toggle` system list
     - `plus_key_clamps_at_max` — verifies SimRate clamps at 2.00x after repeated presses
     - `numpad_add_also_increases_sim_rate` — verifies NumpadAdd works identically to Equal
   - All 266 tests passed via `cargo make uat`
+
+## 2026-02-10 — uat-003 Verification
+- **UAT**: Minus key decreases sim rate by 0.25x (clamped to 0.25x)
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Created `tests/e2e_sim_rate_adjust_minus.rs` with three tests:
+    - `minus_key_decreases_sim_rate_by_quarter` — verifies Minus key decreases SimRate from 1.0 → 0.75 → 0.50
+    - `minus_key_clamps_at_min` — verifies SimRate clamps at 0.25x after repeated presses
+    - `numpad_subtract_also_decreases_sim_rate` — verifies NumpadSubtract works identically to Minus
+  - All 269 tests passed via `cargo make uat`
