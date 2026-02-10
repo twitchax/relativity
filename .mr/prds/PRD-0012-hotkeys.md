@@ -21,7 +21,7 @@ acceptance_tests:
   - id: uat-001
     name: "Pressing Space while Running pauses simulation; pressing again resumes"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
   - id: uat-002
     name: "Plus key increases sim rate by 0.25x (clamped to 2.00x)"
     command: cargo make uat
@@ -241,3 +241,13 @@ Add a `GridVisible(bool)` resource (default `true`). A `grid_toggle` system list
   - All checks passed: 261 tests run, 261 passed, 0 skipped
   - No code changes required — all previous tasks left the codebase in a clean state
 - **Constitution Compliance**: No violations.
+
+## 2026-02-10 — uat-001 Verification
+- **UAT**: Pressing Space while Running pauses simulation; pressing again resumes
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Created `tests/e2e_sim_pause_toggle.rs` with two tests:
+    - `space_pauses_running_and_resumes` — verifies Space toggles Running → SimPaused → Running
+    - `space_does_nothing_in_paused_state` — verifies Space has no effect during launch-aim (GameState::Paused)
+  - All 263 tests passed via `cargo make uat`
