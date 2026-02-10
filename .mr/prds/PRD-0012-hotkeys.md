@@ -41,7 +41,7 @@ acceptance_tests:
   - id: uat-006
     name: "Pressing G toggles gravity grid visibility on/off"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
   - id: uat-007
     name: "Speed controls only apply while GameState::Running"
     command: cargo make uat
@@ -295,3 +295,13 @@ Add a `GridVisible(bool)` resource (default `true`). A `grid_toggle` system list
     - `sim_rate_resets_on_relaunch` — verifies SimRate resets to 1.0 when exiting to menu and re-entering InGame after modifying rate
     - `reset_sim_rate_system_restores_default` — verifies the reset_sim_rate system directly resets a mutated SimRate to 1.0
   - All 275 tests passed via `cargo make uat`
+
+## 2026-02-10 — uat-006 Verification
+- **UAT**: Pressing G toggles gravity grid visibility on/off
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Created `tests/e2e_grid_toggle.rs` with two tests:
+    - `g_toggles_grid_visibility_off_then_on` — verifies G key toggles GridVisible from true → false → true
+    - `g_toggle_works_during_running_state` — verifies G toggle works during GameState::Running
+  - All 277 tests passed via `cargo make uat`
