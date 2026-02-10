@@ -64,6 +64,9 @@ $ cargo make build && cargo run
 - **Click** to lock your launch angle (from the player toward the cursor).
 - **Drag** to set launch power (longer drag = more power).
 - **Release** to fire.
+- **Space** to pause/resume the simulation.
+- **+/−** to adjust simulation speed (0.25×–2.00×).
+- **G** to toggle the gravity grid display.
 - **Escape** to return to the menu from any game state.
 
 ## Development

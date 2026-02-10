@@ -1,87 +1,87 @@
 ---
 id: PRD-0012
-title: "Hotkeys: Pause, Simulation Speed, and Grid Toggle"
-status: active
+title: 'Hotkeys: Pause, Simulation Speed, and Grid Toggle'
+status: done
 owner: twitchax
 created: 2026-02-10
 updated: 2026-02-10
 principles:
-  - Minimal changes to existing systems; new behavior is additive
-  - Use Bevy resources and run conditions rather than modifying core physics math
-  - Follow existing HUD patterns (marker components, targeted queries)
-  - Hotkeys only affect gameplay state during InGame; no effect on menus
+- Minimal changes to existing systems; new behavior is additive
+- Use Bevy resources and run conditions rather than modifying core physics math
+- Follow existing HUD patterns (marker components, targeted queries)
+- Hotkeys only affect gameplay state during InGame; no effect on menus
 references:
-  - name: "Bevy Time / Virtual Time docs"
-    url: "https://docs.rs/bevy/latest/bevy/time/struct.Virtual.html"
-  - name: "PRD-0010 HUD implementation"
-    url: ".mr/prds/PRD-0010-improve-hud.md"
-  - name: "PRD-0011 Gravity Grid"
-    url: ".mr/prds/PRD-0011-warped-euclidean-gravity-grid.md"
+- name: Bevy Time / Virtual Time docs
+  url: https://docs.rs/bevy/latest/bevy/time/struct.Virtual.html
+- name: PRD-0010 HUD implementation
+  url: .mr/prds/PRD-0010-improve-hud.md
+- name: PRD-0011 Gravity Grid
+  url: .mr/prds/PRD-0011-warped-euclidean-gravity-grid.md
 acceptance_tests:
-  - id: uat-001
-    name: "Pressing Space while Running pauses simulation; pressing again resumes"
-    command: cargo make uat
-    uat_status: verified
-  - id: uat-002
-    name: "Plus key increases sim rate by 0.25x (clamped to 2.00x)"
-    command: cargo make uat
-    uat_status: verified
-  - id: uat-003
-    name: "Minus key decreases sim rate by 0.25x (clamped to 0.25x)"
-    command: cargo make uat
-    uat_status: verified
-  - id: uat-004
-    name: "HUD displays current simulation rate in right panel (always visible)"
-    command: cargo make uat
-    uat_status: verified
-  - id: uat-005
-    name: "Sim rate resets to 1.00x on level start / re-launch"
-    command: cargo make uat
-    uat_status: verified
-  - id: uat-006
-    name: "Pressing G toggles gravity grid visibility on/off"
-    command: cargo make uat
-    uat_status: verified
-  - id: uat-007
-    name: "Speed controls only apply while GameState::Running"
-    command: cargo make uat
-    uat_status: verified
+- id: uat-001
+  name: Pressing Space while Running pauses simulation; pressing again resumes
+  command: cargo make uat
+  uat_status: verified
+- id: uat-002
+  name: Plus key increases sim rate by 0.25x (clamped to 2.00x)
+  command: cargo make uat
+  uat_status: verified
+- id: uat-003
+  name: Minus key decreases sim rate by 0.25x (clamped to 0.25x)
+  command: cargo make uat
+  uat_status: verified
+- id: uat-004
+  name: HUD displays current simulation rate in right panel (always visible)
+  command: cargo make uat
+  uat_status: verified
+- id: uat-005
+  name: Sim rate resets to 1.00x on level start / re-launch
+  command: cargo make uat
+  uat_status: verified
+- id: uat-006
+  name: Pressing G toggles gravity grid visibility on/off
+  command: cargo make uat
+  uat_status: verified
+- id: uat-007
+  name: Speed controls only apply while GameState::Running
+  command: cargo make uat
+  uat_status: verified
 tasks:
-  - id: T-001
-    title: "Add SimPaused game state variant and Space toggle system"
-    priority: 1
-    status: done
-    notes: "Add GameState::SimPaused variant. System listens for Space key, toggles between Running and SimPaused. Physics/clock systems must not run during SimPaused."
-  - id: T-002
-    title: "Add SimRate resource and +/- hotkey system"
-    priority: 1
-    status: done
-    notes: "SimRate(f64) resource, default 1.0. System listens for +/- (NumpadAdd/NumpadSubtract or Equals/Minus), steps by 0.25, clamps [0.25, 2.00]. Only active when GameState::Running."
-  - id: T-003
-    title: "Apply SimRate scaling to physics and clock systems"
-    priority: 1
-    status: done
-    notes: "Multiply time.delta_secs() by SimRate in velocity_update, position_update, player_clock_system, and observer_clock_system. Alternatively, use Bevy Virtual time relative_speed."
-  - id: T-004
-    title: "Reset SimRate to 1.0 on level start / re-launch"
-    priority: 2
-    status: done
-    notes: "Reset in spawn_level or when transitioning to GameState::Running from Paused (launch fire)."
-  - id: T-005
-    title: "Add sim rate HUD label in right (observer) panel"
-    priority: 2
-    status: done
-    notes: "New HudSimRate marker component. Display as 'r = 1.00×'. Spawn in observer panel labels. Add update system."
-  - id: T-006
-    title: "Add GridVisible resource and G toggle system"
-    priority: 2
-    status: done
-    notes: "GridVisible(bool) resource, default true. System listens for G key, toggles value. gravity_grid_render_system early-returns when GridVisible is false."
-  - id: T-007
-    title: "Verify clippy, fmt, and existing tests pass"
-    priority: 3
-    status: done
-    notes: "Run cargo make ci to ensure no regressions."
+- id: T-001
+  title: Add SimPaused game state variant and Space toggle system
+  priority: 1
+  status: done
+  notes: Add GameState::SimPaused variant. System listens for Space key, toggles between Running and SimPaused. Physics/clock systems must not run during SimPaused.
+- id: T-002
+  title: Add SimRate resource and +/- hotkey system
+  priority: 1
+  status: done
+  notes: SimRate(f64) resource, default 1.0. System listens for +/- (NumpadAdd/NumpadSubtract or Equals/Minus), steps by 0.25, clamps [0.25, 2.00]. Only active when GameState::Running.
+- id: T-003
+  title: Apply SimRate scaling to physics and clock systems
+  priority: 1
+  status: done
+  notes: Multiply time.delta_secs() by SimRate in velocity_update, position_update, player_clock_system, and observer_clock_system. Alternatively, use Bevy Virtual time relative_speed.
+- id: T-004
+  title: Reset SimRate to 1.0 on level start / re-launch
+  priority: 2
+  status: done
+  notes: Reset in spawn_level or when transitioning to GameState::Running from Paused (launch fire).
+- id: T-005
+  title: Add sim rate HUD label in right (observer) panel
+  priority: 2
+  status: done
+  notes: New HudSimRate marker component. Display as 'r = 1.00×'. Spawn in observer panel labels. Add update system.
+- id: T-006
+  title: Add GridVisible resource and G toggle system
+  priority: 2
+  status: done
+  notes: GridVisible(bool) resource, default true. System listens for G key, toggles value. gravity_grid_render_system early-returns when GridVisible is false.
+- id: T-007
+  title: Verify clippy, fmt, and existing tests pass
+  priority: 3
+  status: done
+  notes: Run cargo make ci to ensure no regressions.
 ---
 
 # Summary
@@ -317,3 +317,16 @@ Add a `GridVisible(bool)` resource (default `true`). A `grid_toggle` system list
     - `speed_controls_work_during_running_state` — verifies +/- keys correctly change SimRate during GameState::Running
   - Tests use `Messages<KeyboardInput>` to send proper key events through the full Bevy schedule (respecting run conditions), rather than `run_system_once` which bypasses state gating
   - All 280 tests passed via `cargo make uat`
+
+## 2026-02-10 — PRD Finalized
+- **Status**: ✅ Finalized
+- **Tasks Completed**: 7 tasks (T-001 through T-007)
+- **Outcome**: All tasks completed, acceptance tests passed (280/280 tests)
+- **Cleanup**: README.md updated with new controls documentation; no temporary files or debug statements found
+- **Summary**:
+  - Added Space key pause/resume toggle via `GameState::SimPaused` variant
+  - Added +/− simulation speed control (0.25×–2.00×) with `SimRate` resource, applied to all physics and clock systems
+  - Added sim rate HUD indicator (`r = 1.00×`) in the observer panel
+  - Added G key gravity grid toggle via `GridVisible` resource
+  - All features reset properly on level start/re-launch
+  - 7 UATs verified with dedicated integration tests
