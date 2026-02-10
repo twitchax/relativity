@@ -27,6 +27,12 @@ pub fn exit_level_check(keyboard_input: ResMut<ButtonInput<KeyCode>>, mut fade: 
     }
 }
 
+// Simulation rate reset on level start.
+
+pub fn reset_sim_rate(mut sim_rate: ResMut<SimRate>) {
+    sim_rate.0 = 1.0;
+}
+
 // Simulation pause toggle (Space).
 
 pub fn sim_pause_toggle(keyboard_input: Res<ButtonInput<KeyCode>>, current_state: Res<State<GameState>>, mut next_state: ResMut<NextState<GameState>>) {
@@ -91,9 +97,9 @@ pub fn rocket_rotation_update(mut query: Query<(&mut Transform, &Velocity), With
     }
 }
 
-pub fn position_update(mut query: Query<(&mut Position, &Velocity)>, time: Res<Time>) {
+pub fn position_update(mut query: Query<(&mut Position, &Velocity)>, time: Res<Time>, sim_rate: Res<SimRate>) {
     for (mut position, velocity) in &mut query {
-        let time_elapsed = *DAYS_PER_SECOND_UOM * f64::from(time.delta_secs());
+        let time_elapsed = *DAYS_PER_SECOND_UOM * f64::from(time.delta_secs()) * sim_rate.0;
 
         position.x += velocity.x * time_elapsed;
         position.y += velocity.y * time_elapsed;
@@ -139,8 +145,8 @@ pub(crate) fn calculate_gravitational_acceleration(pos_x: UomLength, pos_y: UomL
     (accel_x, accel_y)
 }
 
-pub fn velocity_update(mut query: Query<(&mut Velocity, Entity, &Position)>, masses: Query<(Entity, &Position, &Mass)>, time: Res<Time>) {
-    let time_elapsed = *DAYS_PER_SECOND_UOM * f64::from(time.delta_secs());
+pub fn velocity_update(mut query: Query<(&mut Velocity, Entity, &Position)>, masses: Query<(Entity, &Position, &Mass)>, time: Res<Time>, sim_rate: Res<SimRate>) {
+    let time_elapsed = *DAYS_PER_SECOND_UOM * f64::from(time.delta_secs()) * sim_rate.0;
 
     for (mut velocity, entity, position) in &mut query {
         if velocity.x.value == 0.0 || velocity.y.value == 0.0 {

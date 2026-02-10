@@ -60,12 +60,12 @@ tasks:
   - id: T-003
     title: "Apply SimRate scaling to physics and clock systems"
     priority: 1
-    status: todo
+    status: done
     notes: "Multiply time.delta_secs() by SimRate in velocity_update, position_update, player_clock_system, and observer_clock_system. Alternatively, use Bevy Virtual time relative_speed."
   - id: T-004
     title: "Reset SimRate to 1.0 on level start / re-launch"
     priority: 2
-    status: todo
+    status: done
     notes: "Reset in spawn_level or when transitioning to GameState::Running from Paused (launch fire)."
   - id: T-005
     title: "Add sim rate HUD label in right (observer) panel"
@@ -178,6 +178,29 @@ Add a `GridVisible(bool)` resource (default `true`). A `grid_toggle` system list
   - Registered `SimRate` as init resource in `GamePlugin` (`src/game/mod.rs`)
   - Registered `sim_rate_adjust` in the `GameState::Running` system set so it only applies while running
   - Added unit tests for `SimRate` default value and constants in `types.rs`
+  - UAT: `cargo make uat` passed — 260 tests, 260 passed, 0 skipped
+- **Constitution Compliance**: No violations.
+
+## 2026-02-10 — T-003 Completed
+- **Task**: Apply SimRate scaling to physics and clock systems
+- **Status**: ✅ Done
+- **Changes**:
+  - Added `Res<SimRate>` parameter to `velocity_update` and `position_update` in `src/game/shared/systems.rs` — time delta is now multiplied by `sim_rate.0`
+  - Added `Res<SimRate>` parameter to `player_clock_update` in `src/game/player/player_clock.rs` — added `SimRate` import and scaled time delta
+  - Added `Res<SimRate>` parameter to `observer_clock_update` in `src/game/observer/mod.rs` — added `SimRate` import and scaled time delta
+  - Updated `tests/e2e_time_dilation.rs` — added `SimRate` import and `.init_resource::<SimRate>()` to test app builder
+  - Updated `tests/e2e_velocity_update.rs` — added `SimRate` import and `.init_resource::<SimRate>()` to test app builder
+  - UAT: `cargo make uat` passed — 260 tests, 260 passed, 0 skipped
+- **Constitution Compliance**: No violations.
+
+## 2026-02-10 — T-004 Completed
+- **Task**: Reset SimRate to 1.0 on level start / re-launch
+- **Status**: ✅ Done
+- **Changes**:
+  - Added `reset_sim_rate` system in `src/game/shared/systems.rs` — resets `SimRate` to 1.0
+  - Registered `reset_sim_rate` on `OnEnter(AppState::InGame)` in `src/game/mod.rs` alongside `spawn_level`
+  - Added `SimRate` reset in `launch_fire_system` (`src/game/player/player_sprite.rs`) — resets to 1.0 when transitioning from `Paused` → `Running`
+  - Added `SimRate` reset in `reset_level_on_pending` (`src/game/levels/mod.rs`) — resets to 1.0 on level reset after failure
   - UAT: `cargo make uat` passed — 260 tests, 260 passed, 0 skipped
 - **Constitution Compliance**: No violations.
 

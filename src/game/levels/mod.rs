@@ -10,7 +10,7 @@ use super::{
     shared::{
         constants::{MASS_OF_EARTH, MASS_OF_SUN, UNIT_RADIUS},
         helpers::get_position_from_percentage,
-        types::{GameItem, LaunchState, Mass, PendingLevelReset, Radius, Velocity},
+        types::{GameItem, LaunchState, Mass, PendingLevelReset, Radius, SimRate, Velocity},
     },
 };
 
@@ -77,6 +77,7 @@ pub fn reset_level_on_pending(
     query: Query<Entity, With<GameItem>>,
     pending: Option<Res<PendingLevelReset>>,
     mut launch_state: ResMut<LaunchState>,
+    mut sim_rate: ResMut<SimRate>,
 ) {
     if pending.is_none() {
         return;
@@ -89,6 +90,10 @@ pub fn reset_level_on_pending(
 
     // Respawn the level.
     spawn_level(commands.reborrow(), asset_server, current_level);
+
+    // Reset launch state and sim rate.
+    *launch_state = LaunchState::Idle;
+    sim_rate.0 = 1.0;
 
     // Reset launch state.
     *launch_state = LaunchState::Idle;

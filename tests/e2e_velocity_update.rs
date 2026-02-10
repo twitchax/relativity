@@ -17,7 +17,7 @@ use std::time::Duration;
 use bevy::{prelude::*, time::TimeUpdateStrategy};
 use relativity::game::shared::{
     systems::velocity_update,
-    types::{Mass, Position, Velocity},
+    types::{Mass, Position, SimRate, Velocity},
 };
 use uom::si::{
     f64::{Length as UomLength, Mass as UomMass, Velocity as UomVelocity},
@@ -47,6 +47,7 @@ fn build_velocity_test_app() -> App {
     let mut app = App::new();
     app.add_plugins(MinimalPlugins)
         .insert_resource(TimeUpdateStrategy::ManualDuration(Duration::from_secs_f64(1.0 / 60.0)))
+        .init_resource::<SimRate>()
         .add_systems(Update, velocity_update);
     app
 }

@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use super::shared::{
     constants::DAYS_PER_SECOND_UOM,
-    types::{Clock, GameItem},
+    types::{Clock, GameItem, SimRate},
 };
 
 #[derive(Component, Default)]
@@ -39,8 +39,8 @@ pub(crate) fn format_observer_time(clock_value_seconds: f64) -> String {
 
 // Clock systems.
 
-pub fn observer_clock_update(mut query: Query<&mut Clock, With<Observer>>, time: Res<Time>) {
-    let time_elapsed = *DAYS_PER_SECOND_UOM * f64::from(time.delta_secs());
+pub fn observer_clock_update(mut query: Query<&mut Clock, With<Observer>>, time: Res<Time>, sim_rate: Res<SimRate>) {
+    let time_elapsed = *DAYS_PER_SECOND_UOM * f64::from(time.delta_secs()) * sim_rate.0;
 
     let Ok(mut clock) = query.single_mut() else { return };
 

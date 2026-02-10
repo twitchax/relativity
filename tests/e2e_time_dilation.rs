@@ -21,7 +21,7 @@ use relativity::game::{
         player_clock::{player_clock_update, PlayerClockBundle},
         shared::Player,
     },
-    shared::types::{Clock, Mass, Position, Velocity},
+    shared::types::{Clock, Mass, Position, SimRate, Velocity},
 };
 use uom::si::{
     f64::{Length as UomLength, Mass as UomMass, Velocity as UomVelocity},
@@ -48,6 +48,7 @@ fn build_time_dilation_app() -> App {
     let mut app = App::new();
     app.add_plugins(MinimalPlugins)
         .insert_resource(TimeUpdateStrategy::ManualDuration(Duration::from_secs_f64(1.0 / 60.0)))
+        .init_resource::<SimRate>()
         .add_systems(Update, (observer_clock_update, player_clock_update));
     app
 }

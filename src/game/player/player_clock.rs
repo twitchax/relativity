@@ -1,7 +1,7 @@
 use super::shared::Player;
 use crate::game::shared::{
     constants::{C, DAYS_PER_SECOND_UOM, G},
-    types::{Clock, GameItem, GravitationalGamma, Mass, PlayerHud, Position, Velocity, VelocityGamma},
+    types::{Clock, GameItem, GravitationalGamma, Mass, PlayerHud, Position, SimRate, Velocity, VelocityGamma},
 };
 use bevy::prelude::*;
 use uom::si::f64::{Length as UomLength, Mass as UomMass, Time as UomTime, Velocity as UomVelocity};
@@ -86,8 +86,9 @@ pub fn player_clock_update(
     player_query: Query<(Entity, &Position, &Velocity), With<Player>>,
     masses: Query<(Entity, &Position, &Mass)>,
     time: Res<Time>,
+    sim_rate: Res<SimRate>,
 ) {
-    let time_elapsed = *DAYS_PER_SECOND_UOM * f64::from(time.delta_secs());
+    let time_elapsed = *DAYS_PER_SECOND_UOM * f64::from(time.delta_secs()) * sim_rate.0;
 
     let Ok((mut clock, mut velocity_gamma, mut gravitational_gamma)) = query.single_mut() else {
         return;
