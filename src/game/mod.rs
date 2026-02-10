@@ -29,8 +29,11 @@ use self::{
         player_sprite::{launch_aim_system, launch_fire_system, launch_power_system, launch_visual_system},
     },
     shared::{
-        systems::{collision_check, exit_level_check, planet_scale_update, position_update, rocket_rotation_update, rocket_scale_update, sim_pause_toggle, translation_update, velocity_update},
-        types::LaunchState,
+        systems::{
+            collision_check, exit_level_check, planet_scale_update, position_update, rocket_rotation_update, rocket_scale_update, sim_pause_toggle, sim_rate_adjust, translation_update,
+            velocity_update,
+        },
+        types::{LaunchState, SimRate},
     },
     trail::{trail_clear_system, trail_record_system, trail_render_system},
 };
@@ -43,6 +46,7 @@ impl Plugin for GamePlugin {
             .init_state::<GameState>()
             .init_resource::<LaunchState>()
             .init_resource::<FadeState>()
+            .init_resource::<SimRate>()
             // Spawn the persistent fade overlay.
             .add_systems(Startup, spawn_fade_overlay)
             // Fade animation runs unconditionally every frame.
@@ -91,6 +95,7 @@ impl Plugin for GamePlugin {
                     player_clock_update,
                     player_hud_text_update.after(player_clock_update),
                     observer_hud_text_update.after(observer_clock_update),
+                    sim_rate_adjust,
                 )
                     .run_if(in_state(AppState::InGame))
                     .run_if(in_state(GameState::Running)),

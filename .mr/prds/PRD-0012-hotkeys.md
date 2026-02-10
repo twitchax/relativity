@@ -55,7 +55,7 @@ tasks:
   - id: T-002
     title: "Add SimRate resource and +/- hotkey system"
     priority: 1
-    status: todo
+    status: done
     notes: "SimRate(f64) resource, default 1.0. System listens for +/- (NumpadAdd/NumpadSubtract or Equals/Minus), steps by 0.25, clamps [0.25, 2.00]. Only active when GameState::Running."
   - id: T-003
     title: "Apply SimRate scaling to physics and clock systems"
@@ -167,5 +167,17 @@ Add a `GridVisible(bool)` resource (default `true`). A `grid_toggle` system list
   - Updated unit tests in `state.rs` for the new variant (distinctness, debug format)
   - Physics/clock systems already gate on `GameState::Running`, so they automatically freeze during `SimPaused`
   - UAT: `cargo make uat` passed — 258 tests, 258 passed, 0 skipped
+- **Constitution Compliance**: No violations.
+
+## 2026-02-10 — T-002 Completed
+- **Task**: Add SimRate resource and +/- hotkey system
+- **Status**: ✅ Done
+- **Changes**:
+  - Added `SimRate` resource to `src/game/shared/types.rs` — `SimRate(f64)` with `Default` (1.0), constants `MIN` (0.25), `MAX` (2.0), `STEP` (0.25)
+  - Added `sim_rate_adjust` system in `src/game/shared/systems.rs` — listens for `NumpadAdd`/`Equal` (increase) and `NumpadSubtract`/`Minus` (decrease), steps by 0.25, clamps to [0.25, 2.00]
+  - Registered `SimRate` as init resource in `GamePlugin` (`src/game/mod.rs`)
+  - Registered `sim_rate_adjust` in the `GameState::Running` system set so it only applies while running
+  - Added unit tests for `SimRate` default value and constants in `types.rs`
+  - UAT: `cargo make uat` passed — 260 tests, 260 passed, 0 skipped
 - **Constitution Compliance**: No violations.
 

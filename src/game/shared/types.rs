@@ -115,6 +115,24 @@ pub struct GravitationalGamma {
     pub value: f64,
 }
 
+/// Simulation speed multiplier applied to all time-dependent systems.
+///
+/// Range: [0.25, 2.00], step size 0.25. Default 1.0.
+#[derive(Resource)]
+pub struct SimRate(pub f64);
+
+impl Default for SimRate {
+    fn default() -> Self {
+        Self(1.0)
+    }
+}
+
+impl SimRate {
+    pub const MAX: f64 = 2.0;
+    pub const MIN: f64 = 0.25;
+    pub const STEP: f64 = 0.25;
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
@@ -197,5 +215,20 @@ mod tests {
                 prop_assert!(s.is_finite(), "scalar was infinite for vx={}, vy={}", x, y);
             }
         }
+    }
+
+    // --- SimRate ---
+
+    #[test]
+    fn sim_rate_default_is_one() {
+        let rate = SimRate::default();
+        assert_relative_eq!(rate.0, 1.0);
+    }
+
+    #[test]
+    fn sim_rate_constants() {
+        assert_relative_eq!(SimRate::MIN, 0.25);
+        assert_relative_eq!(SimRate::MAX, 2.0);
+        assert_relative_eq!(SimRate::STEP, 0.25);
     }
 }

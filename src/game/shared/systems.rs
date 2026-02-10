@@ -1,7 +1,7 @@
 use super::{
     constants::{C, DAYS_PER_SECOND_UOM, G, SOFTENING_LENGTH},
     helpers::{get_translation_from_position, has_collided, length_to_pixel, planet_sprite_pixel_radius_to_scale, rocket_sprite_pixel_radius_to_scale},
-    types::{LaunchState, Mass, PlanetSprite, Position, Radius, RocketSprite, Velocity},
+    types::{LaunchState, Mass, PlanetSprite, Position, Radius, RocketSprite, SimRate, Velocity},
 };
 use crate::{
     game::{destination::Destination, fade::FadeState, object::Planet, player::shared::Player},
@@ -36,6 +36,19 @@ pub fn sim_pause_toggle(keyboard_input: Res<ButtonInput<KeyCode>>, current_state
             GameState::SimPaused => next_state.set(GameState::Running),
             _ => {}
         }
+    }
+}
+
+// Simulation rate adjustment (+/−).
+
+pub fn sim_rate_adjust(keyboard_input: Res<ButtonInput<KeyCode>>, mut sim_rate: ResMut<SimRate>) {
+    let increase = keyboard_input.just_pressed(KeyCode::NumpadAdd) || keyboard_input.just_pressed(KeyCode::Equal);
+    let decrease = keyboard_input.just_pressed(KeyCode::NumpadSubtract) || keyboard_input.just_pressed(KeyCode::Minus);
+
+    if increase {
+        sim_rate.0 = (sim_rate.0 + SimRate::STEP).min(SimRate::MAX);
+    } else if decrease {
+        sim_rate.0 = (sim_rate.0 - SimRate::STEP).max(SimRate::MIN);
     }
 }
 
