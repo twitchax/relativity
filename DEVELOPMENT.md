@@ -212,3 +212,11 @@ The web version is automatically deployed to GitHub Pages when changes are pushe
 ## Assets
 
 The game assets are stored in the `assets/` directory and must be present next to the binary when distributing the game.
+
+## TODO
+
+- Even better chrome a the bottom.
+- Slider for simulation speed.
+- Better launch controls.
+- `p` to pause.
+- Add more levels.
