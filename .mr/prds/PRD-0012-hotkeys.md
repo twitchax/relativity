@@ -37,7 +37,7 @@ acceptance_tests:
   - id: uat-005
     name: "Sim rate resets to 1.00x on level start / re-launch"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
   - id: uat-006
     name: "Pressing G toggles gravity grid visibility on/off"
     command: cargo make uat
@@ -284,3 +284,14 @@ Add a `GridVisible(bool)` resource (default `true`). A `grid_toggle` system list
     - `sim_rate_label_shows_default_value` — verifies initial text is `r = 1.00×`
     - `sim_rate_label_updates_when_rate_changes` — verifies HUD updates to `r = 1.50×` after changing SimRate resource
   - All 272 tests passed via `cargo make uat`
+
+## 2026-02-10 — uat-005 Verification
+- **UAT**: Sim rate resets to 1.00x on level start / re-launch
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Created `tests/e2e_sim_rate_reset.rs` with three tests:
+    - `sim_rate_is_default_on_level_start` — verifies SimRate is 1.0 after entering InGame (OnEnter reset)
+    - `sim_rate_resets_on_relaunch` — verifies SimRate resets to 1.0 when exiting to menu and re-entering InGame after modifying rate
+    - `reset_sim_rate_system_restores_default` — verifies the reset_sim_rate system directly resets a mutated SimRate to 1.0
+  - All 275 tests passed via `cargo make uat`
