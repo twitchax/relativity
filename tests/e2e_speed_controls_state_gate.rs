@@ -1,5 +1,5 @@
-// E2E headless test: verifies that speed controls (+/-) only apply while GameState::Running.
-// Speed adjustments must not take effect during Paused (launch-aim) or SimPaused states.
+// E2E headless test: verifies that speed controls (+/-) work in all InGame sub-states
+// (Paused, Running, SimPaused) since SimRate is adjustable any time while in-game.
 
 #![allow(clippy::unwrap_used)]
 #![allow(clippy::pedantic)]
@@ -44,7 +44,7 @@ fn press_key_and_update(app: &mut App, key: KeyCode) {
 }
 
 #[test]
-fn speed_controls_ignored_during_paused_state() {
+fn speed_controls_work_during_paused_state() {
     let mut app = common::build_gameplay_app();
     common::enter_game(&mut app);
 
@@ -52,17 +52,25 @@ fn speed_controls_ignored_during_paused_state() {
     assert_eq!(common::current_game_state(&app), GameState::Paused);
     assert!((read_sim_rate(&app) - 1.0).abs() < f64::EPSILON);
 
-    // Press Equal (+) during Paused — SimRate must not change.
+    // Press Equal (+) during Paused — SimRate should increase.
     press_key_and_update(&mut app, KeyCode::Equal);
-    assert!((read_sim_rate(&app) - 1.0).abs() < f64::EPSILON, "SimRate should remain 1.0 during Paused state");
+    assert!(
+        (read_sim_rate(&app) - 1.25).abs() < f64::EPSILON,
+        "SimRate should increase to 1.25 during Paused state, got {}",
+        read_sim_rate(&app)
+    );
 
-    // Press Minus (-) during Paused — SimRate must not change.
+    // Press Minus (-) during Paused — SimRate should decrease back.
     press_key_and_update(&mut app, KeyCode::Minus);
-    assert!((read_sim_rate(&app) - 1.0).abs() < f64::EPSILON, "SimRate should remain 1.0 during Paused state");
+    assert!(
+        (read_sim_rate(&app) - 1.0).abs() < f64::EPSILON,
+        "SimRate should decrease to 1.0 during Paused state, got {}",
+        read_sim_rate(&app)
+    );
 }
 
 #[test]
-fn speed_controls_ignored_during_sim_paused_state() {
+fn speed_controls_work_during_sim_paused_state() {
     let mut app = common::build_gameplay_app();
     common::enter_game(&mut app);
 
@@ -80,13 +88,13 @@ fn speed_controls_ignored_during_sim_paused_state() {
 
     let rate_before = read_sim_rate(&app);
 
-    // Press Equal (+) during SimPaused — SimRate must not change.
+    // Press Equal (+) during SimPaused — SimRate should increase.
     press_key_and_update(&mut app, KeyCode::Equal);
-    assert!((read_sim_rate(&app) - rate_before).abs() < f64::EPSILON, "SimRate should not change during SimPaused state");
-
-    // Press Minus (-) during SimPaused — SimRate must not change.
-    press_key_and_update(&mut app, KeyCode::Minus);
-    assert!((read_sim_rate(&app) - rate_before).abs() < f64::EPSILON, "SimRate should not change during SimPaused state");
+    assert!(
+        (read_sim_rate(&app) - (rate_before + 0.25)).abs() < f64::EPSILON,
+        "SimRate should increase during SimPaused state, got {}",
+        read_sim_rate(&app)
+    );
 }
 
 #[test]

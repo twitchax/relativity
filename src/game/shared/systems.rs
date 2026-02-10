@@ -27,12 +27,6 @@ pub fn exit_level_check(keyboard_input: ResMut<ButtonInput<KeyCode>>, mut fade: 
     }
 }
 
-// Simulation rate reset on level start.
-
-pub fn reset_sim_rate(mut sim_rate: ResMut<SimRate>) {
-    sim_rate.0 = 1.0;
-}
-
 // Simulation pause toggle (Space).
 
 pub fn sim_pause_toggle(keyboard_input: Res<ButtonInput<KeyCode>>, current_state: Res<State<GameState>>, mut next_state: ResMut<NextState<GameState>>) {

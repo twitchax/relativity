@@ -10,7 +10,7 @@ use super::{
     shared::{
         constants::{MASS_OF_EARTH, MASS_OF_SUN, UNIT_RADIUS},
         helpers::get_position_from_percentage,
-        types::{GameItem, GridVisible, LaunchState, Mass, PendingLevelReset, Radius, SimRate, Velocity},
+        types::{GameItem, GridVisible, LaunchState, Mass, PendingLevelReset, Radius, Velocity},
     },
 };
 
@@ -78,7 +78,6 @@ pub fn reset_level_on_pending(
     query: Query<Entity, With<GameItem>>,
     pending: Option<Res<PendingLevelReset>>,
     mut launch_state: ResMut<LaunchState>,
-    mut sim_rate: ResMut<SimRate>,
     mut grid_visible: ResMut<GridVisible>,
 ) {
     if pending.is_none() {
@@ -93,9 +92,8 @@ pub fn reset_level_on_pending(
     // Respawn the level.
     spawn_level(commands.reborrow(), asset_server, current_level);
 
-    // Reset launch state, sim rate, and grid visibility.
+    // Reset launch state and grid visibility.
     *launch_state = LaunchState::Idle;
-    sim_rate.0 = 1.0;
     grid_visible.0 = true;
 
     // Remove the marker.

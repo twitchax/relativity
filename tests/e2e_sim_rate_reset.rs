@@ -1,4 +1,5 @@
-// E2E headless test: verifies that SimRate resets to 1.00x on level start and re-launch.
+// E2E headless test: verifies that SimRate persists across level starts, re-launches,
+// and crashes (it is never automatically reset).
 
 #![allow(clippy::unwrap_used)]
 #![allow(clippy::pedantic)]
@@ -13,11 +14,6 @@ fn read_sim_rate(app: &App) -> f64 {
     app.world().resource::<SimRate>().0
 }
 
-/// Mutate SimRate to a non-default value directly.
-fn set_sim_rate(app: &mut App, value: f64) {
-    app.world_mut().resource_mut::<SimRate>().0 = value;
-}
-
 /// Press a key via the sim_rate_adjust system.
 fn press_key_adjust(app: &mut App, key: KeyCode) {
     app.world_mut().resource_mut::<ButtonInput<KeyCode>>().press(key);
@@ -28,16 +24,20 @@ fn press_key_adjust(app: &mut App, key: KeyCode) {
 }
 
 #[test]
-fn sim_rate_is_default_on_level_start() {
+fn sim_rate_is_default_on_first_level_start() {
     let mut app = common::build_gameplay_app();
     common::enter_game(&mut app);
 
-    // On entering InGame, reset_sim_rate runs → SimRate should be 1.0.
-    assert!((read_sim_rate(&app) - 1.0).abs() < f64::EPSILON, "SimRate should be 1.0 on level start, got {}", read_sim_rate(&app));
+    // On first entry, SimRate should be its init_resource default of 1.0.
+    assert!(
+        (read_sim_rate(&app) - 1.0).abs() < f64::EPSILON,
+        "SimRate should be 1.0 on first level start, got {}",
+        read_sim_rate(&app)
+    );
 }
 
 #[test]
-fn sim_rate_resets_on_relaunch() {
+fn sim_rate_persists_across_relaunch() {
     let mut app = common::build_gameplay_app();
     common::enter_game(&mut app);
 
@@ -59,27 +59,12 @@ fn sim_rate_resets_on_relaunch() {
         .set(relativity::shared::state::AppState::Menu);
     app.update();
 
-    // Re-enter InGame — reset_sim_rate fires again.
+    // Re-enter InGame — SimRate should persist.
     common::enter_game(&mut app);
 
     assert!(
-        (read_sim_rate(&app) - 1.0).abs() < f64::EPSILON,
-        "SimRate should reset to 1.0 on level re-start, got {}",
+        (read_sim_rate(&app) - 1.5).abs() < f64::EPSILON,
+        "SimRate should persist at 1.5 across level re-start, got {}",
         read_sim_rate(&app)
     );
-}
-
-#[test]
-fn reset_sim_rate_system_restores_default() {
-    let mut app = common::build_gameplay_app();
-    common::enter_game(&mut app);
-
-    // Manually set SimRate to a non-default value.
-    set_sim_rate(&mut app, 1.75);
-    assert!((read_sim_rate(&app) - 1.75).abs() < f64::EPSILON);
-
-    // Directly invoke reset_sim_rate — the same system registered on OnEnter(InGame).
-    app.world_mut().run_system_once(relativity::game::shared::systems::reset_sim_rate).expect("reset_sim_rate should run");
-
-    assert!((read_sim_rate(&app) - 1.0).abs() < f64::EPSILON, "SimRate should be 1.0 after reset, got {}", read_sim_rate(&app));
 }

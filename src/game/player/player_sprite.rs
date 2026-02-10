@@ -2,7 +2,7 @@ use super::shared::Player;
 use crate::{
     game::shared::{
         constants::MAX_PLAYER_LAUNCH_VELOCITY,
-        types::{GameItem, LaunchState, Position, PowerBarUi, Radius, RocketSprite, SimRate, TrailBuffer, Velocity},
+        types::{GameItem, LaunchState, Position, PowerBarUi, Radius, RocketSprite, TrailBuffer, Velocity},
     },
     shared::{state::GameState, SCREEN_HEIGHT_PX, SCREEN_WIDTH_PX},
 };
@@ -94,7 +94,6 @@ pub fn launch_fire_system(
     mut player_velocity_query: Query<&mut Velocity, With<Player>>,
     mut game_state: ResMut<NextState<GameState>>,
     mut launch_state: ResMut<LaunchState>,
-    mut sim_rate: ResMut<SimRate>,
 ) {
     if !mouse_input.just_released(MouseButton::Left) {
         return;
@@ -116,7 +115,6 @@ pub fn launch_fire_system(
     player_velocity.y = vy;
 
     *launch_state = LaunchState::Idle;
-    sim_rate.0 = 1.0;
     game_state.set(GameState::Running);
 }
 

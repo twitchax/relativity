@@ -30,8 +30,8 @@ use self::{
     },
     shared::{
         systems::{
-            collision_check, exit_level_check, grid_toggle, planet_scale_update, position_update, reset_grid_visible, reset_sim_rate, rocket_rotation_update, rocket_scale_update, sim_pause_toggle,
-            sim_rate_adjust, translation_update, velocity_update,
+            collision_check, exit_level_check, grid_toggle, planet_scale_update, position_update, reset_grid_visible, rocket_rotation_update, rocket_scale_update, sim_pause_toggle, sim_rate_adjust,
+            translation_update, velocity_update,
         },
         types::{GridVisible, LaunchState, SimRate},
     },
@@ -53,7 +53,7 @@ impl Plugin for GamePlugin {
             // Fade animation runs unconditionally every frame.
             .add_systems(Update, fade_update_system)
             // Spawn things on enter.
-            .add_systems(OnEnter(AppState::InGame), (spawn_level, reset_sim_rate, reset_grid_visible))
+            .add_systems(OnEnter(AppState::InGame), (spawn_level, reset_grid_visible))
             // Destroy things on exit.
             .add_systems(OnExit(AppState::InGame), despawn_level)
             // Success overlay lifecycle.
@@ -65,7 +65,7 @@ impl Plugin for GamePlugin {
             // Run the scale updates always.
             .add_systems(
                 Update,
-                (planet_scale_update, rocket_scale_update, exit_level_check, sim_pause_toggle, grid_toggle).run_if(in_state(AppState::InGame)),
+                (planet_scale_update, rocket_scale_update, exit_level_check, sim_pause_toggle, grid_toggle, sim_rate_adjust).run_if(in_state(AppState::InGame)),
             )
             // Success overlay button interaction while finished.
             .add_systems(Update, success_button_interaction.run_if(in_state(AppState::InGame)).run_if(in_state(GameState::Finished)))
@@ -96,7 +96,6 @@ impl Plugin for GamePlugin {
                     player_clock_update,
                     player_hud_text_update.after(player_clock_update),
                     observer_hud_text_update.after(observer_clock_update),
-                    sim_rate_adjust,
                 )
                     .run_if(in_state(AppState::InGame))
                     .run_if(in_state(GameState::Running)),
