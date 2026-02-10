@@ -70,7 +70,7 @@ tasks:
   - id: T-005
     title: "Add sim rate HUD label in right (observer) panel"
     priority: 2
-    status: todo
+    status: done
     notes: "New HudSimRate marker component. Display as 'r = 1.00×'. Spawn in observer panel labels. Add update system."
   - id: T-006
     title: "Add GridVisible resource and G toggle system"
@@ -202,5 +202,19 @@ Add a `GridVisible(bool)` resource (default `true`). A `grid_toggle` system list
   - Added `SimRate` reset in `launch_fire_system` (`src/game/player/player_sprite.rs`) — resets to 1.0 when transitioning from `Paused` → `Running`
   - Added `SimRate` reset in `reset_level_on_pending` (`src/game/levels/mod.rs`) — resets to 1.0 on level reset after failure
   - UAT: `cargo make uat` passed — 260 tests, 260 passed, 0 skipped
+- **Constitution Compliance**: No violations.
+
+## 2026-02-10 — T-005 Completed
+- **Task**: Add sim rate HUD label in right (observer) panel
+- **Status**: ✅ Done
+- **Changes**:
+  - Added `HudSimRate` marker component in `src/game/hud/mod.rs`
+  - Spawned `r = 1.00×` label in `spawn_observer_labels` (observer panel), repositioning existing `t_o` label from 50% to 35% vertical and placing sim rate at 65% for balanced layout
+  - Added `sim_rate_hud_update` system that reads `Res<SimRate>` and updates the `HudSimRate` text each frame
+  - Imported `SimRate` in `src/game/hud/mod.rs`
+  - Registered `sim_rate_hud_update` in `GamePlugin` (`src/game/mod.rs`) to run during `AppState::InGame` (all sub-states, so rate is visible even when paused)
+  - Exported `sim_rate_hud_update` from `hud` module and imported in `game/mod.rs`
+  - UAT: `cargo make uat` passed — 260 tests, 260 passed, 0 skipped
+  - Opportunistic UAT check: uat-004 ("HUD displays current simulation rate in right panel") is now implementable but deferred to the UAT verification loop
 - **Constitution Compliance**: No violations.
 

@@ -6,7 +6,7 @@ use crate::game::observer::{format_observer_time, Observer};
 use crate::game::player::player_clock::format_velocity_fraction;
 use crate::game::player::shared::Player;
 use crate::game::shared::constants::C;
-use crate::game::shared::types::{Clock, GameItem, GravitationalGamma, PendingLevelReset, PlayerHud, Velocity, VelocityGamma};
+use crate::game::shared::types::{Clock, GameItem, GravitationalGamma, PendingLevelReset, PlayerHud, SimRate, Velocity, VelocityGamma};
 use crate::shared::state::{AppState, GameState};
 use crate::shared::{SCREEN_HEIGHT_PX, SCREEN_WIDTH_PX};
 
@@ -59,6 +59,10 @@ pub struct HudVelocityFraction;
 /// Marker for the observer time (`t_o`) HUD label.
 #[derive(Component)]
 pub struct HudObserverTime;
+
+/// Marker for the simulation rate (`r`) HUD label.
+#[derive(Component)]
+pub struct HudSimRate;
 
 /// Plugin that spawns the HUD layout root.
 ///
@@ -151,7 +155,7 @@ fn spawn_player_labels(panel: &mut ChildSpawnerCommands, font: &Handle<Font>) {
     panel.spawn((base(84.0, "v = 0.00c"), HudVelocityFraction));
 }
 
-/// Spawns placeholder label for the observer clock panel.
+/// Spawns labels for the observer clock panel (observer time + sim rate).
 fn spawn_observer_labels(panel: &mut ChildSpawnerCommands, font: &Handle<Font>) {
     let text_font = TextFont {
         font: font.clone(),
@@ -161,9 +165,18 @@ fn spawn_observer_labels(panel: &mut ChildSpawnerCommands, font: &Handle<Font>) 
 
     panel.spawn((
         HudObserverTime,
-        UiLayout::window().pos(Rl((5.0, 50.0))).anchor(Anchor::CENTER_LEFT).pack(),
+        UiLayout::window().pos(Rl((5.0, 35.0))).anchor(Anchor::CENTER_LEFT).pack(),
         UiTextSize::from(Rh(22.0)),
         Text2d::new("t_o = 0.00"),
+        text_font.clone(),
+        UiColor::from(TEXT_COLOR),
+    ));
+
+    panel.spawn((
+        HudSimRate,
+        UiLayout::window().pos(Rl((5.0, 65.0))).anchor(Anchor::CENTER_LEFT).pack(),
+        UiTextSize::from(Rh(22.0)),
+        Text2d::new("r = 1.00×"),
         text_font,
         UiColor::from(TEXT_COLOR),
     ));
@@ -214,4 +227,11 @@ pub fn observer_hud_text_update(data_query: Query<&Clock, With<Observer>>, mut t
     let Ok(mut text) = to_query.single_mut() else { return };
 
     **text = format_observer_time(clock.value.value);
+}
+
+/// Updates the simulation rate label in the HUD.
+pub fn sim_rate_hud_update(sim_rate: Res<SimRate>, mut query: Query<&mut Text2d, With<HudSimRate>>) {
+    let Ok(mut text) = query.single_mut() else { return };
+
+    **text = format!("r = {:.2}×", sim_rate.0);
 }
