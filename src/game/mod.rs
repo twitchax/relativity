@@ -29,7 +29,7 @@ use self::{
         player_sprite::{launch_aim_system, launch_fire_system, launch_power_system, launch_visual_system},
     },
     shared::{
-        systems::{collision_check, exit_level_check, planet_scale_update, position_update, rocket_rotation_update, rocket_scale_update, translation_update, velocity_update},
+        systems::{collision_check, exit_level_check, planet_scale_update, position_update, rocket_rotation_update, rocket_scale_update, sim_pause_toggle, translation_update, velocity_update},
         types::LaunchState,
     },
     trail::{trail_clear_system, trail_record_system, trail_render_system},
@@ -58,7 +58,10 @@ impl Plugin for GamePlugin {
             .add_systems(OnEnter(GameState::Failed), (apply_collision_shake, spawn_failure_overlay))
             .add_systems(OnExit(GameState::Failed), despawn_failure_overlay)
             // Run the scale updates always.
-            .add_systems(Update, (planet_scale_update, rocket_scale_update, exit_level_check).run_if(in_state(AppState::InGame)))
+            .add_systems(
+                Update,
+                (planet_scale_update, rocket_scale_update, exit_level_check, sim_pause_toggle).run_if(in_state(AppState::InGame)),
+            )
             // Success overlay button interaction while finished.
             .add_systems(Update, success_button_interaction.run_if(in_state(AppState::InGame)).run_if(in_state(GameState::Finished)))
             // Failure auto-reset timer while failed.

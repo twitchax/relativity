@@ -12,6 +12,7 @@ pub enum GameState {
     #[default]
     Paused,
     Running,
+    SimPaused,
     Finished,
     Failed,
 }
@@ -47,6 +48,10 @@ mod tests {
         assert_ne!(GameState::Failed, GameState::Paused);
         assert_ne!(GameState::Failed, GameState::Running);
         assert_ne!(GameState::Failed, GameState::Finished);
+        assert_ne!(GameState::SimPaused, GameState::Paused);
+        assert_ne!(GameState::SimPaused, GameState::Running);
+        assert_ne!(GameState::SimPaused, GameState::Finished);
+        assert_ne!(GameState::SimPaused, GameState::Failed);
     }
 
     // AppState Debug produces expected strings.
@@ -61,6 +66,7 @@ mod tests {
     fn game_state_debug_format() {
         assert_eq!(format!("{:?}", GameState::Paused), "Paused");
         assert_eq!(format!("{:?}", GameState::Running), "Running");
+        assert_eq!(format!("{:?}", GameState::SimPaused), "SimPaused");
         assert_eq!(format!("{:?}", GameState::Finished), "Finished");
         assert_eq!(format!("{:?}", GameState::Failed), "Failed");
     }

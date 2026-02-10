@@ -27,6 +27,18 @@ pub fn exit_level_check(keyboard_input: ResMut<ButtonInput<KeyCode>>, mut fade: 
     }
 }
 
+// Simulation pause toggle (Space).
+
+pub fn sim_pause_toggle(keyboard_input: Res<ButtonInput<KeyCode>>, current_state: Res<State<GameState>>, mut next_state: ResMut<NextState<GameState>>) {
+    if keyboard_input.just_pressed(KeyCode::Space) {
+        match current_state.get() {
+            GameState::Running => next_state.set(GameState::SimPaused),
+            GameState::SimPaused => next_state.set(GameState::Running),
+            _ => {}
+        }
+    }
+}
+
 // Basic scale / velocity / position.
 
 pub fn planet_scale_update(mut query: Query<(&mut Transform, &Radius), With<PlanetSprite>>) {

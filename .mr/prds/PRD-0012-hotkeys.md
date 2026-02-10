@@ -1,7 +1,7 @@
 ---
 id: PRD-0012
 title: "Hotkeys: Pause, Simulation Speed, and Grid Toggle"
-status: draft
+status: active
 owner: twitchax
 created: 2026-02-10
 updated: 2026-02-10
@@ -50,7 +50,7 @@ tasks:
   - id: T-001
     title: "Add SimPaused game state variant and Space toggle system"
     priority: 1
-    status: todo
+    status: done
     notes: "Add GameState::SimPaused variant. System listens for Space key, toggles between Running and SimPaused. Physics/clock systems must not run during SimPaused."
   - id: T-002
     title: "Add SimRate resource and +/- hotkey system"
@@ -156,4 +156,16 @@ Add a `GridVisible(bool)` resource (default `true`). A `grid_toggle` system list
 - Persisting grid visibility preference across sessions
 
 # History
+
+## 2026-02-10 — T-001 Completed
+- **Task**: Add SimPaused game state variant and Space toggle system
+- **Status**: ✅ Done
+- **Changes**:
+  - Added `GameState::SimPaused` variant to `src/shared/state.rs`
+  - Added `sim_pause_toggle` system in `src/game/shared/systems.rs` — listens for `KeyCode::Space` and toggles between `Running` and `SimPaused`
+  - Registered `sim_pause_toggle` in `GamePlugin` (`src/game/mod.rs`) to run during `AppState::InGame` (all sub-states)
+  - Updated unit tests in `state.rs` for the new variant (distinctness, debug format)
+  - Physics/clock systems already gate on `GameState::Running`, so they automatically freeze during `SimPaused`
+  - UAT: `cargo make uat` passed — 258 tests, 258 passed, 0 skipped
+- **Constitution Compliance**: No violations.
 
