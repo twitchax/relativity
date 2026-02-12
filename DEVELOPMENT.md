@@ -216,7 +216,5 @@ The game assets are stored in the `assets/` directory and must be present next t
 ## TODO
 
 - Even better chrome a the bottom.
-- Slider for simulation speed.
 - Better launch controls.
-- `p` to pause.
 - Add more levels.
