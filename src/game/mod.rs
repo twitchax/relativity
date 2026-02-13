@@ -20,7 +20,7 @@ use crate::shared::state::{AppState, GameState};
 use self::{
     fade::{fade_update_system, spawn_fade_overlay, FadeState},
     gravity_grid::gravity_grid_render_system,
-    hud::{hud_flash_system, observer_hud_text_update, player_hud_text_update, sim_rate_hud_update, HudPlugin},
+    hud::{hud_flash_system, hud_glow_pulse_system, observer_hud_text_update, player_hud_text_update, sim_rate_hud_update, HudPlugin},
     levels::{despawn_level, reset_level_on_pending, spawn_level},
     observer::observer_clock_update,
     outcome::{apply_collision_shake, despawn_failure_overlay, despawn_success_overlay, failure_auto_reset, spawn_failure_overlay, spawn_success_overlay, success_button_interaction},
@@ -74,7 +74,10 @@ impl Plugin for GamePlugin {
             // Reset level (despawn/respawn) when PendingLevelReset is present, and clear trail buffer.
             .add_systems(OnEnter(GameState::Paused), (reset_level_on_pending, trail_clear_system))
             // Render trail and gravity grid while in game (visible across all sub-states).
-            .add_systems(Update, (trail_render_system, gravity_grid_render_system, sim_rate_hud_update).run_if(in_state(AppState::InGame)))
+            .add_systems(
+                Update,
+                (trail_render_system, gravity_grid_render_system, sim_rate_hud_update, hud_glow_pulse_system).run_if(in_state(AppState::InGame)),
+            )
             // Flash-decay for HUD readouts (runs after all text-update systems).
             .add_systems(
                 Update,

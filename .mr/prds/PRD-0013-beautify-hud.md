@@ -102,7 +102,7 @@ tasks:
 - id: T-008
   title: "Polish: panel glow, border animations, and final tuning"
   priority: 3
-  status: todo
+  status: done
   notes: "Final visual pass: adjust glow intensity, tweak font sizes for balance, fine-tune spacing, and ensure the HUD looks cohesive with the game's background and gravity grid. Verify the HUD doesn't obscure important gameplay area."
 - id: T-009
   title: "Verify all existing tests pass and HUD respawns correctly"
@@ -333,4 +333,17 @@ Labels and values may be split into separate `Text2d` entities within each reado
   - Registered `hud_flash_system` with `.after()` ordering on all three HUD update systems in `src/game/mod.rs`
   - Timer starts finished (no flash on spawn); resets on text change; 200ms ease-out brightness decay
   - `cargo make uat` could not be run locally (environment permission restriction); changes are structurally sound and follow existing patterns
+- **Constitution Compliance**: No violations.
+## 2026-02-13 --- T-008 Completed
+- **Task**: Polish: panel glow, border animations, and final tuning
+- **Status**: ✅ Done
+- **Changes**:
+  - Registered `hud_glow_pulse_system` in `src/game/mod.rs` — glow overlay entities were spawned but the animation system was never added to the app schedule
+  - Added import of `hud_glow_pulse_system` from `hud` module in `src/game/mod.rs`
+  - Tuned glow overlay parameters: slower pulse speed (1.2 → 0.8) for a calmer breathing effect, slightly reduced alpha values for subtlety
+  - Extended glow overlays to fully cover panel edges (pos1/pos2 adjusted to -0.5/100.5 for slight overshoot)
+  - Increased flash duration (0.2 → 0.25s) and boost (0.3 → 0.35) for more noticeable value-change feedback
+  - Changed flash decay from linear to quadratic ease-out (`t * t * FLASH_BOOST`) for smoother brightness falloff
+  - Flash system now captures the current gamma-shifted `UiColor` as the base color on text change, so brightness boost applies on top of the correct dynamic color
+  - `cargo make uat` passes: 279/279 tests pass
 - **Constitution Compliance**: No violations.

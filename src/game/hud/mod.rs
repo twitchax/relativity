@@ -57,10 +57,10 @@ const DISPLAY_FONT: &str = "fonts/Orbitron-Regular.ttf";
 const PANEL_BORDER_PX: f32 = 4.0;
 
 /// Duration of the brightness flash when a readout value changes.
-const FLASH_DURATION_SECS: f32 = 0.2;
+const FLASH_DURATION_SECS: f32 = 0.25;
 
 /// Maximum brightness boost applied at the start of a flash.
-const FLASH_BOOST: f32 = 0.3;
+const FLASH_BOOST: f32 = 0.35;
 
 // Colors — cockpit palette.
 
@@ -165,14 +165,19 @@ pub struct HudSimRate;
 pub struct HudFlash {
     timer: Timer,
     prev_text: String,
+    base_color: Srgba,
 }
 
 impl HudFlash {
-    fn new() -> Self {
+    fn new(base: Color) -> Self {
         let mut timer = Timer::from_seconds(FLASH_DURATION_SECS, TimerMode::Once);
         // Start finished so no flash fires on initial spawn.
         timer.tick(Duration::from_secs_f32(FLASH_DURATION_SECS));
-        Self { timer, prev_text: String::new() }
+        Self {
+            timer,
+            prev_text: String::new(),
+            base_color: base.to_srgba(),
+        }
     }
 }
 
@@ -255,8 +260,14 @@ fn spawn_hud_root(mut commands: Commands, asset_server: Res<AssetServer>) {
                     // Glow overlays — slightly oversized, semi-transparent panel sprites
                     // behind the main panels, pulsing slowly for a breathing border glow.
                     bar.spawn((
-                        HudGlow { color: PANEL_BORDER_GLOW, base_alpha: 0.12, amplitude: 0.06, speed: 1.2, offset: 0.0 },
-                        UiLayout::boundary().pos1(Rl((0.0, 1.0))).pos2(Rl((60.5, 99.0))).pack(),
+                        HudGlow {
+                            color: PANEL_BORDER_GLOW,
+                            base_alpha: 0.10,
+                            amplitude: 0.05,
+                            speed: 0.8,
+                            offset: 0.0,
+                        },
+                        UiLayout::boundary().pos1(Rl((-0.5, 0.0))).pos2(Rl((61.0, 100.0))).pack(),
                         UiDepth::Add(-0.5),
                         Sprite {
                             image: player_panel_image.clone(),
@@ -264,14 +275,20 @@ fn spawn_hud_root(mut commands: Commands, asset_server: Res<AssetServer>) {
                                 border: BorderRect::all(PANEL_BORDER_PX),
                                 ..Default::default()
                             }),
-                            color: Color::srgba(0.30, 0.70, 1.00, 0.12),
+                            color: Color::srgba(0.30, 0.70, 1.00, 0.10),
                             ..Default::default()
                         },
                     ));
 
                     bar.spawn((
-                        HudGlow { color: Color::srgba(0.25, 0.65, 0.85, 1.0), base_alpha: 0.10, amplitude: 0.05, speed: 1.2, offset: std::f32::consts::PI },
-                        UiLayout::boundary().pos1(Rl((62.5, 1.0))).pos2(Rl((100.0, 99.0))).pack(),
+                        HudGlow {
+                            color: Color::srgba(0.25, 0.65, 0.85, 1.0),
+                            base_alpha: 0.08,
+                            amplitude: 0.04,
+                            speed: 0.8,
+                            offset: std::f32::consts::PI,
+                        },
+                        UiLayout::boundary().pos1(Rl((62.0, 0.0))).pos2(Rl((100.5, 100.0))).pack(),
                         UiDepth::Add(-0.5),
                         Sprite {
                             image: observer_panel_image.clone(),
@@ -279,7 +296,7 @@ fn spawn_hud_root(mut commands: Commands, asset_server: Res<AssetServer>) {
                                 border: BorderRect::all(PANEL_BORDER_PX),
                                 ..Default::default()
                             }),
-                            color: Color::srgba(0.25, 0.65, 0.85, 0.10),
+                            color: Color::srgba(0.25, 0.65, 0.85, 0.08),
                             ..Default::default()
                         },
                     ));
@@ -470,12 +487,12 @@ fn spawn_player_labels(panel: &mut ChildSpawnerCommands, font: &Handle<Font>, di
     };
 
     // Left column values.
-    panel.spawn((value(5.0, 42.0, "t_p = 0.00"), HudPlayerTime, HudFlash::new()));
-    panel.spawn((value(5.0, 76.0, "v = 0.00c"), HudVelocityFraction, HudFlash::new()));
+    panel.spawn((value(5.0, 42.0, "t_p = 0.00"), HudPlayerTime, HudFlash::new(TEXT_COLOR)));
+    panel.spawn((value(5.0, 76.0, "v = 0.00c"), HudVelocityFraction, HudFlash::new(TEXT_COLOR)));
 
     // Right column values (gamma grouped together).
-    panel.spawn((value(55.0, 42.0, "γ_v = 1.00"), HudVelocityGamma, HudFlash::new()));
-    panel.spawn((value(55.0, 66.0, "γ_g = 1.00"), HudGravGamma, HudFlash::new()));
+    panel.spawn((value(55.0, 42.0, "γ_v = 1.00"), HudVelocityGamma, HudFlash::new(TEXT_COLOR)));
+    panel.spawn((value(55.0, 66.0, "γ_g = 1.00"), HudGravGamma, HudFlash::new(TEXT_COLOR)));
 }
 
 /// Spawns labels for the observer clock panel with visual hierarchy.
@@ -596,7 +613,7 @@ fn spawn_observer_labels(panel: &mut ChildSpawnerCommands, font: &Handle<Font>, 
     // Value readouts.
     panel.spawn((
         HudObserverTime,
-        HudFlash::new(),
+        HudFlash::new(TEXT_COLOR),
         UiLayout::window().pos(Rl((5.0, 58.0))).anchor(Anchor::CENTER_LEFT).pack(),
         UiTextSize::from(Rh(22.0)),
         Text2d::new("t_o = 0.00"),
@@ -606,7 +623,7 @@ fn spawn_observer_labels(panel: &mut ChildSpawnerCommands, font: &Handle<Font>, 
 
     panel.spawn((
         HudSimRate,
-        HudFlash::new(),
+        HudFlash::new(TEXT_COLOR),
         UiLayout::window().pos(Rl((55.0, 58.0))).anchor(Anchor::CENTER_LEFT).pack(),
         UiTextSize::from(Rh(22.0)),
         Text2d::new("r = 1.00×"),
@@ -685,21 +702,23 @@ pub fn hud_flash_system(time: Res<Time>, mut query: Query<(&Text2d, &mut HudFlas
         if text.as_str() != flash.prev_text {
             flash.prev_text.clone_from(text);
             flash.timer.reset();
+            // Capture the current (possibly gamma-shifted) color as the
+            // flash base so the brightness boost applies on top of it.
+            if let Some(&c) = color.get(&UiBase::id()) {
+                flash.base_color = c.to_srgba();
+            }
         }
 
         flash.timer.tick(time.delta());
 
-        if !flash.timer.is_finished() {
+        if flash.timer.is_finished() {
+            *color = Color::from(flash.base_color).into();
+        } else {
             let t = 1.0 - flash.timer.fraction();
-            let boost = t * FLASH_BOOST;
-            let base = color.to_srgba();
-            *color = Color::srgba(
-                (base.red + boost).min(1.0),
-                (base.green + boost).min(1.0),
-                (base.blue + boost).min(1.0),
-                base.alpha,
-            )
-            .into();
+            // Quadratic ease-out for a smoother decay.
+            let boost = t * t * FLASH_BOOST;
+            let base = flash.base_color;
+            *color = Color::srgba((base.red + boost).min(1.0), (base.green + boost).min(1.0), (base.blue + boost).min(1.0), base.alpha).into();
         }
     }
 }
