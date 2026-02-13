@@ -33,7 +33,7 @@ acceptance_tests:
 - id: uat-001
   name: "HUD displays all six readouts: t_p, γ_v, γ_g, v, t_o, r"
   command: cargo make uat
-  uat_status: unverified
+  uat_status: verified
 - id: uat-002
   name: "HUD bar remains anchored to the bottom 12% of the screen"
   command: cargo make uat
@@ -347,3 +347,13 @@ Labels and values may be split into separate `Text2d` entities within each reado
   - Flash system now captures the current gamma-shifted `UiColor` as the base color on text change, so brightness boost applies on top of the correct dynamic color
   - `cargo make uat` passes: 279/279 tests pass
 - **Constitution Compliance**: No violations.
+
+## 2026-02-13 — uat-001 Verification
+- **UAT**: HUD displays all six readouts: t_p, γ_v, γ_g, v, t_o, r
+- **Status**: ✅ Verified
+- **Method**: Existing tests
+- **Details**:
+  - `tests/e2e_hud_player_panel.rs` — `player_panel_has_four_stat_labels` and `player_panel_shows_default_values_at_spawn` verify t_p, γ_v, γ_g, v entities exist and display correct defaults
+  - `tests/e2e_hud_observer_panel.rs` — `observer_panel_has_time_label` and `observer_panel_shows_default_value_at_spawn` verify t_o exists and displays correct default
+  - `tests/e2e_hud_sim_rate.rs` — `observer_panel_has_sim_rate_label` and `sim_rate_label_shows_default_value` verify r exists and displays correct default
+  - All 279 tests pass via `cargo make uat`
