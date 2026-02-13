@@ -45,7 +45,7 @@ acceptance_tests:
 - id: uat-004
   name: "Labels use a display font; numeric values use the monospace font"
   command: cargo make uat
-  uat_status: unverified
+  uat_status: verified
 - id: uat-005
   name: "Value changes trigger a subtle visual feedback (color flash, glow pulse, or highlight)"
   command: cargo make uat
@@ -375,3 +375,14 @@ Labels and values may be split into separate `Text2d` entities within each reado
   - Created `tests/e2e_hud_panel_distinction.rs` — `player_and_observer_panels_use_distinct_sprites`
   - Test queries `PlayerPanel` and `ObserverPanel` entities, extracts their `Sprite` image handles, and asserts they differ
   - All 281 tests pass via `cargo make uat`
+
+## 2026-02-13 — uat-004 Verification
+- **UAT**: Labels use a display font; numeric values use the monospace font
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Created `tests/e2e_hud_font_assignment.rs` — `labels_use_display_font_and_values_use_monospace_font`
+  - Loads both font handles (Orbitron display font and Hack Nerd Font Mono) via AssetServer and verifies they differ
+  - Asserts all six value readout entities (HudPlayerTime, HudVelocityGamma, HudGravGamma, HudVelocityFraction, HudObserverTime, HudSimRate) use the monospace font
+  - Asserts all header/label text entities (FLIGHT DATA, OBSERVER, TIME, VELOCITY, GAMMA, RATE) use the display font
+  - All 282 tests pass via `cargo make uat`
