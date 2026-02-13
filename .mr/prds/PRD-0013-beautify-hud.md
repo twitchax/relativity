@@ -41,7 +41,7 @@ acceptance_tests:
 - id: uat-003
   name: "Player panel (left) and observer panel (right) are visually distinct with new panel art"
   command: cargo make uat
-  uat_status: unverified
+  uat_status: verified
 - id: uat-004
   name: "Labels use a display font; numeric values use the monospace font"
   command: cargo make uat
@@ -366,3 +366,12 @@ Labels and values may be split into separate `Text2d` entities within each reado
   - Created `tests/e2e_hud_anchoring.rs` — `hud_bar_anchored_to_bottom_twelve_percent`
   - Test inspects the `UiLayout` boundary on the `HudBar` entity and asserts pos1 y=88%, pos2 y=100% (bottom 12%)
   - All 280 tests pass via `cargo make uat`
+
+## 2026-02-13 — uat-003 Verification
+- **UAT**: Player panel (left) and observer panel (right) are visually distinct with new panel art
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Created `tests/e2e_hud_panel_distinction.rs` — `player_and_observer_panels_use_distinct_sprites`
+  - Test queries `PlayerPanel` and `ObserverPanel` entities, extracts their `Sprite` image handles, and asserts they differ
+  - All 281 tests pass via `cargo make uat`
