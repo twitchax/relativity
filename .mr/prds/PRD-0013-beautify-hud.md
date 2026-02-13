@@ -61,7 +61,7 @@ acceptance_tests:
 - id: uat-008
   name: "All existing tests pass (cargo make ci)"
   command: cargo make ci
-  uat_status: unverified
+  uat_status: verified
 
 tasks:
 - id: T-001
@@ -416,3 +416,12 @@ Labels and values may be split into separate `Text2d` entities within each reado
   - Created `tests/e2e_hud_level_reset.rs` — `hud_respawns_with_all_readouts_after_level_reset`
   - Test enters the game, verifies HUD exists, triggers a failure via planet collision, waits for auto-reset, then asserts all six HUD readout entities (HudPlayerTime, HudVelocityGamma, HudGravGamma, HudVelocityFraction, HudObserverTime, HudSimRate) are present with default values
   - All 288 tests pass via `cargo make uat`
+
+## 2026-02-13 — uat-008 Verification
+- **UAT**: All existing tests pass (cargo make ci)
+- **Status**: ✅ Verified
+- **Method**: Existing test
+- **Details**:
+  - Ran `cargo make ci` which executes fmt-check, clippy, and nextest
+  - All 288 tests passed, 0 skipped, 0 failed
+  - CI completed successfully in ~11.5 seconds
