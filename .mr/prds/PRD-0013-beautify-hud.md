@@ -49,7 +49,7 @@ acceptance_tests:
 - id: uat-005
   name: "Value changes trigger a subtle visual feedback (color flash, glow pulse, or highlight)"
   command: cargo make uat
-  uat_status: unverified
+  uat_status: verified
 - id: uat-006
   name: "Gamma-based color shifting: readouts shift from cool (blue/cyan) toward warm (orange/red) as γ increases"
   command: cargo make uat
@@ -386,3 +386,13 @@ Labels and values may be split into separate `Text2d` entities within each reado
   - Asserts all six value readout entities (HudPlayerTime, HudVelocityGamma, HudGravGamma, HudVelocityFraction, HudObserverTime, HudSimRate) use the monospace font
   - Asserts all header/label text entities (FLIGHT DATA, OBSERVER, TIME, VELOCITY, GAMMA, RATE) use the display font
   - All 282 tests pass via `cargo make uat`
+
+## 2026-02-13 — uat-005 Verification
+- **UAT**: Value changes trigger a subtle visual feedback (color flash, glow pulse, or highlight)
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Created `tests/e2e_hud_value_flash.rs` with two tests:
+    - `all_value_readouts_have_hud_flash_component` — verifies all 6 numeric readout entities (HudPlayerTime, HudVelocityGamma, HudGravGamma, HudVelocityFraction, HudObserverTime, HudSimRate) carry the `HudFlash` component
+    - `value_change_triggers_brightness_flash` — launches the player, confirms the UiColor brightness is boosted immediately after text changes, and returns to base color after the flash timer decays (0.25s)
+  - All 284 tests pass via `cargo make uat`
