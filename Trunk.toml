@@ -4,6 +4,10 @@ public_url = "/relativity/"
 # Output directory for built files
 dist = "dist"
 
+# Run wasm-opt on the output for smaller, faster WASM binaries (-Os = optimize for size)
+[tools]
+wasm_opt = "-Os"
+
 [watch]
 # Watch for changes to these paths
 ignore = ["dist"]
