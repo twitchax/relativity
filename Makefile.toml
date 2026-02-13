@@ -169,6 +169,13 @@ dependencies = ["install-trunk"]
 command = "trunk"
 args = ["build", "--release"]
 
+[tasks.serve-web]
+cwd = "."
+workspace = false
+dependencies = ["install-trunk"]
+command = "trunk"
+args = ["serve", "--public-url", "/"]
+
 # =============================================================================
 # Publishing
 # =============================================================================
