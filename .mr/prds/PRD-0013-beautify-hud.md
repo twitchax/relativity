@@ -37,7 +37,7 @@ acceptance_tests:
 - id: uat-002
   name: "HUD bar remains anchored to the bottom 12% of the screen"
   command: cargo make uat
-  uat_status: unverified
+  uat_status: verified
 - id: uat-003
   name: "Player panel (left) and observer panel (right) are visually distinct with new panel art"
   command: cargo make uat
@@ -357,3 +357,12 @@ Labels and values may be split into separate `Text2d` entities within each reado
   - `tests/e2e_hud_observer_panel.rs` — `observer_panel_has_time_label` and `observer_panel_shows_default_value_at_spawn` verify t_o exists and displays correct default
   - `tests/e2e_hud_sim_rate.rs` — `observer_panel_has_sim_rate_label` and `sim_rate_label_shows_default_value` verify r exists and displays correct default
   - All 279 tests pass via `cargo make uat`
+
+## 2026-02-13 — uat-002 Verification
+- **UAT**: HUD bar remains anchored to the bottom 12% of the screen
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Created `tests/e2e_hud_anchoring.rs` — `hud_bar_anchored_to_bottom_twelve_percent`
+  - Test inspects the `UiLayout` boundary on the `HudBar` entity and asserts pos1 y=88%, pos2 y=100% (bottom 12%)
+  - All 280 tests pass via `cargo make uat`
