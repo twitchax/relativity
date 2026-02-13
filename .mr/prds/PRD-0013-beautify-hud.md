@@ -57,7 +57,7 @@ acceptance_tests:
 - id: uat-007
   name: "HUD renders correctly after level reset (PendingLevelReset re-spawn)"
   command: cargo make uat
-  uat_status: unverified
+  uat_status: verified
 - id: uat-008
   name: "All existing tests pass (cargo make ci)"
   command: cargo make ci
@@ -407,3 +407,12 @@ Labels and values may be split into separate `Text2d` entities within each reado
     - `high_gamma_readout_is_warm` — launches at ~0.94c (γ ≈ 3), verifies HudVelocityGamma color is warm (red > blue)
     - `velocity_fraction_readout_shifts_warm_at_high_speed` — verifies HudVelocityFraction also shifts warm at high γ
   - All 287 tests pass via `cargo make uat`
+
+## 2026-02-13 — uat-007 Verification
+- **UAT**: HUD renders correctly after level reset (PendingLevelReset re-spawn)
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Created `tests/e2e_hud_level_reset.rs` — `hud_respawns_with_all_readouts_after_level_reset`
+  - Test enters the game, verifies HUD exists, triggers a failure via planet collision, waits for auto-reset, then asserts all six HUD readout entities (HudPlayerTime, HudVelocityGamma, HudGravGamma, HudVelocityFraction, HudObserverTime, HudSimRate) are present with default values
+  - All 288 tests pass via `cargo make uat`
