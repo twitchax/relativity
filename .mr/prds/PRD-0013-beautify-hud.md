@@ -1,14 +1,10 @@
 ---
 id: PRD-0013
-title: "Beautify HUD: Sci-Fi Cockpit Instrument Panel"
-status: active
+title: 'Beautify HUD: Sci-Fi Cockpit Instrument Panel'
+status: done
 owner: twitchax
 created: 2026-02-12
 updated: 2026-02-12
-depends_on:
-- PRD-0010
-- PRD-0012
-
 principles:
 - Keep all existing HUD information (t_p, γ_v, γ_g, v, t_o, r); nothing is removed
 - Bottom-bar layout is preserved; beautification is visual, not structural
@@ -17,100 +13,100 @@ principles:
 - New assets are welcome but must remain lightweight (small PNGs, no large textures)
 - Monospace font (Hack Nerd Font Mono) stays for numeric values; a second display font may be introduced for labels/headers
 - Existing marker-component query architecture is preserved; changes are additive
-- "Follow the project constitution: minimal changes, DRY, separation of concerns"
-
+- 'Follow the project constitution: minimal changes, DRY, separation of concerns'
 references:
-- name: "PRD-0010: Improve HUD (bevy_lunex)"
+- name: 'PRD-0010: Improve HUD (bevy_lunex)'
   url: .mr/prds/PRD-0010-improve-hud.md
-- name: "PRD-0012: Hotkeys (sim rate display)"
+- name: 'PRD-0012: Hotkeys (sim rate display)'
   url: .mr/prds/PRD-0012-hotkeys.md
 - name: bevy_lunex documentation
   url: https://docs.rs/bevy_lunex/latest/bevy_lunex/
 - name: Google Fonts — Orbitron (candidate display font)
   url: https://fonts.google.com/specimen/Orbitron
-
+depends_on:
+- PRD-0010
+- PRD-0012
 acceptance_tests:
 - id: uat-001
-  name: "HUD displays all six readouts: t_p, γ_v, γ_g, v, t_o, r"
+  name: 'HUD displays all six readouts: t_p, γ_v, γ_g, v, t_o, r'
   command: cargo make uat
   uat_status: verified
 - id: uat-002
-  name: "HUD bar remains anchored to the bottom 12% of the screen"
+  name: HUD bar remains anchored to the bottom 12% of the screen
   command: cargo make uat
   uat_status: verified
 - id: uat-003
-  name: "Player panel (left) and observer panel (right) are visually distinct with new panel art"
+  name: Player panel (left) and observer panel (right) are visually distinct with new panel art
   command: cargo make uat
   uat_status: verified
 - id: uat-004
-  name: "Labels use a display font; numeric values use the monospace font"
+  name: Labels use a display font; numeric values use the monospace font
   command: cargo make uat
   uat_status: verified
 - id: uat-005
-  name: "Value changes trigger a subtle visual feedback (color flash, glow pulse, or highlight)"
+  name: Value changes trigger a subtle visual feedback (color flash, glow pulse, or highlight)
   command: cargo make uat
   uat_status: verified
 - id: uat-006
-  name: "Gamma-based color shifting: readouts shift from cool (blue/cyan) toward warm (orange/red) as γ increases"
+  name: 'Gamma-based color shifting: readouts shift from cool (blue/cyan) toward warm (orange/red) as γ increases'
   command: cargo make uat
   uat_status: verified
 - id: uat-007
-  name: "HUD renders correctly after level reset (PendingLevelReset re-spawn)"
+  name: HUD renders correctly after level reset (PendingLevelReset re-spawn)
   command: cargo make uat
   uat_status: verified
 - id: uat-008
-  name: "All existing tests pass (cargo make ci)"
+  name: All existing tests pass (cargo make ci)
   command: cargo make ci
   uat_status: verified
-
 tasks:
 - id: T-001
-  title: "Design the cockpit panel visual language (colors, borders, glow, segmentation)"
+  title: Design the cockpit panel visual language (colors, borders, glow, segmentation)
   priority: 1
   status: done
-  notes: "Agent makes design choices. Decide on: panel background gradient/texture, border glow color & intensity, inner section dividers, and overall light/dark balance. Document decisions as code comments."
+  notes: 'Agent makes design choices. Decide on: panel background gradient/texture, border glow color & intensity, inner section dividers, and overall light/dark balance. Document decisions as code comments.'
 - id: T-002
-  title: "Create or source new panel sprite assets"
+  title: Create or source new panel sprite assets
   priority: 1
   status: done
-  notes: "Create new 9-slice panel sprites: a main panel background with richer detail (gradient, inner bevel, subtle noise), and optional accent/divider sprites. Keep assets small (<10 KB each). Consider a separate panel style for player vs. observer to add visual variety."
+  notes: 'Create new 9-slice panel sprites: a main panel background with richer detail (gradient, inner bevel, subtle noise), and optional accent/divider sprites. Keep assets small (<10 KB each). Consider a separate panel style for player vs. observer to add visual variety.'
 - id: T-003
-  title: "Add a display font for labels/section headers"
+  title: Add a display font for labels/section headers
   priority: 2
   status: done
-  notes: "Agent picks a sci-fi display font (e.g., Orbitron, Rajdhani, Exo 2, or similar OFL-licensed font). Use it for label prefixes (t_p, γ_v, etc.) or section headers. Keep Hack Nerd Font Mono for numeric values. Add the .ttf to assets/fonts/."
+  notes: Agent picks a sci-fi display font (e.g., Orbitron, Rajdhani, Exo 2, or similar OFL-licensed font). Use it for label prefixes (t_p, γ_v, etc.) or section headers. Keep Hack Nerd Font Mono for numeric values. Add the .ttf to assets/fonts/.
 - id: T-004
-  title: "Redesign panel layout with visual hierarchy and grouping"
+  title: Redesign panel layout with visual hierarchy and grouping
   priority: 2
   status: done
-  notes: "Improve the internal layout of each panel: add section labels/headers, visual separators between readouts, and better vertical spacing. Consider grouping related stats (e.g., γ_v and γ_g together). Maintain bevy_lunex relative positioning."
+  notes: 'Improve the internal layout of each panel: add section labels/headers, visual separators between readouts, and better vertical spacing. Consider grouping related stats (e.g., γ_v and γ_g together). Maintain bevy_lunex relative positioning.'
 - id: T-005
-  title: "Add decorative elements: icons, divider lines, or accent graphics"
+  title: 'Add decorative elements: icons, divider lines, or accent graphics'
   priority: 3
   status: done
-  notes: "Agent decides what decorative elements to add. Possibilities: small icons next to each stat (clock icon for time, speedometer for velocity), thin horizontal dividers, corner accent flourishes, or a subtle panel title bar. Keep it tasteful and not cluttered."
+  notes: 'Agent decides what decorative elements to add. Possibilities: small icons next to each stat (clock icon for time, speedometer for velocity), thin horizontal dividers, corner accent flourishes, or a subtle panel title bar. Keep it tasteful and not cluttered.'
 - id: T-006
-  title: "Implement gamma-based dynamic color shifting on readouts"
+  title: Implement gamma-based dynamic color shifting on readouts
   priority: 2
   status: done
-  notes: "Readout text color shifts based on the displayed value's intensity. For γ_v and γ_g: interpolate from cyan (γ ≈ 1) toward orange/red (γ ≥ 3), matching the trail system's color language. For velocity: shift from cool to warm as v approaches c. Use UiColor updates in the existing HUD update systems."
+  notes: 'Readout text color shifts based on the displayed value''s intensity. For γ_v and γ_g: interpolate from cyan (γ ≈ 1) toward orange/red (γ ≥ 3), matching the trail system''s color language. For velocity: shift from cool to warm as v approaches c. Use UiColor updates in the existing HUD update systems.'
 - id: T-007
-  title: "Implement subtle value-change animations (pulse/flash on update)"
+  title: Implement subtle value-change animations (pulse/flash on update)
   priority: 3
   status: done
-  notes: "When a displayed value changes significantly, briefly flash the text brighter or pulse the label's alpha/scale. Use a small Bevy timer or tween component. Keep the effect subtle (100-300ms duration, slight brightness boost). Avoid per-frame allocations."
+  notes: When a displayed value changes significantly, briefly flash the text brighter or pulse the label's alpha/scale. Use a small Bevy timer or tween component. Keep the effect subtle (100-300ms duration, slight brightness boost). Avoid per-frame allocations.
 - id: T-008
-  title: "Polish: panel glow, border animations, and final tuning"
+  title: 'Polish: panel glow, border animations, and final tuning'
   priority: 3
   status: done
-  notes: "Final visual pass: adjust glow intensity, tweak font sizes for balance, fine-tune spacing, and ensure the HUD looks cohesive with the game's background and gravity grid. Verify the HUD doesn't obscure important gameplay area."
+  notes: 'Final visual pass: adjust glow intensity, tweak font sizes for balance, fine-tune spacing, and ensure the HUD looks cohesive with the game''s background and gravity grid. Verify the HUD doesn''t obscure important gameplay area.'
 - id: T-009
-  title: "Verify all existing tests pass and HUD respawns correctly"
+  title: Verify all existing tests pass and HUD respawns correctly
   priority: 1
   status: done
-  notes: "Run cargo make ci. Verify HUD spawns on InGame enter, respawns after PendingLevelReset, and all marker-component queries still work. Confirm screenshot tests still pass (if any reference the HUD area, thresholds may need updating)."
-
+  notes: Run cargo make ci. Verify HUD spawns on InGame enter, respawns after PendingLevelReset, and all marker-component queries still work. Confirm screenshot tests still pass (if any reference the HUD area, thresholds may need updating).
 ---
+
 
 # Summary
 
@@ -425,3 +421,14 @@ Labels and values may be split into separate `Text2d` entities within each reado
   - Ran `cargo make ci` which executes fmt-check, clippy, and nextest
   - All 288 tests passed, 0 skipped, 0 failed
   - CI completed successfully in ~11.5 seconds
+
+## 2026-02-13 — PRD Finalized
+- **Status**: ✅ Finalized
+- **Tasks Completed**: 9 tasks (T-001 through T-009)
+- **Outcome**: All tasks completed, acceptance tests passed (288/288 tests)
+- **Cleanup**: No temporary files, debug statements, or stale comments found; codebase is clean
+- **Summary**:
+  - Transformed the plain text HUD into a sci-fi cockpit instrument panel with Orbitron display font, two distinct 9-slice panel sprites, and structured two-column layout with section headers and dividers
+  - Added gamma-based dynamic color shifting on readouts (cyan → yellow → red) and subtle value-change flash animations with quadratic ease-out decay
+  - Added glow pulse overlays on panels and decorative elements (gauge dots, corner accents, sub-dividers) for visual depth
+  - All 8 UAT acceptance criteria verified with dedicated integration tests; 288/288 tests pass
