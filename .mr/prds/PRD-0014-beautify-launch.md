@@ -56,7 +56,7 @@ acceptance_tests:
   - id: uat-010
     name: "All existing launch unit tests pass or are updated to match new behavior"
     command: cargo make test
-    uat_status: unverified
+    uat_status: verified
 tasks:
   - id: T-001
     title: "Add hover preview system (dotted aim line on mouse move, before click)"
@@ -445,3 +445,12 @@ A new cancel path is added from any non-Idle state back to Idle via right-click 
     - `no_power_bar_ui_nodes_spawned_during_launching`: enters Launching state, runs `launch_visual_system`, and asserts no new bevy_ui `Node` entities are spawned — confirming the old `PowerBarUi` entity is gone and the replacement radial arc uses Gizmos only.
   - Also verified via `grep` that `PowerBarUi` and `spawn_or_update_power_bar` no longer exist anywhere in source code (only referenced in PRD history).
   - `cargo make uat` passed — 321 tests, 321 passed, 0 skipped.
+
+## 2026-02-14 — uat-010 Verification
+- **UAT**: All existing launch unit tests pass or are updated to match new behavior
+- **Status**: ✅ Verified
+- **Method**: Existing test
+- **Details**:
+  - Ran `cargo make test` which executes the full test suite via nextest.
+  - All 321 tests passed (321 passed, 0 skipped, 1 slow) in 8.2 seconds.
+  - This confirms that all existing launch unit tests were updated during T-006/T-008 to match the new non-linear power curve behavior, and all new tests added throughout PRD-0014 (cancel, preview, arc, ticks, readout, no-power-bar) pass alongside the original tests.
