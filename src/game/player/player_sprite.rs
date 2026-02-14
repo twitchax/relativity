@@ -43,12 +43,12 @@ const MAX_LAUNCH_LINE: f32 = 300.0;
 /// Radius of the radial power arc around the player (pixels).
 const ARC_RADIUS: f32 = 50.0;
 /// Maximum sweep angle for the power arc (270°).
-const MAX_ARC_ANGLE: f32 = std::f32::consts::FRAC_PI_2 * 3.0;
+pub const MAX_ARC_ANGLE: f32 = std::f32::consts::FRAC_PI_2 * 3.0;
 
 /// Half-length of each tick mark (extends inward and outward from arc radius).
 const TICK_HALF_LENGTH: f32 = 6.0;
 /// Velocity fractions (of c) at which tick marks are drawn on the arc.
-const TICK_VELOCITY_FRACTIONS: [f32; 4] = [0.25, 0.5, 0.75, 0.9];
+pub const TICK_VELOCITY_FRACTIONS: [f32; 4] = [0.25, 0.5, 0.75, 0.9];
 
 /// Minimum velocity fraction (of `max_velocity`) at zero raw power.
 const MIN_POWER_FRACTION: f32 = 0.1 / 0.99;

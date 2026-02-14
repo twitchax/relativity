@@ -32,7 +32,7 @@ acceptance_tests:
   - id: uat-004
     name: "Arc tick marks appear at 0.25c, 0.5c, 0.75c, and 0.9c"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
   - id: uat-005
     name: "Numeric velocity readout (e.g. 0.45c) displays near the arc during Launching phase"
     command: cargo make uat
@@ -364,3 +364,16 @@ A new cancel path is added from any non-Idle state back to Idle via right-click 
     - `color_gradient_transitions_cyan_to_red`: asserts the color gradient via `power_to_color` transitions from cyan (low power) to red (full power) with non-decreasing red channel.
   - Widened `map_power_nonlinear` and `power_to_color` from `pub(crate)` to `pub` (with `#[must_use]`) so integration tests can call them directly.
   - `cargo make uat` passed — 313 tests, 313 passed, 0 skipped.
+
+## 2026-02-14 — uat-004 Verification
+- **UAT**: Arc tick marks appear at 0.25c, 0.5c, 0.75c, and 0.9c
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Created `tests/e2e_launch_arc_ticks.rs` with four tests:
+    - `tick_velocity_fractions_match_spec`: asserts `TICK_VELOCITY_FRACTIONS` contains exactly [0.25, 0.5, 0.75, 0.9].
+    - `tick_angular_positions_within_arc_range`: verifies each tick's angular position falls within the arc's sweep range.
+    - `tick_marks_drawn_during_launching_without_panic`: runs `launch_visual_system` in Launching state at five power levels, exercising the `draw_arc_ticks` code path.
+    - `tick_fractions_produce_valid_mapped_powers`: confirms each tick fraction produces a monotonically increasing mapped power within [0, 1].
+  - Widened `TICK_VELOCITY_FRACTIONS` and `MAX_ARC_ANGLE` from private to `pub` so integration tests can verify the constants directly.
+  - `cargo make uat` passed — 317 tests, 317 passed, 0 skipped.
