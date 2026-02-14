@@ -44,7 +44,7 @@ acceptance_tests:
   - id: uat-007
     name: "Right-click or Escape cancels launch at any phase and returns to Idle"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
   - id: uat-008
     name: "Power maps to 0.1c–0.99c range with non-linear (exponential ease-in) curve"
     command: cargo make uat
@@ -402,4 +402,18 @@ A new cancel path is added from any non-Idle state back to Idle via right-click 
     - Asserts GameState transitions to Running
     - Asserts player velocity vx>0, vy>0 (correct angle), and vx/vy ≈ 1.0 (45° symmetry)
   - `tests/e2e_launch_state_machine.rs::full_launch_state_machine_idle_to_running` (lines 176–206) provides additional coverage with a complete round-trip (Idle → AimLocked → Launching → Running).
+  - `cargo make uat` passed — 320 tests, 320 passed, 0 skipped.
+
+## 2026-02-14 — uat-007 Verification
+- **UAT**: Right-click or Escape cancels launch at any phase and returns to Idle
+- **Status**: ✅ Verified
+- **Method**: Existing test
+- **Details**:
+  - `tests/e2e_launch_cancel.rs` already contains 5 tests covering this criterion:
+    - `cancel_aim_locked_via_right_click`: right-click during AimLocked → Idle
+    - `cancel_aim_locked_via_escape`: Escape during AimLocked → Idle
+    - `cancel_launching_via_right_click`: right-click during Launching → Idle
+    - `cancel_launching_via_escape`: Escape during Launching → Idle
+    - `cancel_noop_when_idle`: cancel is no-op when already Idle
+  - All tests exercise `launch_cancel_system` via `run_system_once` and assert `LaunchState` resets to `Idle`.
   - `cargo make uat` passed — 320 tests, 320 passed, 0 skipped.
