@@ -4,7 +4,7 @@ use crate::{
         constants::MAX_PLAYER_LAUNCH_VELOCITY,
         types::{GameItem, LaunchState, Position, PowerBarUi, Radius, RocketSprite, TrailBuffer, Velocity},
     },
-    shared::{state::GameState, SCREEN_HEIGHT_PX, SCREEN_WIDTH_PX},
+    shared::{state::GameState, SCREEN_WIDTH_PX},
 };
 use bevy::{prelude::*, window::PrimaryWindow};
 use uom::si::f64::Velocity as UomVelocity;
@@ -31,6 +31,7 @@ pub fn launch_aim_system(
     mouse_input: Res<ButtonInput<MouseButton>>,
     player_query: Query<&Transform, With<Player>>,
     window_query: Query<&Window, With<PrimaryWindow>>,
+    camera_query: Query<(&Camera, &GlobalTransform), With<Camera2d>>,
     mut launch_state: ResMut<LaunchState>,
 ) {
     // Only transition from Idle on initial press.
@@ -44,9 +45,11 @@ pub fn launch_aim_system(
     let Ok(player_transform) = player_query.single() else { return };
     let Ok(window) = window_query.single() else { return };
     let Some(cursor_position): Option<Vec2> = window.cursor_position() else { return };
+    let Ok((camera, camera_transform)) = camera_query.single() else { return };
+    let Ok(cursor_world) = camera.viewport_to_world_2d(camera_transform, cursor_position) else {
+        return;
+    };
 
-    #[allow(clippy::cast_possible_truncation)]
-    let cursor_world = Vec2::new(cursor_position.x, SCREEN_HEIGHT_PX as f32 - cursor_position.y);
     let player_pos = player_transform.translation.truncate();
 
     let direction = cursor_world - player_pos;
@@ -60,6 +63,7 @@ pub fn launch_power_system(
     mouse_input: Res<ButtonInput<MouseButton>>,
     player_query: Query<&Transform, With<Player>>,
     window_query: Query<&Window, With<PrimaryWindow>>,
+    camera_query: Query<(&Camera, &GlobalTransform), With<Camera2d>>,
     mut launch_state: ResMut<LaunchState>,
 ) {
     if !mouse_input.pressed(MouseButton::Left) {
@@ -73,9 +77,11 @@ pub fn launch_power_system(
     let Ok(player_transform) = player_query.single() else { return };
     let Ok(window) = window_query.single() else { return };
     let Some(cursor_position): Option<Vec2> = window.cursor_position() else { return };
+    let Ok((camera, camera_transform)) = camera_query.single() else { return };
+    let Ok(cursor_world) = camera.viewport_to_world_2d(camera_transform, cursor_position) else {
+        return;
+    };
 
-    #[allow(clippy::cast_possible_truncation)]
-    let cursor_world = Vec2::new(cursor_position.x, SCREEN_HEIGHT_PX as f32 - cursor_position.y);
     let player_pos = player_transform.translation.truncate();
 
     let drag_distance = (cursor_world - player_pos).length();
