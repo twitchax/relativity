@@ -86,7 +86,7 @@ tasks:
   - id: T-006
     title: "Implement non-linear power curve (exponential ease-in, 0.1c–0.99c)"
     priority: 2
-    status: todo
+    status: done
     notes: "Replace linear power mapping. Raw power 0.0–1.0 from drag → apply exponential ease-in → map to 0.1c–0.99c. Update `calculate_launch_velocity_from_angle_power` or add a new mapping function. Minimum launch velocity is 0.1c."
   - id: T-007
     title: "Update launch_visual_system to use new arc + dotted line visuals"
@@ -293,5 +293,19 @@ A new cancel path is added from any non-Idle state back to Idle via right-click 
   - Added constants `READOUT_OFFSET` (18px) and `READOUT_FONT_SIZE` (14px) for readout positioning and styling.
   - Registered `launch_readout_system` in the Paused launch systems tuple in `src/game/mod.rs`.
   - The readout uses `Orbitron-Regular.ttf` font and is color-matched to the power arc via `power_to_color`.
+  - UAT: `cargo make uat` passed — 291 tests, 291 passed, 0 skipped.
+- **Constitution Compliance**: No violations.
+
+## 2026-02-14 — T-006 Completed
+- **Task**: Implement non-linear power curve (exponential ease-in, 0.1c–0.99c)
+- **Status**: ✅ Done
+- **Changes**:
+  - Added `map_power_nonlinear` helper function in `src/game/player/player_sprite.rs` — quadratic ease-in mapping raw power (0.0–1.0) to effective power fraction (≈0.101–1.0), giving velocity range 0.1c–0.99c.
+  - Added `MIN_POWER_FRACTION` constant (0.1/0.99 ≈ 0.101) for the minimum velocity floor.
+  - Updated `calculate_launch_velocity_from_angle_power` to use the non-linear mapping instead of a linear clamp.
+  - Updated `launch_visual_system` to use mapped power for arc fill angle, direction line length, and color gradient.
+  - Updated `launch_readout_system` to display velocity based on mapped power and position the readout using mapped arc fill angle.
+  - Updated `draw_arc_ticks` comment to reflect the non-linear mapping context.
+  - Updated 3 unit tests that relied on linear power behavior: `angle_power_zero_power_produces_minimum_velocity`, `angle_power_clamped_at_max`, `angle_power_nonlinear_half_power_slower_than_linear`.
   - UAT: `cargo make uat` passed — 291 tests, 291 passed, 0 skipped.
 - **Constitution Compliance**: No violations.

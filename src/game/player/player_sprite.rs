@@ -48,8 +48,10 @@ const MAX_ARC_ANGLE: f32 = std::f32::consts::FRAC_PI_2 * 3.0;
 /// Half-length of each tick mark (extends inward and outward from arc radius).
 const TICK_HALF_LENGTH: f32 = 6.0;
 /// Velocity fractions (of c) at which tick marks are drawn on the arc.
-/// Power = `velocity_fraction` / 0.99 maps each to an angular position.
 const TICK_VELOCITY_FRACTIONS: [f32; 4] = [0.25, 0.5, 0.75, 0.9];
+
+/// Minimum velocity fraction (of `max_velocity`) at zero raw power.
+const MIN_POWER_FRACTION: f32 = 0.1 / 0.99;
 
 /// Offset beyond the arc radius at which the velocity readout text is placed.
 const READOUT_OFFSET: f32 = 18.0;
@@ -58,6 +60,17 @@ const READOUT_FONT_SIZE: f32 = 14.0;
 
 // Helpers.
 
+/// Maps raw drag power (0.0–1.0) to an effective power fraction (≈0.101–1.0)
+/// using a quadratic ease-in curve with a 0.1c minimum velocity floor.
+///
+/// Result × `max_velocity` (0.99c) gives the launched velocity:
+/// - raw 0.0 → ≈0.101 → 0.1c
+/// - raw 1.0 → 1.0   → 0.99c
+pub(crate) fn map_power_nonlinear(raw_power: f32) -> f32 {
+    let p = raw_power.clamp(0.0, 1.0);
+    MIN_POWER_FRACTION + (1.0 - MIN_POWER_FRACTION) * p * p
+}
+
 /// Draws tick marks on the radial arc at predefined velocity fractions.
 ///
 /// Each tick is a short radial line spanning `ARC_RADIUS ± TICK_HALF_LENGTH`.
@@ -65,7 +78,7 @@ const READOUT_FONT_SIZE: f32 = 14.0;
 /// arc's sweep range.
 fn draw_arc_ticks(gizmos: &mut Gizmos, center: Vec2, arc_rotation_rad: f32) {
     for &frac in &TICK_VELOCITY_FRACTIONS {
-        // Power corresponding to this velocity fraction (linear mapping: v = power * 0.99c).
+        // Mapped power corresponding to this velocity fraction.
         let tick_power = frac / 0.99;
         // Position along the arc sweep: fraction of MAX_ARC_ANGLE, offset from centre.
         let local_angle = MAX_ARC_ANGLE * (tick_power - 0.5);
@@ -281,12 +294,13 @@ pub fn launch_visual_system(launch_state: Res<LaunchState>, player_query: Query<
         }
         LaunchState::Launching { angle, power } => {
             let direction = Vec2::new(angle.cos(), angle.sin());
+            let mapped_power = map_power_nonlinear(power);
 
-            // Solid direction line, length scaled by power.
-            let line_length = MIN_LAUNCH_LINE + power * (MAX_LAUNCH_LINE - MIN_LAUNCH_LINE);
+            // Solid direction line, length scaled by mapped power.
+            let line_length = MIN_LAUNCH_LINE + mapped_power * (MAX_LAUNCH_LINE - MIN_LAUNCH_LINE);
             let line_end = player_pos + direction * line_length;
 
-            let color = power_to_color(power);
+            let color = power_to_color(mapped_power);
             gizmos.line_2d(player_pos, line_end, color);
 
             // Dotted extension beyond the power-scaled line.
@@ -299,8 +313,8 @@ pub fn launch_visual_system(launch_state: Res<LaunchState>, player_query: Query<
             let outline_iso = Isometry2d::new(player_pos, arc_rotation);
             gizmos.arc_2d(outline_iso, MAX_ARC_ANGLE, ARC_RADIUS, Color::srgba(1.0, 1.0, 1.0, 0.15));
 
-            // Filled arc proportional to power.
-            let filled_angle = power * MAX_ARC_ANGLE;
+            // Filled arc proportional to mapped power.
+            let filled_angle = mapped_power * MAX_ARC_ANGLE;
             let filled_iso = Isometry2d::new(player_pos, arc_rotation);
             gizmos.arc_2d(filled_iso, filled_angle, ARC_RADIUS, color);
 
@@ -335,12 +349,12 @@ pub fn launch_readout_system(
     let Ok(player_transform) = player_query.single() else { return };
     let player_pos = player_transform.translation.truncate();
 
-    let velocity_fraction = power * 0.99;
+    let velocity_fraction = map_power_nonlinear(power) * 0.99;
     let text = format!("{velocity_fraction:.2}c");
 
     // Position the readout at the tip of the filled arc, just outside.
     let arc_rotation_rad = -3.0 * std::f32::consts::FRAC_PI_4;
-    let filled_angle = power * MAX_ARC_ANGLE;
+    let filled_angle = map_power_nonlinear(power) * MAX_ARC_ANGLE;
     let tip_angle = arc_rotation_rad + filled_angle * 0.5;
     let readout_pos = player_pos + Vec2::new(tip_angle.cos(), tip_angle.sin()) * (ARC_RADIUS + READOUT_OFFSET);
 
@@ -350,7 +364,7 @@ pub fn launch_readout_system(
         transform.translation = readout_pos.extend(10.0);
     } else {
         // Spawn new readout entity.
-        let color = power_to_color(power);
+        let color = power_to_color(map_power_nonlinear(power));
         commands.spawn((
             VelocityReadout,
             Text2d::new(text),
@@ -365,14 +379,15 @@ pub fn launch_readout_system(
     }
 }
 
-/// Computes launch velocity from angle and power (0.0–1.0).
+/// Computes launch velocity from angle and raw power (0.0–1.0).
 ///
-/// Power is clamped to 0.99 to prevent reaching the speed of light.
+/// Applies a non-linear (quadratic ease-in) power curve mapping raw power to
+/// a velocity fraction of 0.1c–0.99c, giving fine control at low speeds.
 #[must_use]
 pub(crate) fn calculate_launch_velocity_from_angle_power(angle: f32, power: f32, max_velocity: UomVelocity) -> (UomVelocity, UomVelocity) {
-    let clamped_power = power.min(0.99);
-    let vx = max_velocity * f64::from(clamped_power) * f64::from(angle.cos());
-    let vy = max_velocity * f64::from(clamped_power) * f64::from(angle.sin());
+    let mapped = f64::from(map_power_nonlinear(power));
+    let vx = max_velocity * mapped * f64::from(angle.cos());
+    let vy = max_velocity * mapped * f64::from(angle.sin());
     (vx, vy)
 }
 
@@ -518,26 +533,31 @@ mod tests {
     }
 
     #[test]
-    fn angle_power_zero_power_produces_zero_velocity() {
-        let (vx, vy) = calculate_launch_velocity_from_angle_power(0.5, 0.0, max_v());
-        assert_relative_eq!(kps(vx), 0.0, epsilon = 1e-10);
-        assert_relative_eq!(kps(vy), 0.0, epsilon = 1e-10);
+    fn angle_power_zero_power_produces_minimum_velocity() {
+        let (vx, vy) = calculate_launch_velocity_from_angle_power(0.0, 0.0, max_v());
+        let speed = (kps(vx).powi(2) + kps(vy).powi(2)).sqrt();
+        // Zero raw power should produce the minimum velocity (≈0.1c fraction of max_v).
+        let expected = kps(max_v()) * f64::from(MIN_POWER_FRACTION);
+        assert_relative_eq!(speed, expected, epsilon = 1e-2);
     }
 
     #[test]
-    fn angle_power_clamped_at_ninety_nine_percent() {
+    fn angle_power_clamped_at_max() {
+        // Power > 1.0 is clamped to 1.0, giving full mapped velocity.
         let (vx, vy) = calculate_launch_velocity_from_angle_power(0.0, 1.5, max_v());
         let speed = (kps(vx).powi(2) + kps(vy).powi(2)).sqrt();
-        assert_relative_eq!(speed, kps(max_v()) * 0.99, epsilon = 1e-4);
+        assert_relative_eq!(speed, kps(max_v()), epsilon = 1e-2);
     }
 
     #[test]
-    fn angle_power_half_power_is_proportional() {
+    fn angle_power_nonlinear_half_power_slower_than_linear() {
+        // With quadratic ease-in, half raw power gives less than half max speed.
         let result_half = calculate_launch_velocity_from_angle_power(0.0, 0.5, max_v());
-        let result_full = calculate_launch_velocity_from_angle_power(0.0, 0.99, max_v());
         let speed_half = (kps(result_half.0).powi(2) + kps(result_half.1).powi(2)).sqrt();
-        let speed_full = (kps(result_full.0).powi(2) + kps(result_full.1).powi(2)).sqrt();
-        assert_relative_eq!(speed_half / speed_full, 0.5 / 0.99, epsilon = 1e-4);
+        let mapped_half = f64::from(map_power_nonlinear(0.5));
+        assert_relative_eq!(speed_half, kps(max_v()) * mapped_half, epsilon = 1e-2);
+        // Verify non-linearity: mapped 0.5 < 0.5 (quadratic ease-in is slower early).
+        assert!(mapped_half < 0.5, "quadratic ease-in should give less than half at raw_power=0.5");
     }
 
     #[test]
