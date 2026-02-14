@@ -2,7 +2,7 @@ use super::shared::Player;
 use crate::{
     game::shared::{
         constants::MAX_PLAYER_LAUNCH_VELOCITY,
-        types::{GameItem, LaunchState, Position, PowerBarUi, Radius, RocketSprite, TrailBuffer, Velocity},
+        types::{GameItem, LaunchState, Position, Radius, RocketSprite, TrailBuffer, Velocity},
     },
     shared::{state::GameState, SCREEN_WIDTH_PX},
 };
@@ -32,6 +32,11 @@ const PREVIEW_LINE_LENGTH: f32 = 300.0;
 const PREVIEW_DASH_LENGTH: f32 = 10.0;
 /// Gap between dash segments in the preview line (pixels).
 const PREVIEW_GAP_LENGTH: f32 = 8.0;
+
+/// Radius of the radial power arc around the player (pixels).
+const ARC_RADIUS: f32 = 50.0;
+/// Maximum sweep angle for the power arc (270°).
+const MAX_ARC_ANGLE: f32 = std::f32::consts::FRAC_PI_2 * 3.0;
 
 // Systems.
 
@@ -187,16 +192,28 @@ pub fn launch_fire_system(
     game_state.set(GameState::Running);
 }
 
-/// Draw the aim direction line and power bar.
-pub fn launch_visual_system(
-    launch_state: Res<LaunchState>,
-    player_query: Query<&Transform, With<Player>>,
-    mut gizmos: Gizmos,
-    mut commands: Commands,
-    power_bar_query: Query<Entity, With<PowerBarUi>>,
-) {
+/// Maps power (0.0–1.0) to a color gradient: cyan → orange → red.
+fn power_to_color(power: f32) -> Color {
+    let t = power.clamp(0.0, 1.0);
+
+    let (r, g, b) = if t < 0.5 {
+        let f = t * 2.0;
+        (f, 1.0 - 0.35 * f, 1.0 - f)
+    } else {
+        let f = (t - 0.5) * 2.0;
+        (1.0, 0.65 * (1.0 - f), 0.0)
+    };
+
+    Color::srgba(r, g, b, 0.9)
+}
+
+/// Draw the aim direction line and radial power arc around the player.
+pub fn launch_visual_system(launch_state: Res<LaunchState>, player_query: Query<&Transform, With<Player>>, mut gizmos: Gizmos) {
     let Ok(player_transform) = player_query.single() else { return };
     let player_pos = player_transform.translation.truncate();
+
+    // Rotate so the arc gap sits at the bottom.
+    let arc_rotation = Rot2::radians(-3.0 * std::f32::consts::FRAC_PI_4);
 
     match *launch_state {
         LaunchState::AimLocked { angle } => {
@@ -205,10 +222,9 @@ pub fn launch_visual_system(
             let line_end = player_pos + direction * 200.0;
             gizmos.line_2d(player_pos, line_end, Color::srgba(1.0, 1.0, 1.0, 0.7));
 
-            // Despawn any leftover power bar.
-            for entity in &power_bar_query {
-                commands.entity(entity).despawn();
-            }
+            // Faint arc outline showing max range.
+            let isometry = Isometry2d::new(player_pos, arc_rotation);
+            gizmos.arc_2d(isometry, MAX_ARC_ANGLE, ARC_RADIUS, Color::srgba(1.0, 1.0, 1.0, 0.15));
         }
         LaunchState::Launching { angle, power } => {
             // Draw direction line, length scaled by power.
@@ -216,55 +232,20 @@ pub fn launch_visual_system(
             let line_length = 100.0 + power * 200.0;
             let line_end = player_pos + direction * line_length;
 
-            let color = Color::srgba(1.0, 1.0 - power, 0.0, 0.9);
+            let color = power_to_color(power);
             gizmos.line_2d(player_pos, line_end, color);
 
-            // Spawn or update power bar UI.
-            spawn_or_update_power_bar(&mut commands, &power_bar_query, power);
+            // Faint arc outline showing max range.
+            let outline_iso = Isometry2d::new(player_pos, arc_rotation);
+            gizmos.arc_2d(outline_iso, MAX_ARC_ANGLE, ARC_RADIUS, Color::srgba(1.0, 1.0, 1.0, 0.15));
+
+            // Filled arc proportional to power.
+            let filled_angle = power * MAX_ARC_ANGLE;
+            let filled_iso = Isometry2d::new(player_pos, arc_rotation);
+            gizmos.arc_2d(filled_iso, filled_angle, ARC_RADIUS, color);
         }
-        LaunchState::Idle => {
-            // Despawn power bar when idle.
-            for entity in &power_bar_query {
-                commands.entity(entity).despawn();
-            }
-        }
+        LaunchState::Idle => {}
     }
-}
-
-/// Spawn or replace the power-bar UI overlay.
-fn spawn_or_update_power_bar(commands: &mut Commands, power_bar_query: &Query<Entity, With<PowerBarUi>>, power: f32) {
-    // Despawn existing.
-    for entity in power_bar_query {
-        commands.entity(entity).despawn();
-    }
-
-    let bar_width = power * 200.0;
-
-    commands
-        .spawn((
-            PowerBarUi,
-            GameItem,
-            Node {
-                position_type: PositionType::Absolute,
-                bottom: Val::Px(40.0),
-                left: Val::Percent(50.0),
-                width: Val::Px(204.0),
-                height: Val::Px(24.0),
-                margin: UiRect::left(Val::Px(-102.0)),
-                ..Default::default()
-            },
-            BackgroundColor(Color::srgba(0.2, 0.2, 0.2, 0.7)),
-        ))
-        .with_children(|parent| {
-            parent.spawn((
-                Node {
-                    width: Val::Px(bar_width),
-                    height: Val::Percent(100.0),
-                    ..Default::default()
-                },
-                BackgroundColor(Color::srgba(1.0, 1.0 - power, 0.0, 0.9)),
-            ));
-        });
 }
 
 /// Computes launch velocity from angle and power (0.0–1.0).

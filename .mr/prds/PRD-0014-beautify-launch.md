@@ -71,7 +71,7 @@ tasks:
   - id: T-003
     title: "Replace power bar with radial arc around player"
     priority: 1
-    status: todo
+    status: done
     notes: "Remove `spawn_or_update_power_bar` and `PowerBarUi`. In `launch_visual_system`, draw a radial arc (Gizmos::arc_2d) centered on the player. Arc spans 0–270° proportional to power. Color gradient: cyan at 0.1c → orange → red at 0.99c."
   - id: T-004
     title: "Add tick marks on the arc at 0.25c, 0.5c, 0.75c, 0.9c"
@@ -243,5 +243,19 @@ A new cancel path is added from any non-Idle state back to Idle via right-click 
 - **Changes**:
   - Added `launch_cancel_system` in `src/game/player/player_sprite.rs` — listens for `MouseButton::Right` or `KeyCode::Escape` just-pressed and resets `LaunchState` to `Idle` from any non-Idle state.
   - Registered `launch_cancel_system` in the Paused launch systems tuple in `src/game/mod.rs`.
+  - UAT: `cargo make uat` passed — 291 tests, 291 passed, 0 skipped.
+- **Constitution Compliance**: No violations.
+
+## 2026-02-14 — T-003 Completed
+- **Task**: Replace power bar with radial arc around player
+- **Status**: ✅ Done
+- **Changes**:
+  - Replaced `spawn_or_update_power_bar` and `PowerBarUi` usage in `launch_visual_system` (`src/game/player/player_sprite.rs`) with a radial arc drawn via `Gizmos::arc_2d`.
+  - Added constants `ARC_RADIUS` (50px) and `MAX_ARC_ANGLE` (270°) for arc geometry.
+  - Added `power_to_color` helper function implementing cyan → orange → red color gradient.
+  - AimLocked state now shows a faint arc outline (0.15 alpha) in addition to the direction line.
+  - Launching state shows the faint outline plus a filled arc proportional to power with the color gradient.
+  - Removed `PowerBarUi` import and `Commands`/query parameters from `launch_visual_system` (no more UI entity spawning).
+  - Updated `tests/e2e_launch_visuals.rs`: replaced PowerBarUi entity-count assertions with gizmo-path smoke tests (system runs without panic in each state).
   - UAT: `cargo make uat` passed — 291 tests, 291 passed, 0 skipped.
 - **Constitution Compliance**: No violations.
