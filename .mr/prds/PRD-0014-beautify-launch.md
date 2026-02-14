@@ -36,7 +36,7 @@ acceptance_tests:
   - id: uat-005
     name: "Numeric velocity readout (e.g. 0.45c) displays near the arc during Launching phase"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
   - id: uat-006
     name: "Release fires player at correct angle and power; GameState transitions to Running"
     command: cargo make uat
@@ -377,3 +377,14 @@ A new cancel path is added from any non-Idle state back to Idle via right-click 
     - `tick_fractions_produce_valid_mapped_powers`: confirms each tick fraction produces a monotonically increasing mapped power within [0, 1].
   - Widened `TICK_VELOCITY_FRACTIONS` and `MAX_ARC_ANGLE` from private to `pub` so integration tests can verify the constants directly.
   - `cargo make uat` passed — 317 tests, 317 passed, 0 skipped.
+
+## 2026-02-14 — uat-005 Verification
+- **UAT**: Numeric velocity readout (e.g. 0.45c) displays near the arc during Launching phase
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Created `tests/e2e_launch_readout.rs` with three tests:
+    - `readout_spawns_with_correct_text_during_launching`: enters Launching state, runs `launch_readout_system`, and asserts a `VelocityReadout` entity is spawned with text matching the expected "X.XXc" format derived from `map_power_nonlinear`.
+    - `readout_despawns_when_idle`: spawns the readout in Launching, then returns to Idle and verifies the `VelocityReadout` entity is despawned.
+    - `readout_updates_on_power_change`: spawns at low power, increases power, and verifies the text content updates to reflect the new velocity fraction.
+  - `cargo make uat` passed — 320 tests, 320 passed, 0 skipped.
