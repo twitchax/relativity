@@ -96,7 +96,7 @@ tasks:
   - id: T-008
     title: "Update and add unit tests for new power curve and arc rendering logic"
     priority: 3
-    status: todo
+    status: done
     notes: "Update existing tests for `calculate_launch_velocity_from_angle_power`. Add tests for non-linear mapping, 0.1c minimum, cancel behavior."
   - id: T-009
     title: "Clean up dead code (PowerBarUi, spawn_or_update_power_bar)"
@@ -309,3 +309,14 @@ A new cancel path is added from any non-Idle state back to Idle via right-click 
   - Updated 3 unit tests that relied on linear power behavior: `angle_power_zero_power_produces_minimum_velocity`, `angle_power_clamped_at_max`, `angle_power_nonlinear_half_power_slower_than_linear`.
   - UAT: `cargo make uat` passed — 291 tests, 291 passed, 0 skipped.
 - **Constitution Compliance**: No violations.
+
+## 2026-02-14 — T-008 Completed
+- **Task**: Update and add unit tests for new power curve and arc rendering logic
+- **Status**: ✅ Done
+- **Changes**:
+  - Added 6 unit tests for `map_power_nonlinear` in `src/game/player/player_sprite.rs`: boundary values (0.0 → MIN_POWER_FRACTION, 1.0 → 1.0), clamping (negative, >1.0), monotonicity, and below-linear-reference at quarter power.
+  - Added 4 unit tests for `power_to_color` in `src/game/player/player_sprite.rs`: cyan at 0.0, red at 1.0, smooth transition at 0.5, and out-of-range clamping safety.
+  - Changed `power_to_color` visibility from `fn` to `pub(crate) fn` to enable testing.
+  - Created `tests/e2e_launch_cancel.rs` with 5 tests: cancel from AimLocked via right-click and Escape, cancel from Launching via right-click and Escape, and no-op when already Idle.
+  - UAT: `cargo make uat` passed — 306 tests, 306 passed, 0 skipped.
+- **Constitution Compliance**: No violations. Changed `power_to_color` from private to `pub(crate)` — minimal scope widening to enable testing, no public API change.

@@ -250,7 +250,7 @@ pub fn launch_fire_system(
 }
 
 /// Maps power (0.0–1.0) to a color gradient: cyan → orange → red.
-fn power_to_color(power: f32) -> Color {
+pub(crate) fn power_to_color(power: f32) -> Color {
     let t = power.clamp(0.0, 1.0);
 
     let (r, g, b) = if t < 0.5 {
@@ -567,6 +567,94 @@ mod tests {
         assert!(kps(vx) > 0.0);
         assert!(kps(vy) > 0.0);
         assert_relative_eq!(kps(vx), kps(vy), epsilon = 1e-4);
+    }
+
+    // --- map_power_nonlinear ---
+
+    #[test]
+    fn nonlinear_zero_gives_min_fraction() {
+        assert_relative_eq!(map_power_nonlinear(0.0), MIN_POWER_FRACTION, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn nonlinear_one_gives_one() {
+        assert_relative_eq!(map_power_nonlinear(1.0), 1.0, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn nonlinear_clamps_negative() {
+        assert_relative_eq!(map_power_nonlinear(-0.5), MIN_POWER_FRACTION, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn nonlinear_clamps_above_one() {
+        assert_relative_eq!(map_power_nonlinear(2.0), 1.0, epsilon = 1e-6);
+    }
+
+    #[test]
+    #[allow(clippy::cast_precision_loss)]
+    fn nonlinear_monotonically_increasing() {
+        let steps: Vec<f32> = (0..=10).map(|i| i as f32 / 10.0).collect();
+        for window in steps.windows(2) {
+            let lo = map_power_nonlinear(window[0]);
+            let hi = map_power_nonlinear(window[1]);
+            assert!(
+                hi >= lo,
+                "map_power_nonlinear should be monotonically increasing: f({}) = {} > f({}) = {}",
+                window[1],
+                hi,
+                window[0],
+                lo
+            );
+        }
+    }
+
+    #[test]
+    fn nonlinear_quarter_power_below_linear() {
+        // Quadratic ease-in: at 0.25, mapped should be well below linear 0.25.
+        let mapped = map_power_nonlinear(0.25);
+        let linear = MIN_POWER_FRACTION + (1.0 - MIN_POWER_FRACTION) * 0.25;
+        assert!(mapped < linear, "quadratic ease-in at 0.25 should be below linear reference");
+    }
+
+    // --- power_to_color ---
+
+    #[test]
+    fn color_at_zero_is_cyan() {
+        let c = power_to_color(0.0);
+        let srgba = c.to_srgba();
+        // At t=0: (r=0, g=1, b=1) → cyan.
+        assert_relative_eq!(srgba.red, 0.0, epsilon = 1e-3);
+        assert_relative_eq!(srgba.green, 1.0, epsilon = 1e-3);
+        assert_relative_eq!(srgba.blue, 1.0, epsilon = 1e-3);
+        assert_relative_eq!(srgba.alpha, 0.9, epsilon = 1e-3);
+    }
+
+    #[test]
+    fn color_at_one_is_red() {
+        let c = power_to_color(1.0);
+        let srgba = c.to_srgba();
+        // At t=1: (r=1, g=0, b=0) → red.
+        assert_relative_eq!(srgba.red, 1.0, epsilon = 1e-3);
+        assert_relative_eq!(srgba.green, 0.0, epsilon = 1e-3);
+        assert_relative_eq!(srgba.blue, 0.0, epsilon = 1e-3);
+    }
+
+    #[test]
+    fn color_at_half_transitions_smoothly() {
+        let c = power_to_color(0.5);
+        let srgba = c.to_srgba();
+        // At t=0.5 (boundary): (r=1, g=0.65, b=0) — warm yellow-orange.
+        assert_relative_eq!(srgba.red, 1.0, epsilon = 1e-3);
+        assert!(srgba.green > 0.0, "green should be nonzero at midpoint");
+        assert_relative_eq!(srgba.blue, 0.0, epsilon = 1e-3);
+    }
+
+    #[test]
+    fn color_clamps_out_of_range() {
+        // power_to_color clamps input; should not panic.
+        let _lo = power_to_color(-1.0);
+        let _hi = power_to_color(5.0);
     }
 
     // --- LaunchState ---
