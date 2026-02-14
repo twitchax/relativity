@@ -1,7 +1,7 @@
 ---
 id: PRD-0014
 title: "Beautify Launch: Intuitive Aim Preview and Radial Power Arc"
-status: draft
+status: active
 owner: twitchax
 created: 2026-02-14
 updated: 2026-02-14
@@ -61,7 +61,7 @@ tasks:
   - id: T-001
     title: "Add hover preview system (dotted aim line on mouse move, before click)"
     priority: 1
-    status: todo
+    status: done
     notes: "New system `launch_preview_system` runs during GameState::Paused + LaunchState::Idle. Renders a thin dotted line from player toward cursor using Gizmos. Runs every frame on cursor move."
   - id: T-002
     title: "Add right-click / Escape cancel support to launch systems"
@@ -226,3 +226,13 @@ A new cancel path is added from any non-Idle state back to Idle via right-click 
 - Changing the `LaunchState` enum variant structure (e.g., adding new states).
 
 # History
+
+## 2026-02-14 — T-001 Completed
+- **Task**: Add hover preview system (dotted aim line on mouse move, before click)
+- **Status**: ✅ Done
+- **Changes**:
+  - Added `launch_preview_system` in `src/game/player/player_sprite.rs` — draws a dotted (dashed) aim-preview line from the player toward the cursor using Gizmos while `LaunchState::Idle`.
+  - Registered `launch_preview_system` in the Paused launch systems tuple in `src/game/mod.rs`.
+  - Added constants `PREVIEW_LINE_LENGTH`, `PREVIEW_DASH_LENGTH`, `PREVIEW_GAP_LENGTH` for the dash pattern.
+  - UAT: `cargo make uat` passed — 291 tests, 291 passed, 0 skipped.
+- **Constitution Compliance**: No violations.

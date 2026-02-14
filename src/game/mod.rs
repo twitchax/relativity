@@ -26,7 +26,7 @@ use self::{
     outcome::{apply_collision_shake, despawn_failure_overlay, despawn_success_overlay, failure_auto_reset, spawn_failure_overlay, spawn_success_overlay, success_button_interaction},
     player::{
         player_clock::player_clock_update,
-        player_sprite::{launch_aim_system, launch_fire_system, launch_power_system, launch_visual_system},
+        player_sprite::{launch_aim_system, launch_fire_system, launch_power_system, launch_preview_system, launch_visual_system},
     },
     shared::{
         systems::{
@@ -90,7 +90,14 @@ impl Plugin for GamePlugin {
             // Launch mechanic (aim, power, fire, visuals) while paused.
             .add_systems(
                 Update,
-                (launch_aim_system, launch_power_system, launch_fire_system, launch_visual_system, translation_update)
+                (
+                    launch_aim_system,
+                    launch_power_system,
+                    launch_fire_system,
+                    launch_visual_system,
+                    launch_preview_system,
+                    translation_update,
+                )
                     .run_if(in_state(AppState::InGame))
                     .run_if(in_state(GameState::Paused)),
             )

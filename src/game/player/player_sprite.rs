@@ -24,7 +24,59 @@ pub struct PlayerSpriteBundle {
     pub trail_buffer: TrailBuffer,
 }
 
+// Constants.
+
+/// Length of the dotted aim-preview line (pixels).
+const PREVIEW_LINE_LENGTH: f32 = 300.0;
+/// Length of each dash segment in the preview line (pixels).
+const PREVIEW_DASH_LENGTH: f32 = 10.0;
+/// Gap between dash segments in the preview line (pixels).
+const PREVIEW_GAP_LENGTH: f32 = 8.0;
+
 // Systems.
+
+/// Draws a dotted aim-preview line from the player toward the cursor while idle.
+///
+/// Runs every frame during `GameState::Paused` when `LaunchState::Idle`.
+/// The line is rendered as a series of short dash segments via `Gizmos`.
+pub fn launch_preview_system(
+    launch_state: Res<LaunchState>,
+    player_query: Query<&Transform, With<Player>>,
+    window_query: Query<&Window, With<PrimaryWindow>>,
+    camera_query: Query<(&Camera, &GlobalTransform), With<Camera2d>>,
+    mut gizmos: Gizmos,
+) {
+    if *launch_state != LaunchState::Idle {
+        return;
+    }
+
+    let Ok(player_transform) = player_query.single() else { return };
+    let Ok(window) = window_query.single() else { return };
+    let Some(cursor_position) = window.cursor_position() else { return };
+    let Ok((camera, camera_transform)) = camera_query.single() else { return };
+    let Ok(cursor_world) = camera.viewport_to_world_2d(camera_transform, cursor_position) else {
+        return;
+    };
+
+    let player_pos = player_transform.translation.truncate();
+    let direction = (cursor_world - player_pos).normalize_or_zero();
+
+    if direction == Vec2::ZERO {
+        return;
+    }
+
+    let color = Color::srgba(1.0, 1.0, 1.0, 0.3);
+    let stride = PREVIEW_DASH_LENGTH + PREVIEW_GAP_LENGTH;
+    let mut offset = 0.0;
+
+    while offset < PREVIEW_LINE_LENGTH {
+        let dash_end = (offset + PREVIEW_DASH_LENGTH).min(PREVIEW_LINE_LENGTH);
+        let start = player_pos + direction * offset;
+        let end = player_pos + direction * dash_end;
+        gizmos.line_2d(start, end, color);
+        offset += stride;
+    }
+}
 
 /// Phase 1: On mouse press, compute angle from player to cursor and lock the aim direction.
 pub fn launch_aim_system(
