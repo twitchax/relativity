@@ -48,7 +48,7 @@ acceptance_tests:
   - id: uat-008
     name: "Power maps to 0.1c–0.99c range with non-linear (exponential ease-in) curve"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
   - id: uat-009
     name: "Old bottom-center power bar UI no longer appears"
     command: cargo make uat
@@ -416,4 +416,22 @@ A new cancel path is added from any non-Idle state back to Idle via right-click 
     - `cancel_launching_via_escape`: Escape during Launching → Idle
     - `cancel_noop_when_idle`: cancel is no-op when already Idle
   - All tests exercise `launch_cancel_system` via `run_system_once` and assert `LaunchState` resets to `Idle`.
+  - `cargo make uat` passed — 320 tests, 320 passed, 0 skipped.
+
+## 2026-02-14 — uat-008 Verification
+- **UAT**: Power maps to 0.1c–0.99c range with non-linear (exponential ease-in) curve
+- **Status**: ✅ Verified
+- **Method**: Existing test
+- **Details**:
+  - 6 unit tests in `src/game/player/player_sprite.rs` directly test `map_power_nonlinear`:
+    - `nonlinear_zero_gives_min_fraction`: verifies `map_power_nonlinear(0.0) ≈ MIN_POWER_FRACTION` (0.1/0.99 ≈ 0.101), mapping to 0.1c
+    - `nonlinear_one_gives_one`: verifies `map_power_nonlinear(1.0) = 1.0`, mapping to 0.99c
+    - `nonlinear_clamps_negative` / `nonlinear_clamps_above_one`: boundary clamping
+    - `nonlinear_monotonically_increasing`: confirms ease-in curve is strictly increasing
+    - `nonlinear_quarter_power_below_linear`: confirms quadratic curve yields less than linear at 0.25 (ease-in characteristic)
+  - 3 integration tests in `src/game/player/player_sprite.rs` verify end-to-end through `calculate_launch_velocity_from_angle_power`:
+    - `angle_power_zero_power_produces_minimum_velocity`: actual velocity at zero power = MIN_POWER_FRACTION × max_v (0.1c)
+    - `angle_power_clamped_at_max`: full power clamped correctly (0.99c)
+    - `angle_power_nonlinear_half_power_slower_than_linear`: non-linear curve verified through full pipeline
+  - Integration test `tests/e2e_launch_arc_gradient.rs::arc_fill_fraction_increases_with_power` further validates monotonic non-linear mapping.
   - `cargo make uat` passed — 320 tests, 320 passed, 0 skipped.
