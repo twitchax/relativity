@@ -78,6 +78,17 @@ pub fn launch_preview_system(
     }
 }
 
+/// Cancels the launch on right-click or Escape from any non-Idle state.
+pub fn launch_cancel_system(mouse_input: Res<ButtonInput<MouseButton>>, keyboard_input: Res<ButtonInput<KeyCode>>, mut launch_state: ResMut<LaunchState>) {
+    if *launch_state == LaunchState::Idle {
+        return;
+    }
+
+    if mouse_input.just_pressed(MouseButton::Right) || keyboard_input.just_pressed(KeyCode::Escape) {
+        *launch_state = LaunchState::Idle;
+    }
+}
+
 /// Phase 1: On mouse press, compute angle from player to cursor and lock the aim direction.
 pub fn launch_aim_system(
     mouse_input: Res<ButtonInput<MouseButton>>,

@@ -66,7 +66,7 @@ tasks:
   - id: T-002
     title: "Add right-click / Escape cancel support to launch systems"
     priority: 1
-    status: todo
+    status: done
     notes: "New system `launch_cancel_system` resets LaunchState to Idle on right-click or Escape from any non-Idle state."
   - id: T-003
     title: "Replace power bar with radial arc around player"
@@ -234,5 +234,14 @@ A new cancel path is added from any non-Idle state back to Idle via right-click 
   - Added `launch_preview_system` in `src/game/player/player_sprite.rs` — draws a dotted (dashed) aim-preview line from the player toward the cursor using Gizmos while `LaunchState::Idle`.
   - Registered `launch_preview_system` in the Paused launch systems tuple in `src/game/mod.rs`.
   - Added constants `PREVIEW_LINE_LENGTH`, `PREVIEW_DASH_LENGTH`, `PREVIEW_GAP_LENGTH` for the dash pattern.
+  - UAT: `cargo make uat` passed — 291 tests, 291 passed, 0 skipped.
+- **Constitution Compliance**: No violations.
+
+## 2026-02-14 — T-002 Completed
+- **Task**: Add right-click / Escape cancel support to launch systems
+- **Status**: ✅ Done
+- **Changes**:
+  - Added `launch_cancel_system` in `src/game/player/player_sprite.rs` — listens for `MouseButton::Right` or `KeyCode::Escape` just-pressed and resets `LaunchState` to `Idle` from any non-Idle state.
+  - Registered `launch_cancel_system` in the Paused launch systems tuple in `src/game/mod.rs`.
   - UAT: `cargo make uat` passed — 291 tests, 291 passed, 0 skipped.
 - **Constitution Compliance**: No violations.
