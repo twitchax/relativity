@@ -30,6 +30,10 @@ pub enum LaunchState {
 #[derive(Component)]
 pub struct PowerBarUi;
 
+/// Marker for the velocity readout text entity shown near the radial arc during launch.
+#[derive(Component)]
+pub struct VelocityReadout;
+
 /// Marker for the success overlay spawned when the player reaches the destination.
 #[derive(Component)]
 pub struct SuccessOverlay;

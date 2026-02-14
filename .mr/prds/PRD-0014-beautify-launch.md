@@ -81,7 +81,7 @@ tasks:
   - id: T-005
     title: "Add numeric velocity readout near the arc"
     priority: 2
-    status: todo
+    status: done
     notes: "Spawn a small text entity (or use Gizmos text if available) near the arc tip showing e.g. '0.45c'. Update each frame during Launching. Despawn on Idle."
   - id: T-006
     title: "Implement non-linear power curve (exponential ease-in, 0.1c–0.99c)"
@@ -281,5 +281,17 @@ A new cancel path is added from any non-Idle state back to Idle via right-click 
   - Added constants `TICK_HALF_LENGTH` (6px) and `TICK_VELOCITY_FRACTIONS` ([0.25, 0.5, 0.75, 0.9]) in `src/game/player/player_sprite.rs`.
   - Added `draw_arc_ticks` helper function that draws short radial line segments at angular positions corresponding to each velocity fraction on the arc.
   - Called `draw_arc_ticks` from the `Launching` arm of `launch_visual_system`.
+  - UAT: `cargo make uat` passed — 291 tests, 291 passed, 0 skipped.
+- **Constitution Compliance**: No violations.
+
+## 2026-02-14 — T-005 Completed
+- **Task**: Add numeric velocity readout near the arc
+- **Status**: ✅ Done
+- **Changes**:
+  - Added `VelocityReadout` marker component in `src/game/shared/types.rs`.
+  - Added `launch_readout_system` in `src/game/player/player_sprite.rs` — spawns a `Text2d` entity near the arc tip during `Launching` phase, showing the velocity as a fraction of c (e.g. "0.45c"). Despawns when not launching.
+  - Added constants `READOUT_OFFSET` (18px) and `READOUT_FONT_SIZE` (14px) for readout positioning and styling.
+  - Registered `launch_readout_system` in the Paused launch systems tuple in `src/game/mod.rs`.
+  - The readout uses `Orbitron-Regular.ttf` font and is color-matched to the power arc via `power_to_color`.
   - UAT: `cargo make uat` passed — 291 tests, 291 passed, 0 skipped.
 - **Constitution Compliance**: No violations.

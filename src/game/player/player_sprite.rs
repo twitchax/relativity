@@ -2,7 +2,7 @@ use super::shared::Player;
 use crate::{
     game::shared::{
         constants::MAX_PLAYER_LAUNCH_VELOCITY,
-        types::{GameItem, LaunchState, Position, Radius, RocketSprite, TrailBuffer, Velocity},
+        types::{GameItem, LaunchState, Position, Radius, RocketSprite, TrailBuffer, Velocity, VelocityReadout},
     },
     shared::{state::GameState, SCREEN_WIDTH_PX},
 };
@@ -50,6 +50,11 @@ const TICK_HALF_LENGTH: f32 = 6.0;
 /// Velocity fractions (of c) at which tick marks are drawn on the arc.
 /// Power = `velocity_fraction` / 0.99 maps each to an angular position.
 const TICK_VELOCITY_FRACTIONS: [f32; 4] = [0.25, 0.5, 0.75, 0.9];
+
+/// Offset beyond the arc radius at which the velocity readout text is placed.
+const READOUT_OFFSET: f32 = 18.0;
+/// Font size of the velocity readout text entity.
+const READOUT_FONT_SIZE: f32 = 14.0;
 
 // Helpers.
 
@@ -304,6 +309,59 @@ pub fn launch_visual_system(launch_state: Res<LaunchState>, player_query: Query<
             draw_arc_ticks(&mut gizmos, player_pos, arc_rotation_rad);
         }
         LaunchState::Idle => {}
+    }
+}
+
+/// Manages the velocity readout text entity near the radial arc.
+///
+/// Spawns a `Text2d` with `VelocityReadout` marker when `Launching`, updates its
+/// content and position each frame, and despawns it in any other state.
+#[allow(clippy::type_complexity)]
+pub fn launch_readout_system(
+    launch_state: Res<LaunchState>,
+    player_query: Query<&Transform, With<Player>>,
+    mut readout_query: Query<(Entity, &mut Text2d, &mut Transform), (With<VelocityReadout>, Without<Player>)>,
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+) {
+    let LaunchState::Launching { power, .. } = *launch_state else {
+        // Despawn readout when not launching.
+        for (entity, _, _) in &readout_query {
+            commands.entity(entity).despawn();
+        }
+        return;
+    };
+
+    let Ok(player_transform) = player_query.single() else { return };
+    let player_pos = player_transform.translation.truncate();
+
+    let velocity_fraction = power * 0.99;
+    let text = format!("{velocity_fraction:.2}c");
+
+    // Position the readout at the tip of the filled arc, just outside.
+    let arc_rotation_rad = -3.0 * std::f32::consts::FRAC_PI_4;
+    let filled_angle = power * MAX_ARC_ANGLE;
+    let tip_angle = arc_rotation_rad + filled_angle * 0.5;
+    let readout_pos = player_pos + Vec2::new(tip_angle.cos(), tip_angle.sin()) * (ARC_RADIUS + READOUT_OFFSET);
+
+    if let Ok((_, mut text_component, mut transform)) = readout_query.single_mut() {
+        // Update existing readout.
+        *text_component = Text2d::new(text);
+        transform.translation = readout_pos.extend(10.0);
+    } else {
+        // Spawn new readout entity.
+        let color = power_to_color(power);
+        commands.spawn((
+            VelocityReadout,
+            Text2d::new(text),
+            TextFont {
+                font: asset_server.load("fonts/Orbitron-Regular.ttf"),
+                font_size: READOUT_FONT_SIZE,
+                ..Default::default()
+            },
+            TextColor(color),
+            Transform::from_translation(readout_pos.extend(10.0)),
+        ));
     }
 }
 
