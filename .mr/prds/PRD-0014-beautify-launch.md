@@ -52,7 +52,7 @@ acceptance_tests:
   - id: uat-009
     name: "Old bottom-center power bar UI no longer appears"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
   - id: uat-010
     name: "All existing launch unit tests pass or are updated to match new behavior"
     command: cargo make test
@@ -435,3 +435,13 @@ A new cancel path is added from any non-Idle state back to Idle via right-click 
     - `angle_power_nonlinear_half_power_slower_than_linear`: non-linear curve verified through full pipeline
   - Integration test `tests/e2e_launch_arc_gradient.rs::arc_fill_fraction_increases_with_power` further validates monotonic non-linear mapping.
   - `cargo make uat` passed — 320 tests, 320 passed, 0 skipped.
+
+## 2026-02-14 — uat-009 Verification
+- **UAT**: Old bottom-center power bar UI no longer appears
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Created `tests/e2e_no_power_bar.rs` with one test:
+    - `no_power_bar_ui_nodes_spawned_during_launching`: enters Launching state, runs `launch_visual_system`, and asserts no new bevy_ui `Node` entities are spawned — confirming the old `PowerBarUi` entity is gone and the replacement radial arc uses Gizmos only.
+  - Also verified via `grep` that `PowerBarUi` and `spawn_or_update_power_bar` no longer exist anywhere in source code (only referenced in PRD history).
+  - `cargo make uat` passed — 321 tests, 321 passed, 0 skipped.
