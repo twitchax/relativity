@@ -31,28 +31,28 @@ cargo make uat
 
 All dev/CI workflows route through `cargo make`. Key tasks:
 
-| Task | Description |
-|------|-------------|
-| `fmt` | Format code with rustfmt |
-| `fmt-check` | Check formatting without modifying |
-| `clippy` | Run clippy with `-D warnings` |
-| `build` | Debug build |
-| `build-release` | Release build |
-| `test` | Run tests with nextest |
-| `test-cargo` | Fallback: run tests with `cargo test` |
-| `ci` | Full CI pipeline (fmt-check + clippy + test) |
-| `uat` | The one true gate (runs `ci`) |
-| `codecov` | Generate LCOV coverage report |
-| `codecov-html` | Generate HTML coverage report |
-| `build-linux` | Cross-compile for `x86_64-unknown-linux-gnu` |
-| `build-windows` | Cross-compile for `x86_64-pc-windows-gnu` |
-| `build-macos` | Build for `aarch64-apple-darwin` |
-| `build-web` | Build WASM via Trunk |
-| `changelog` | Generate CHANGELOG.md via git-cliff |
-| `release` | Full release pipeline (CI → changelog → bump → push) |
-| `github-release` | Create GitHub release with artifacts |
-| `publish-all` | Full publish pipeline (GitHub release) |
-| `clean` | Run `cargo clean` |
+| Task             | Description                                          |
+| ---------------- | ---------------------------------------------------- |
+| `fmt`            | Format code with rustfmt                             |
+| `fmt-check`      | Check formatting without modifying                   |
+| `clippy`         | Run clippy with `-D warnings`                        |
+| `build`          | Debug build                                          |
+| `build-release`  | Release build                                        |
+| `test`           | Run tests with nextest                               |
+| `test-cargo`     | Fallback: run tests with `cargo test`                |
+| `ci`             | Full CI pipeline (fmt-check + clippy + test)         |
+| `uat`            | The one true gate (runs `ci`)                        |
+| `codecov`        | Generate LCOV coverage report                        |
+| `codecov-html`   | Generate HTML coverage report                        |
+| `build-linux`    | Cross-compile for `x86_64-unknown-linux-gnu`         |
+| `build-windows`  | Cross-compile for `x86_64-pc-windows-gnu`            |
+| `build-macos`    | Build for `aarch64-apple-darwin`                     |
+| `build-web`      | Build WASM via Trunk                                 |
+| `changelog`      | Generate CHANGELOG.md via git-cliff                  |
+| `release`        | Full release pipeline (CI → changelog → bump → push) |
+| `github-release` | Create GitHub release with artifacts                 |
+| `publish-all`    | Full publish pipeline (GitHub release)               |
+| `clean`          | Run `cargo clean`                                    |
 
 ## Conventions for Agents
 

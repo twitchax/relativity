@@ -3,7 +3,6 @@ on: [push, pull_request]
 name: Build and Test
 
 jobs:
-
   test:
     name: Test
     runs-on: ubuntu-latest
