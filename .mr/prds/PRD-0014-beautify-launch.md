@@ -24,7 +24,7 @@ acceptance_tests:
   - id: uat-002
     name: "Click locks aim direction and transitions LaunchState to AimLocked"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
   - id: uat-003
     name: "Drag along aim direction fills radial arc around player with correct color gradient"
     command: cargo make uat
@@ -342,3 +342,13 @@ A new cancel path is added from any non-Idle state back to Idle via right-click 
     - `preview_line_skipped_when_not_idle`: confirms the system early-returns (no drawing) in `AimLocked` and `Launching` states.
   - Key technique: Bevy 0.18 `Window::set_physical_cursor_position` and manual `Camera.computed` setup allow `viewport_to_world_2d` to succeed in headless tests.
   - `cargo make uat` passed — 308 tests, 308 passed, 0 skipped.
+
+## 2026-02-14 — uat-002 Verification
+- **UAT**: Click locks aim direction and transitions LaunchState to AimLocked
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Created `tests/e2e_launch_aim_lock.rs` with two tests:
+    - `click_locks_aim_direction`: spawns a headless window with injected cursor position and camera, simulates a left-click via `ButtonInput<MouseButton>`, runs `launch_aim_system` via `run_system_once`, and asserts LaunchState transitions from Idle to AimLocked with a finite aim angle.
+    - `click_does_not_re_aim_when_already_locked`: confirms the system early-returns when LaunchState is already AimLocked, preserving the original angle.
+  - `cargo make uat` passed — 310 tests, 310 passed, 0 skipped.
