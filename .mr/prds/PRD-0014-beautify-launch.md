@@ -28,7 +28,7 @@ acceptance_tests:
   - id: uat-003
     name: "Drag along aim direction fills radial arc around player with correct color gradient"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
   - id: uat-004
     name: "Arc tick marks appear at 0.25c, 0.5c, 0.75c, and 0.9c"
     command: cargo make uat
@@ -352,3 +352,15 @@ A new cancel path is added from any non-Idle state back to Idle via right-click 
     - `click_locks_aim_direction`: spawns a headless window with injected cursor position and camera, simulates a left-click via `ButtonInput<MouseButton>`, runs `launch_aim_system` via `run_system_once`, and asserts LaunchState transitions from Idle to AimLocked with a finite aim angle.
     - `click_does_not_re_aim_when_already_locked`: confirms the system early-returns when LaunchState is already AimLocked, preserving the original angle.
   - `cargo make uat` passed — 310 tests, 310 passed, 0 skipped.
+
+## 2026-02-14 — uat-003 Verification
+- **UAT**: Drag along aim direction fills radial arc around player with correct color gradient
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Created `tests/e2e_launch_arc_gradient.rs` with three tests:
+    - `arc_fills_at_increasing_power_levels_without_panic`: runs `launch_visual_system` in Launching state at five power levels (0.0–1.0), exercising the filled-arc + color gradient code path.
+    - `arc_fill_fraction_increases_with_power`: asserts `map_power_nonlinear` returns monotonically increasing fill fractions across the power sweep.
+    - `color_gradient_transitions_cyan_to_red`: asserts the color gradient via `power_to_color` transitions from cyan (low power) to red (full power) with non-decreasing red channel.
+  - Widened `map_power_nonlinear` and `power_to_color` from `pub(crate)` to `pub` (with `#[must_use]`) so integration tests can call them directly.
+  - `cargo make uat` passed — 313 tests, 313 passed, 0 skipped.

@@ -66,7 +66,8 @@ const READOUT_FONT_SIZE: f32 = 14.0;
 /// Result × `max_velocity` (0.99c) gives the launched velocity:
 /// - raw 0.0 → ≈0.101 → 0.1c
 /// - raw 1.0 → 1.0   → 0.99c
-pub(crate) fn map_power_nonlinear(raw_power: f32) -> f32 {
+#[must_use]
+pub fn map_power_nonlinear(raw_power: f32) -> f32 {
     let p = raw_power.clamp(0.0, 1.0);
     MIN_POWER_FRACTION + (1.0 - MIN_POWER_FRACTION) * p * p
 }
@@ -250,7 +251,8 @@ pub fn launch_fire_system(
 }
 
 /// Maps power (0.0–1.0) to a color gradient: cyan → orange → red.
-pub(crate) fn power_to_color(power: f32) -> Color {
+#[must_use]
+pub fn power_to_color(power: f32) -> Color {
     let t = power.clamp(0.0, 1.0);
 
     let (r, g, b) = if t < 0.5 {
