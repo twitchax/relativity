@@ -20,7 +20,7 @@ acceptance_tests:
   - id: uat-001
     name: "Dotted aim preview line renders on hover before any click"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
   - id: uat-002
     name: "Click locks aim direction and transitions LaunchState to AimLocked"
     command: cargo make uat
@@ -331,3 +331,14 @@ A new cancel path is added from any non-Idle state back to Idle via right-click 
   - No references to either symbol remained in source or test code.
   - UAT: `cargo make uat` passed — 306 tests, 306 passed, 0 skipped.
 - **Constitution Compliance**: No violations.
+
+## 2026-02-14 — uat-001 Verification
+- **UAT**: Dotted aim preview line renders on hover before any click
+- **Status**: ✅ Verified
+- **Method**: New test
+- **Details**:
+  - Created `tests/e2e_launch_preview.rs` with two tests:
+    - `preview_line_draws_on_hover_in_idle`: spawns a headless `PrimaryWindow` with injected cursor position and a `Camera2d` with pre-computed projection values, then runs `launch_preview_system` via `run_system_once` — exercises the full `draw_dashed_line` code path without panicking.
+    - `preview_line_skipped_when_not_idle`: confirms the system early-returns (no drawing) in `AimLocked` and `Launching` states.
+  - Key technique: Bevy 0.18 `Window::set_physical_cursor_position` and manual `Camera.computed` setup allow `viewport_to_world_2d` to succeed in headless tests.
+  - `cargo make uat` passed — 308 tests, 308 passed, 0 skipped.
