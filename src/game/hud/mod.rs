@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use bevy::camera::ScalingMode;
 use bevy::ecs::hierarchy::ChildSpawnerCommands;
 use bevy::prelude::*;
 use bevy_lunex::prelude::*;
@@ -10,7 +11,6 @@ use crate::game::player::shared::Player;
 use crate::game::shared::constants::C;
 use crate::game::shared::types::{Clock, GameItem, GravitationalGamma, PendingLevelReset, PlayerHud, SimRate, Velocity, VelocityGamma};
 use crate::shared::state::{AppState, GameState};
-use crate::shared::{SCREEN_HEIGHT_PX, SCREEN_WIDTH_PX};
 
 // ────────────────────────────────────────────────────────────────────
 // Cockpit Panel Visual Language (T-001)
@@ -208,7 +208,11 @@ impl Plugin for HudPlugin {
         // and despawn_level recursively cleans up all children.
         app.add_systems(OnEnter(AppState::InGame), spawn_hud_root)
             // Respawn the HUD after a level reset (PendingLevelReset despawns all GameItem entities).
-            .add_systems(OnEnter(GameState::Paused), spawn_hud_root.run_if(resource_exists::<PendingLevelReset>));
+            .add_systems(OnEnter(GameState::Paused), spawn_hud_root.run_if(resource_exists::<PendingLevelReset>))
+            // Sync HUD root dimension from the camera's ScalingMode::Fixed projection.
+            // bevy_lunex's built-in UiFetchFromCamera uses pixel viewport size, which
+            // doesn't account for ScalingMode::Fixed. This system corrects that.
+            .add_systems(Update, sync_hud_dimension_from_camera.run_if(in_state(AppState::InGame)));
     }
 }
 
@@ -238,82 +242,75 @@ fn spawn_hud_root(mut commands: Commands, asset_server: Res<AssetServer>) {
         ..Default::default()
     };
 
-    // Position the layout root at the camera center so bevy_lunex
-    // world-space coordinates align with the visible viewport.
-    #[allow(clippy::cast_possible_truncation)]
-    let root_transform = Transform::from_xyz(SCREEN_WIDTH_PX as f32 / 2.0, SCREEN_HEIGHT_PX as f32 / 2.0, 0.0);
-
-    commands
-        .spawn((GameItem, HudRoot, UiLayoutRoot::new_2d(), UiFetchFromCamera::<0>, root_transform))
-        .with_children(|root| {
-            // Bottom HUD bar: occupies bottom 12% of screen.
-            // Only the root carries GameItem; children are despawned
-            // recursively when the root is removed by despawn_level.
-            //
-            // UiDepth must stay low: bevy_lunex sets accumulated depth as local z,
-            // and Bevy's transform propagation adds parent z + child z. The
-            // default orthographic camera has far=1000, so total global z must
-            // stay well below that. Depth 10 renders above game sprites (z ≈ 0)
-            // while keeping grandchildren (10 → 11 → 12) safely in range.
-            root.spawn((HudBar, UiLayout::boundary().pos1(Rl((0.0, 88.0))).pos2(Rl(100.0)).pack(), UiDepth::Add(10.0)))
-                .with_children(|bar| {
-                    // Glow overlays — slightly oversized, semi-transparent panel sprites
-                    // behind the main panels, pulsing slowly for a breathing border glow.
-                    bar.spawn((
-                        HudGlow {
-                            color: PANEL_BORDER_GLOW,
-                            base_alpha: 0.10,
-                            amplitude: 0.05,
-                            speed: 0.8,
-                            offset: 0.0,
-                        },
-                        UiLayout::boundary().pos1(Rl((-0.5, 0.0))).pos2(Rl((61.0, 100.0))).pack(),
-                        UiDepth::Add(-0.5),
-                        Sprite {
-                            image: player_panel_image.clone(),
-                            image_mode: SpriteImageMode::Sliced(TextureSlicer {
-                                border: BorderRect::all(PANEL_BORDER_PX),
-                                ..Default::default()
-                            }),
-                            color: Color::srgba(0.30, 0.70, 1.00, 0.10),
+    commands.spawn((GameItem, HudRoot, UiLayoutRoot::new_2d())).with_children(|root| {
+        // Bottom HUD bar: occupies bottom 12% of screen.
+        // Only the root carries GameItem; children are despawned
+        // recursively when the root is removed by despawn_level.
+        //
+        // UiDepth must stay low: bevy_lunex sets accumulated depth as local z,
+        // and Bevy's transform propagation adds parent z + child z. The
+        // default orthographic camera has far=1000, so total global z must
+        // stay well below that. Depth 10 renders above game sprites (z ≈ 0)
+        // while keeping grandchildren (10 → 11 → 12) safely in range.
+        root.spawn((HudBar, UiLayout::boundary().pos1(Rl((0.0, 88.0))).pos2(Rl(100.0)).pack(), UiDepth::Add(10.0)))
+            .with_children(|bar| {
+                // Glow overlays — slightly oversized, semi-transparent panel sprites
+                // behind the main panels, pulsing slowly for a breathing border glow.
+                bar.spawn((
+                    HudGlow {
+                        color: PANEL_BORDER_GLOW,
+                        base_alpha: 0.10,
+                        amplitude: 0.05,
+                        speed: 0.8,
+                        offset: 0.0,
+                    },
+                    UiLayout::boundary().pos1(Rl((-0.5, 0.0))).pos2(Rl((61.0, 100.0))).pack(),
+                    UiDepth::Add(-0.5),
+                    Sprite {
+                        image: player_panel_image.clone(),
+                        image_mode: SpriteImageMode::Sliced(TextureSlicer {
+                            border: BorderRect::all(PANEL_BORDER_PX),
                             ..Default::default()
-                        },
-                    ));
+                        }),
+                        color: Color::srgba(0.30, 0.70, 1.00, 0.10),
+                        ..Default::default()
+                    },
+                ));
 
-                    bar.spawn((
-                        HudGlow {
-                            color: Color::srgba(0.25, 0.65, 0.85, 1.0),
-                            base_alpha: 0.08,
-                            amplitude: 0.04,
-                            speed: 0.8,
-                            offset: std::f32::consts::PI,
-                        },
-                        UiLayout::boundary().pos1(Rl((62.0, 0.0))).pos2(Rl((100.5, 100.0))).pack(),
-                        UiDepth::Add(-0.5),
-                        Sprite {
-                            image: observer_panel_image.clone(),
-                            image_mode: SpriteImageMode::Sliced(TextureSlicer {
-                                border: BorderRect::all(PANEL_BORDER_PX),
-                                ..Default::default()
-                            }),
-                            color: Color::srgba(0.25, 0.65, 0.85, 0.08),
+                bar.spawn((
+                    HudGlow {
+                        color: Color::srgba(0.25, 0.65, 0.85, 1.0),
+                        base_alpha: 0.08,
+                        amplitude: 0.04,
+                        speed: 0.8,
+                        offset: std::f32::consts::PI,
+                    },
+                    UiLayout::boundary().pos1(Rl((62.0, 0.0))).pos2(Rl((100.5, 100.0))).pack(),
+                    UiDepth::Add(-0.5),
+                    Sprite {
+                        image: observer_panel_image.clone(),
+                        image_mode: SpriteImageMode::Sliced(TextureSlicer {
+                            border: BorderRect::all(PANEL_BORDER_PX),
                             ..Default::default()
-                        },
-                    ));
+                        }),
+                        color: Color::srgba(0.25, 0.65, 0.85, 0.08),
+                        ..Default::default()
+                    },
+                ));
 
-                    // Left panel — player stats (left 60%, with margin).
-                    bar.spawn((PlayerPanel, UiLayout::boundary().pos1(Rl((1.0, 4.0))).pos2(Rl((59.0, 96.0))).pack(), player_panel_sprite()))
-                        .with_children(|panel| {
-                            spawn_player_labels(panel, &font, &display_font);
-                        });
+                // Left panel — player stats (left 60%, with margin).
+                bar.spawn((PlayerPanel, UiLayout::boundary().pos1(Rl((1.0, 4.0))).pos2(Rl((59.0, 96.0))).pack(), player_panel_sprite()))
+                    .with_children(|panel| {
+                        spawn_player_labels(panel, &font, &display_font);
+                    });
 
-                    // Right panel — observer clock (right 35%, with margin).
-                    bar.spawn((ObserverPanel, UiLayout::boundary().pos1(Rl((64.0, 4.0))).pos2(Rl((99.0, 96.0))).pack(), observer_panel_sprite()))
-                        .with_children(|panel| {
-                            spawn_observer_labels(panel, &font, &display_font);
-                        });
-                });
-        });
+                // Right panel — observer clock (right 35%, with margin).
+                bar.spawn((ObserverPanel, UiLayout::boundary().pos1(Rl((64.0, 4.0))).pos2(Rl((99.0, 96.0))).pack(), observer_panel_sprite()))
+                    .with_children(|panel| {
+                        spawn_observer_labels(panel, &font, &display_font);
+                    });
+            });
+    });
 }
 
 /// Spawns labeled readouts for the player stats panel with visual hierarchy.
@@ -731,4 +728,26 @@ pub fn hud_glow_pulse_system(time: Res<Time>, mut query: Query<(&HudGlow, &mut S
         let alpha = (glow.base_alpha + glow.amplitude * t.sin()).clamp(0.0, 1.0);
         sprite.color = Color::srgba(c.red, c.green, c.blue, alpha);
     }
+}
+
+/// Syncs the HUD root's `Dimension` and `Transform` with the camera's projection.
+///
+/// `bevy_lunex`'s built-in `UiFetchFromCamera` reads `camera.logical_viewport_size()`
+/// (pixel-based) which does not account for `ScalingMode::Fixed`. This system
+/// correctly extracts the fixed world-space dimensions and centers the HUD on
+/// the camera's position so the layout always fills the visible viewport.
+#[allow(clippy::type_complexity)]
+pub fn sync_hud_dimension_from_camera(camera_query: Query<(&Projection, &Transform), (With<Camera2d>, Without<HudRoot>)>, mut hud_query: Query<(&mut Dimension, &mut Transform), With<HudRoot>>) {
+    let Ok((projection, cam_transform)) = camera_query.single() else { return };
+    let Ok((mut dimension, mut hud_transform)) = hud_query.single_mut() else { return };
+
+    let Projection::Orthographic(ortho) = projection else { return };
+
+    let size = match ortho.scaling_mode {
+        ScalingMode::Fixed { width, height } => Vec2::new(width, height),
+        _ => return,
+    };
+
+    **dimension = size;
+    hud_transform.translation = cam_transform.translation;
 }
