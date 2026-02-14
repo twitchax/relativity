@@ -61,9 +61,11 @@ $ cargo make build && cargo run
 
 ### Controls
 
-- **Click** to lock your launch angle (from the player toward the cursor).
-- **Drag** to set launch power (longer drag = more power).
+- **Hover** to preview your aim direction (dotted line from the player toward the cursor).
+- **Click** to lock your launch angle.
+- **Drag** to set launch power — a radial arc around the player fills from cyan (0.1 c) to red (0.99 c) with tick marks at 0.25 c, 0.5 c, 0.75 c, and 0.9 c.
 - **Release** to fire.
+- **Right-click** or **Escape** to cancel the launch from any phase.
 - **Space** to pause/resume the simulation.
 - **+/−** to adjust simulation speed (0.25×–2.00×).
 - **G** to toggle the gravity grid display.

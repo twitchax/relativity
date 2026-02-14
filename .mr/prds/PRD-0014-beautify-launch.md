@@ -1,108 +1,108 @@
 ---
 id: PRD-0014
-title: "Beautify Launch: Intuitive Aim Preview and Radial Power Arc"
-status: active
+title: 'Beautify Launch: Intuitive Aim Preview and Radial Power Arc'
+status: done
 owner: twitchax
 created: 2026-02-14
 updated: 2026-02-14
 principles:
-  - "Launch interaction should feel intuitive without instructions"
-  - "Power feedback should be spatially co-located with the player, not a separate HUD element"
-  - "Preview aim direction on hover so the player can plan before committing"
-  - "Non-linear power curve gives fine control at low speeds and dramatic feel at high speeds"
-  - "Minimal changes to existing state machine and pure functions"
+- Launch interaction should feel intuitive without instructions
+- Power feedback should be spatially co-located with the player, not a separate HUD element
+- Preview aim direction on hover so the player can plan before committing
+- Non-linear power curve gives fine control at low speeds and dramatic feel at high speeds
+- Minimal changes to existing state machine and pure functions
 references:
-  - name: "PRD-0009: Improve Visuals (original launch UX)"
-    url: ".mr/prds/PRD-0009-improve-visuals.md"
-  - name: "Bevy Gizmos documentation"
-    url: "https://docs.rs/bevy/latest/bevy/gizmos/index.html"
+- name: 'PRD-0009: Improve Visuals (original launch UX)'
+  url: .mr/prds/PRD-0009-improve-visuals.md
+- name: Bevy Gizmos documentation
+  url: https://docs.rs/bevy/latest/bevy/gizmos/index.html
 acceptance_tests:
-  - id: uat-001
-    name: "Dotted aim preview line renders on hover before any click"
-    command: cargo make uat
-    uat_status: verified
-  - id: uat-002
-    name: "Click locks aim direction and transitions LaunchState to AimLocked"
-    command: cargo make uat
-    uat_status: verified
-  - id: uat-003
-    name: "Drag along aim direction fills radial arc around player with correct color gradient"
-    command: cargo make uat
-    uat_status: verified
-  - id: uat-004
-    name: "Arc tick marks appear at 0.25c, 0.5c, 0.75c, and 0.9c"
-    command: cargo make uat
-    uat_status: verified
-  - id: uat-005
-    name: "Numeric velocity readout (e.g. 0.45c) displays near the arc during Launching phase"
-    command: cargo make uat
-    uat_status: verified
-  - id: uat-006
-    name: "Release fires player at correct angle and power; GameState transitions to Running"
-    command: cargo make uat
-    uat_status: verified
-  - id: uat-007
-    name: "Right-click or Escape cancels launch at any phase and returns to Idle"
-    command: cargo make uat
-    uat_status: verified
-  - id: uat-008
-    name: "Power maps to 0.1c–0.99c range with non-linear (exponential ease-in) curve"
-    command: cargo make uat
-    uat_status: verified
-  - id: uat-009
-    name: "Old bottom-center power bar UI no longer appears"
-    command: cargo make uat
-    uat_status: verified
-  - id: uat-010
-    name: "All existing launch unit tests pass or are updated to match new behavior"
-    command: cargo make test
-    uat_status: verified
+- id: uat-001
+  name: Dotted aim preview line renders on hover before any click
+  command: cargo make uat
+  uat_status: verified
+- id: uat-002
+  name: Click locks aim direction and transitions LaunchState to AimLocked
+  command: cargo make uat
+  uat_status: verified
+- id: uat-003
+  name: Drag along aim direction fills radial arc around player with correct color gradient
+  command: cargo make uat
+  uat_status: verified
+- id: uat-004
+  name: Arc tick marks appear at 0.25c, 0.5c, 0.75c, and 0.9c
+  command: cargo make uat
+  uat_status: verified
+- id: uat-005
+  name: Numeric velocity readout (e.g. 0.45c) displays near the arc during Launching phase
+  command: cargo make uat
+  uat_status: verified
+- id: uat-006
+  name: Release fires player at correct angle and power; GameState transitions to Running
+  command: cargo make uat
+  uat_status: verified
+- id: uat-007
+  name: Right-click or Escape cancels launch at any phase and returns to Idle
+  command: cargo make uat
+  uat_status: verified
+- id: uat-008
+  name: Power maps to 0.1c–0.99c range with non-linear (exponential ease-in) curve
+  command: cargo make uat
+  uat_status: verified
+- id: uat-009
+  name: Old bottom-center power bar UI no longer appears
+  command: cargo make uat
+  uat_status: verified
+- id: uat-010
+  name: All existing launch unit tests pass or are updated to match new behavior
+  command: cargo make test
+  uat_status: verified
 tasks:
-  - id: T-001
-    title: "Add hover preview system (dotted aim line on mouse move, before click)"
-    priority: 1
-    status: done
-    notes: "New system `launch_preview_system` runs during GameState::Paused + LaunchState::Idle. Renders a thin dotted line from player toward cursor using Gizmos. Runs every frame on cursor move."
-  - id: T-002
-    title: "Add right-click / Escape cancel support to launch systems"
-    priority: 1
-    status: done
-    notes: "New system `launch_cancel_system` resets LaunchState to Idle on right-click or Escape from any non-Idle state."
-  - id: T-003
-    title: "Replace power bar with radial arc around player"
-    priority: 1
-    status: done
-    notes: "Remove `spawn_or_update_power_bar` and `PowerBarUi`. In `launch_visual_system`, draw a radial arc (Gizmos::arc_2d) centered on the player. Arc spans 0–270° proportional to power. Color gradient: cyan at 0.1c → orange → red at 0.99c."
-  - id: T-004
-    title: "Add tick marks on the arc at 0.25c, 0.5c, 0.75c, 0.9c"
-    priority: 2
-    status: done
-    notes: "Short radial lines at fixed angular positions corresponding to those velocities. Rendered via Gizmos during Launching phase."
-  - id: T-005
-    title: "Add numeric velocity readout near the arc"
-    priority: 2
-    status: done
-    notes: "Spawn a small text entity (or use Gizmos text if available) near the arc tip showing e.g. '0.45c'. Update each frame during Launching. Despawn on Idle."
-  - id: T-006
-    title: "Implement non-linear power curve (exponential ease-in, 0.1c–0.99c)"
-    priority: 2
-    status: done
-    notes: "Replace linear power mapping. Raw power 0.0–1.0 from drag → apply exponential ease-in → map to 0.1c–0.99c. Update `calculate_launch_velocity_from_angle_power` or add a new mapping function. Minimum launch velocity is 0.1c."
-  - id: T-007
-    title: "Update launch_visual_system to use new arc + dotted line visuals"
-    priority: 1
-    status: done
-    notes: "Refactor `launch_visual_system` to render: AimLocked → solid direction line + empty arc outline; Launching → solid direction line (length scaled by power) + filled arc + tick marks + readout."
-  - id: T-008
-    title: "Update and add unit tests for new power curve and arc rendering logic"
-    priority: 3
-    status: done
-    notes: "Update existing tests for `calculate_launch_velocity_from_angle_power`. Add tests for non-linear mapping, 0.1c minimum, cancel behavior."
-  - id: T-009
-    title: "Clean up dead code (PowerBarUi, spawn_or_update_power_bar)"
-    priority: 3
-    status: done
-    notes: "Remove PowerBarUi component from types.rs, remove spawn_or_update_power_bar from player_sprite.rs, remove any references in mod.rs."
+- id: T-001
+  title: Add hover preview system (dotted aim line on mouse move, before click)
+  priority: 1
+  status: done
+  notes: New system `launch_preview_system` runs during GameState::Paused + LaunchState::Idle. Renders a thin dotted line from player toward cursor using Gizmos. Runs every frame on cursor move.
+- id: T-002
+  title: Add right-click / Escape cancel support to launch systems
+  priority: 1
+  status: done
+  notes: New system `launch_cancel_system` resets LaunchState to Idle on right-click or Escape from any non-Idle state.
+- id: T-003
+  title: Replace power bar with radial arc around player
+  priority: 1
+  status: done
+  notes: 'Remove `spawn_or_update_power_bar` and `PowerBarUi`. In `launch_visual_system`, draw a radial arc (Gizmos::arc_2d) centered on the player. Arc spans 0–270° proportional to power. Color gradient: cyan at 0.1c → orange → red at 0.99c.'
+- id: T-004
+  title: Add tick marks on the arc at 0.25c, 0.5c, 0.75c, 0.9c
+  priority: 2
+  status: done
+  notes: Short radial lines at fixed angular positions corresponding to those velocities. Rendered via Gizmos during Launching phase.
+- id: T-005
+  title: Add numeric velocity readout near the arc
+  priority: 2
+  status: done
+  notes: Spawn a small text entity (or use Gizmos text if available) near the arc tip showing e.g. '0.45c'. Update each frame during Launching. Despawn on Idle.
+- id: T-006
+  title: Implement non-linear power curve (exponential ease-in, 0.1c–0.99c)
+  priority: 2
+  status: done
+  notes: Replace linear power mapping. Raw power 0.0–1.0 from drag → apply exponential ease-in → map to 0.1c–0.99c. Update `calculate_launch_velocity_from_angle_power` or add a new mapping function. Minimum launch velocity is 0.1c.
+- id: T-007
+  title: Update launch_visual_system to use new arc + dotted line visuals
+  priority: 1
+  status: done
+  notes: 'Refactor `launch_visual_system` to render: AimLocked → solid direction line + empty arc outline; Launching → solid direction line (length scaled by power) + filled arc + tick marks + readout.'
+- id: T-008
+  title: Update and add unit tests for new power curve and arc rendering logic
+  priority: 3
+  status: done
+  notes: Update existing tests for `calculate_launch_velocity_from_angle_power`. Add tests for non-linear mapping, 0.1c minimum, cancel behavior.
+- id: T-009
+  title: Clean up dead code (PowerBarUi, spawn_or_update_power_bar)
+  priority: 3
+  status: done
+  notes: Remove PowerBarUi component from types.rs, remove spawn_or_update_power_bar from player_sprite.rs, remove any references in mod.rs.
 ---
 
 # Summary
@@ -454,3 +454,14 @@ A new cancel path is added from any non-Idle state back to Idle via right-click 
   - Ran `cargo make test` which executes the full test suite via nextest.
   - All 321 tests passed (321 passed, 0 skipped, 1 slow) in 8.2 seconds.
   - This confirms that all existing launch unit tests were updated during T-006/T-008 to match the new non-linear power curve behavior, and all new tests added throughout PRD-0014 (cancel, preview, arc, ticks, readout, no-power-bar) pass alongside the original tests.
+
+## 2026-02-14 — PRD Finalized
+- **Status**: ✅ Finalized
+- **Tasks Completed**: 9 tasks (T-001 through T-009)
+- **Outcome**: All tasks completed, acceptance tests passed (321/321 tests)
+- **Cleanup**: No cleanup required — no debug logging, temp files, or stale TODO comments found
+- **Summary**:
+  - Replaced the disconnected bottom-center power bar with a radial arc centered on the player, color-coded from cyan (0.1c) to red (0.99c), with tick marks at 0.25c, 0.5c, 0.75c, and 0.9c
+  - Added hover aim-preview (dotted line before click), numeric velocity readout during drag, and right-click/Escape cancel from any launch phase
+  - Implemented quadratic ease-in power curve mapping drag to 0.1c–0.99c, giving fine control at low speeds
+  - Removed all dead code (`PowerBarUi`, `spawn_or_update_power_bar`) and added 30 new tests covering every new system and helper function
