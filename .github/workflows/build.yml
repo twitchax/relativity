@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libasound2-dev portaudio19-dev build-essential libpulse-dev libdbus-1-dev libudev-dev libwayland-dev libxkbcommon-dev
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev portaudio19-dev build-essential libpulse-dev libdbus-1-dev libudev-dev libwayland-dev libxkbcommon-dev clang mold
       - name: Read toolchain
         id: read-toolchain
         run: echo "channel=$(grep '^channel' rust-toolchain.toml | sed 's/.*= *\"\(.*\)\"/\1/')" >> "$GITHUB_OUTPUT"
@@ -25,6 +25,8 @@ jobs:
           cache-bin: "false"
       - run: cargo binstall cargo-make --no-confirm
       - run: cargo make ci
+        env:
+          RUSTFLAGS: "-C linker=clang -C link-arg=-fuse-ld=mold"
 
   codecov:
     needs: test
@@ -33,7 +35,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libasound2-dev portaudio19-dev build-essential libpulse-dev libdbus-1-dev libudev-dev libwayland-dev libxkbcommon-dev
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev portaudio19-dev build-essential libpulse-dev libdbus-1-dev libudev-dev libwayland-dev libxkbcommon-dev clang mold
       - name: Read toolchain
         id: read-toolchain
         run: echo "channel=$(grep '^channel' rust-toolchain.toml | sed 's/.*= *\"\(.*\)\"/\1/')" >> "$GITHUB_OUTPUT"
@@ -47,6 +49,8 @@ jobs:
           cache-bin: "false"
       - run: cargo binstall cargo-make --no-confirm
       - run: cargo make codecov
+        env:
+          RUSTFLAGS: "-C linker=clang -C link-arg=-fuse-ld=mold"
       - uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -60,9 +64,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libasound2-dev portaudio19-dev build-essential libpulse-dev libdbus-1-dev libudev-dev libwayland-dev libxkbcommon-dev
-      - name: Install mold linker
-        run: sudo apt-get install -y clang mold
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev portaudio19-dev build-essential libpulse-dev libdbus-1-dev libudev-dev libwayland-dev libxkbcommon-dev clang mold
       - name: Read toolchain
         id: read-toolchain
         run: echo "channel=$(grep '^channel' rust-toolchain.toml | sed 's/.*= *\"\(.*\)\"/\1/')" >> "$GITHUB_OUTPUT"
@@ -142,6 +144,8 @@ jobs:
     name: Build and Deploy Web
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - name: Read toolchain

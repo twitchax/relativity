@@ -88,8 +88,10 @@ Strict clippy denies are enforced in `src/main.rs`:
 ### CI / Workflow Patterns
 
 - CI workflow (`.github/workflows/build.yml`) uses `cargo-make` tasks, not raw cargo commands. All jobs (test, codecov, platform builds, web deploy) are in this single file.
+- All Linux CI jobs install `clang` and `mold` and set `RUSTFLAGS="-C linker=clang -C link-arg=-fuse-ld=mold"` to avoid linker OOM when building 45+ test binaries with Bevy.
 - Rust toolchain is pinned in `rust-toolchain.toml` (single source of truth). Workflow files read the channel dynamically via a "Read toolchain" step — no hardcoded toolchain dates in workflow YAML.
 - Tools are installed via `cargo-binstall` (fast binary installs), not `cargo install`.
+- GitHub Pages deployment uses `peaceiris/actions-gh-pages@v4` in the `build_web` job (requires `permissions: contents: write`).
 - `.github/workflows/copilot-setup-steps.yml` sets up the environment for GitHub Copilot coding agents.
 - Changelog is generated with [git-cliff](https://git-cliff.org/) using `cliff.toml` config.
 
