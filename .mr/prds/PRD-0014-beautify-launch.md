@@ -40,7 +40,7 @@ acceptance_tests:
   - id: uat-006
     name: "Release fires player at correct angle and power; GameState transitions to Running"
     command: cargo make uat
-    uat_status: unverified
+    uat_status: verified
   - id: uat-007
     name: "Right-click or Escape cancels launch at any phase and returns to Idle"
     command: cargo make uat
@@ -387,4 +387,19 @@ A new cancel path is added from any non-Idle state back to Idle via right-click 
     - `readout_spawns_with_correct_text_during_launching`: enters Launching state, runs `launch_readout_system`, and asserts a `VelocityReadout` entity is spawned with text matching the expected "X.XXc" format derived from `map_power_nonlinear`.
     - `readout_despawns_when_idle`: spawns the readout in Launching, then returns to Idle and verifies the `VelocityReadout` entity is despawned.
     - `readout_updates_on_power_change`: spawns at low power, increases power, and verifies the text content updates to reflect the new velocity fraction.
+  - `cargo make uat` passed — 320 tests, 320 passed, 0 skipped.
+
+## 2026-02-14 — uat-006 Verification
+- **UAT**: Release fires player at correct angle and power; GameState transitions to Running
+- **Status**: ✅ Verified
+- **Method**: Existing test
+- **Details**:
+  - `tests/e2e_launch_state_machine.rs::launching_to_running_via_fire_system` (lines 94–141) already covers this acceptance criterion:
+    - Sets LaunchState to Launching with angle=π/4 (45°) and power=0.8
+    - Injects mouse release via `ButtonInput<MouseButton>`
+    - Runs `launch_fire_system` via `run_system_once`
+    - Asserts LaunchState resets to Idle
+    - Asserts GameState transitions to Running
+    - Asserts player velocity vx>0, vy>0 (correct angle), and vx/vy ≈ 1.0 (45° symmetry)
+  - `tests/e2e_launch_state_machine.rs::full_launch_state_machine_idle_to_running` (lines 176–206) provides additional coverage with a complete round-trip (Idle → AimLocked → Launching → Running).
   - `cargo make uat` passed — 320 tests, 320 passed, 0 skipped.
