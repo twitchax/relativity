@@ -76,7 +76,7 @@ tasks:
   - id: T-004
     title: "Add tick marks on the arc at 0.25c, 0.5c, 0.75c, 0.9c"
     priority: 2
-    status: todo
+    status: done
     notes: "Short radial lines at fixed angular positions corresponding to those velocities. Rendered via Gizmos during Launching phase."
   - id: T-005
     title: "Add numeric velocity readout near the arc"
@@ -271,5 +271,15 @@ A new cancel path is added from any non-Idle state back to Idle via right-click 
   - Launching state now draws a dotted extension beyond the power-scaled solid line, showing remaining potential range.
   - Refactored `launch_preview_system` to use the shared `draw_dashed_line` helper.
   - Enhanced doc comment on `launch_visual_system` documenting per-state rendering behavior.
+  - UAT: `cargo make uat` passed — 291 tests, 291 passed, 0 skipped.
+- **Constitution Compliance**: No violations.
+
+## 2026-02-14 — T-004 Completed
+- **Task**: Add tick marks on the arc at 0.25c, 0.5c, 0.75c, 0.9c
+- **Status**: ✅ Done
+- **Changes**:
+  - Added constants `TICK_HALF_LENGTH` (6px) and `TICK_VELOCITY_FRACTIONS` ([0.25, 0.5, 0.75, 0.9]) in `src/game/player/player_sprite.rs`.
+  - Added `draw_arc_ticks` helper function that draws short radial line segments at angular positions corresponding to each velocity fraction on the arc.
+  - Called `draw_arc_ticks` from the `Launching` arm of `launch_visual_system`.
   - UAT: `cargo make uat` passed — 291 tests, 291 passed, 0 skipped.
 - **Constitution Compliance**: No violations.

@@ -45,7 +45,33 @@ const ARC_RADIUS: f32 = 50.0;
 /// Maximum sweep angle for the power arc (270°).
 const MAX_ARC_ANGLE: f32 = std::f32::consts::FRAC_PI_2 * 3.0;
 
+/// Half-length of each tick mark (extends inward and outward from arc radius).
+const TICK_HALF_LENGTH: f32 = 6.0;
+/// Velocity fractions (of c) at which tick marks are drawn on the arc.
+/// Power = `velocity_fraction` / 0.99 maps each to an angular position.
+const TICK_VELOCITY_FRACTIONS: [f32; 4] = [0.25, 0.5, 0.75, 0.9];
+
 // Helpers.
+
+/// Draws tick marks on the radial arc at predefined velocity fractions.
+///
+/// Each tick is a short radial line spanning `ARC_RADIUS ± TICK_HALF_LENGTH`.
+/// The angular position is derived from the velocity fraction mapped to the
+/// arc's sweep range.
+fn draw_arc_ticks(gizmos: &mut Gizmos, center: Vec2, arc_rotation_rad: f32) {
+    for &frac in &TICK_VELOCITY_FRACTIONS {
+        // Power corresponding to this velocity fraction (linear mapping: v = power * 0.99c).
+        let tick_power = frac / 0.99;
+        // Position along the arc sweep: fraction of MAX_ARC_ANGLE, offset from centre.
+        let local_angle = MAX_ARC_ANGLE * (tick_power - 0.5);
+        let world_angle = arc_rotation_rad + local_angle;
+        let radial = Vec2::new(world_angle.cos(), world_angle.sin());
+
+        let inner = center + radial * (ARC_RADIUS - TICK_HALF_LENGTH);
+        let outer = center + radial * (ARC_RADIUS + TICK_HALF_LENGTH);
+        gizmos.line_2d(inner, outer, Color::srgba(1.0, 1.0, 1.0, 0.5));
+    }
+}
 
 /// Draws a dashed line from `start` along `direction` for `length` pixels.
 fn draw_dashed_line(gizmos: &mut Gizmos, start: Vec2, direction: Vec2, length: f32, color: Color) {
@@ -272,6 +298,10 @@ pub fn launch_visual_system(launch_state: Res<LaunchState>, player_query: Query<
             let filled_angle = power * MAX_ARC_ANGLE;
             let filled_iso = Isometry2d::new(player_pos, arc_rotation);
             gizmos.arc_2d(filled_iso, filled_angle, ARC_RADIUS, color);
+
+            // Tick marks at notable velocity fractions.
+            let arc_rotation_rad = -3.0 * std::f32::consts::FRAC_PI_4;
+            draw_arc_ticks(&mut gizmos, player_pos, arc_rotation_rad);
         }
         LaunchState::Idle => {}
     }
