@@ -101,7 +101,7 @@ tasks:
   - id: T-009
     title: "Clean up dead code (PowerBarUi, spawn_or_update_power_bar)"
     priority: 3
-    status: todo
+    status: done
     notes: "Remove PowerBarUi component from types.rs, remove spawn_or_update_power_bar from player_sprite.rs, remove any references in mod.rs."
 ---
 
@@ -320,3 +320,14 @@ A new cancel path is added from any non-Idle state back to Idle via right-click 
   - Created `tests/e2e_launch_cancel.rs` with 5 tests: cancel from AimLocked via right-click and Escape, cancel from Launching via right-click and Escape, and no-op when already Idle.
   - UAT: `cargo make uat` passed — 306 tests, 306 passed, 0 skipped.
 - **Constitution Compliance**: No violations. Changed `power_to_color` from private to `pub(crate)` — minimal scope widening to enable testing, no public API change.
+
+## 2026-02-14 — T-009 Completed
+- **Task**: Clean up dead code (PowerBarUi, spawn_or_update_power_bar)
+- **Status**: ✅ Done
+- **Changes**:
+  - Removed `PowerBarUi` marker component from `src/game/shared/types.rs` (struct and doc comment).
+  - Updated `LaunchState` doc comment to say "radial arc visible" instead of "power bar UI visible".
+  - `spawn_or_update_power_bar` was already removed in T-003; no further action needed.
+  - No references to either symbol remained in source or test code.
+  - UAT: `cargo make uat` passed — 306 tests, 306 passed, 0 skipped.
+- **Constitution Compliance**: No violations.

@@ -12,7 +12,7 @@ pub struct PlayerHud;
 ///
 /// - `Idle`: waiting for the player to click.
 /// - `AimLocked`: click registered; direction line rendered via Gizmos.
-/// - `Launching`: holding and dragging to set power; power bar UI visible.
+/// - `Launching`: holding and dragging to set power; radial arc visible.
 #[derive(Resource, Default, Debug, Clone, PartialEq)]
 pub enum LaunchState {
     #[default]
@@ -25,10 +25,6 @@ pub enum LaunchState {
         power: f32,
     },
 }
-
-/// Marker for the power-bar UI overlay spawned during the Launching phase.
-#[derive(Component)]
-pub struct PowerBarUi;
 
 /// Marker for the velocity readout text entity shown near the radial arc during launch.
 #[derive(Component)]
