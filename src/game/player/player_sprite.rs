@@ -29,14 +29,37 @@ pub struct PlayerSpriteBundle {
 /// Length of the dotted aim-preview line (pixels).
 const PREVIEW_LINE_LENGTH: f32 = 300.0;
 /// Length of each dash segment in the preview line (pixels).
-const PREVIEW_DASH_LENGTH: f32 = 10.0;
+const DASH_LENGTH: f32 = 10.0;
 /// Gap between dash segments in the preview line (pixels).
-const PREVIEW_GAP_LENGTH: f32 = 8.0;
+const DASH_GAP: f32 = 8.0;
+
+/// Solid aim-line length in `AimLocked` state (pixels).
+const AIM_LINE_LENGTH: f32 = 200.0;
+/// Minimum solid direction-line length in `Launching` state (pixels).
+const MIN_LAUNCH_LINE: f32 = 100.0;
+/// Maximum solid direction-line length at full power (pixels).
+const MAX_LAUNCH_LINE: f32 = 300.0;
 
 /// Radius of the radial power arc around the player (pixels).
 const ARC_RADIUS: f32 = 50.0;
 /// Maximum sweep angle for the power arc (270°).
 const MAX_ARC_ANGLE: f32 = std::f32::consts::FRAC_PI_2 * 3.0;
+
+// Helpers.
+
+/// Draws a dashed line from `start` along `direction` for `length` pixels.
+fn draw_dashed_line(gizmos: &mut Gizmos, start: Vec2, direction: Vec2, length: f32, color: Color) {
+    let stride = DASH_LENGTH + DASH_GAP;
+    let mut offset = 0.0;
+
+    while offset < length {
+        let dash_end = (offset + DASH_LENGTH).min(length);
+        let s = start + direction * offset;
+        let e = start + direction * dash_end;
+        gizmos.line_2d(s, e, color);
+        offset += stride;
+    }
+}
 
 // Systems.
 
@@ -70,17 +93,7 @@ pub fn launch_preview_system(
         return;
     }
 
-    let color = Color::srgba(1.0, 1.0, 1.0, 0.3);
-    let stride = PREVIEW_DASH_LENGTH + PREVIEW_GAP_LENGTH;
-    let mut offset = 0.0;
-
-    while offset < PREVIEW_LINE_LENGTH {
-        let dash_end = (offset + PREVIEW_DASH_LENGTH).min(PREVIEW_LINE_LENGTH);
-        let start = player_pos + direction * offset;
-        let end = player_pos + direction * dash_end;
-        gizmos.line_2d(start, end, color);
-        offset += stride;
-    }
+    draw_dashed_line(&mut gizmos, player_pos, direction, PREVIEW_LINE_LENGTH, Color::srgba(1.0, 1.0, 1.0, 0.3));
 }
 
 /// Cancels the launch on right-click or Escape from any non-Idle state.
@@ -208,6 +221,10 @@ fn power_to_color(power: f32) -> Color {
 }
 
 /// Draw the aim direction line and radial power arc around the player.
+///
+/// - **`AimLocked`**: solid direction line + dotted extension + faint arc outline.
+/// - **`Launching`**: solid direction line (length scaled by power) + dotted
+///   extension to max range + filled arc with color gradient.
 pub fn launch_visual_system(launch_state: Res<LaunchState>, player_query: Query<&Transform, With<Player>>, mut gizmos: Gizmos) {
     let Ok(player_transform) = player_query.single() else { return };
     let player_pos = player_transform.translation.truncate();
@@ -217,23 +234,35 @@ pub fn launch_visual_system(launch_state: Res<LaunchState>, player_query: Query<
 
     match *launch_state {
         LaunchState::AimLocked { angle } => {
-            // Draw direction line.
             let direction = Vec2::new(angle.cos(), angle.sin());
-            let line_end = player_pos + direction * 200.0;
+
+            // Solid direction line.
+            let line_end = player_pos + direction * AIM_LINE_LENGTH;
             gizmos.line_2d(player_pos, line_end, Color::srgba(1.0, 1.0, 1.0, 0.7));
+
+            // Dotted extension beyond the solid line.
+            let extension_length = MAX_LAUNCH_LINE - AIM_LINE_LENGTH;
+            draw_dashed_line(&mut gizmos, line_end, direction, extension_length, Color::srgba(1.0, 1.0, 1.0, 0.15));
 
             // Faint arc outline showing max range.
             let isometry = Isometry2d::new(player_pos, arc_rotation);
             gizmos.arc_2d(isometry, MAX_ARC_ANGLE, ARC_RADIUS, Color::srgba(1.0, 1.0, 1.0, 0.15));
         }
         LaunchState::Launching { angle, power } => {
-            // Draw direction line, length scaled by power.
             let direction = Vec2::new(angle.cos(), angle.sin());
-            let line_length = 100.0 + power * 200.0;
+
+            // Solid direction line, length scaled by power.
+            let line_length = MIN_LAUNCH_LINE + power * (MAX_LAUNCH_LINE - MIN_LAUNCH_LINE);
             let line_end = player_pos + direction * line_length;
 
             let color = power_to_color(power);
             gizmos.line_2d(player_pos, line_end, color);
+
+            // Dotted extension beyond the power-scaled line.
+            let extension_length = MAX_LAUNCH_LINE - line_length;
+            if extension_length > 0.0 {
+                draw_dashed_line(&mut gizmos, line_end, direction, extension_length, Color::srgba(1.0, 1.0, 1.0, 0.1));
+            }
 
             // Faint arc outline showing max range.
             let outline_iso = Isometry2d::new(player_pos, arc_rotation);

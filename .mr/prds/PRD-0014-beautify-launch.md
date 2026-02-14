@@ -91,7 +91,7 @@ tasks:
   - id: T-007
     title: "Update launch_visual_system to use new arc + dotted line visuals"
     priority: 1
-    status: todo
+    status: done
     notes: "Refactor `launch_visual_system` to render: AimLocked → solid direction line + empty arc outline; Launching → solid direction line (length scaled by power) + filled arc + tick marks + readout."
   - id: T-008
     title: "Update and add unit tests for new power curve and arc rendering logic"
@@ -257,5 +257,19 @@ A new cancel path is added from any non-Idle state back to Idle via right-click 
   - Launching state shows the faint outline plus a filled arc proportional to power with the color gradient.
   - Removed `PowerBarUi` import and `Commands`/query parameters from `launch_visual_system` (no more UI entity spawning).
   - Updated `tests/e2e_launch_visuals.rs`: replaced PowerBarUi entity-count assertions with gizmo-path smoke tests (system runs without panic in each state).
+  - UAT: `cargo make uat` passed — 291 tests, 291 passed, 0 skipped.
+- **Constitution Compliance**: No violations.
+
+## 2026-02-14 — T-007 Completed
+- **Task**: Update launch_visual_system to use new arc + dotted line visuals
+- **Status**: ✅ Done
+- **Changes**:
+  - Extracted `draw_dashed_line` helper function in `src/game/player/player_sprite.rs` (DRY: reused by `launch_preview_system` and `launch_visual_system`).
+  - Renamed constants `PREVIEW_DASH_LENGTH`/`PREVIEW_GAP_LENGTH` to `DASH_LENGTH`/`DASH_GAP` since they are now shared.
+  - Added named constants `AIM_LINE_LENGTH` (200px), `MIN_LAUNCH_LINE` (100px), `MAX_LAUNCH_LINE` (300px) replacing magic numbers.
+  - AimLocked state now draws a dotted extension line beyond the solid aim line, providing visual continuity with the idle preview.
+  - Launching state now draws a dotted extension beyond the power-scaled solid line, showing remaining potential range.
+  - Refactored `launch_preview_system` to use the shared `draw_dashed_line` helper.
+  - Enhanced doc comment on `launch_visual_system` documenting per-state rendering behavior.
   - UAT: `cargo make uat` passed — 291 tests, 291 passed, 0 skipped.
 - **Constitution Compliance**: No violations.
