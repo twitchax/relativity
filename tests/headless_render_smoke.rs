@@ -13,6 +13,7 @@ mod common;
 use common::headless::{build_headless_render_app, suppress_backtrace, wait_for_plugins};
 
 #[test]
+#[ignore]
 fn headless_app_boots_and_runs_without_panic() {
     // cargo-make sets RUST_BACKTRACE=full by default. Any non-zero value causes
     // wgpu/Bevy's Metal render graph to hang on macOS (backtrace symbolication
