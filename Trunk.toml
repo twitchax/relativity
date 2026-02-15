@@ -1,6 +1,6 @@
 [build]
 # Set the public URL for GitHub Pages deployment
-public_url = "/relativity/"
+public_url = "/"
 # Output directory for built files
 dist = "dist"
 

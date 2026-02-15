@@ -41,7 +41,7 @@ $ chmod a+x /usr/local/bin/relativity
 
 You can play the game directly in your browser at:
 
-**https://twitchax.github.io/relativity/**
+**https://relativity.gh.twitchax.com/**
 
 The web version is automatically built and deployed from the main branch.
 
