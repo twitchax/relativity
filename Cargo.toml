@@ -16,11 +16,11 @@ bevy = { version = "0.18", default-features = false, features = [
     "bevy_gizmos_render",
 
     # Core systems the game uses directly.
-    "bevy_state",          # AppState / GameState machines
-    "bevy_picking",        # Pickable::IGNORE on fade overlay
-    "bevy_asset",          # Asset loading
-    "bevy_winit",          # Window backend
-    "bevy_log",            # Tracing/logging
+    "bevy_state",   # AppState / GameState machines
+    "bevy_picking", # Pickable::IGNORE on fade overlay
+    "bevy_asset",   # Asset loading
+    "bevy_winit",   # Window backend
+    "bevy_log",     # Tracing/logging
 
     # Image format for sprites.
     "png",
@@ -48,12 +48,17 @@ bevy = { version = "0.18", default-features = false, features = [
 
 # WASM support: webgl2 feature for browser compatibility.
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-bevy = { version = "0.18", default-features = false, features = ["webgl2", "web"] }
+bevy = { version = "0.18", default-features = false, features = [
+    "webgl2",
+    "web",
+] }
 bevy_lunex = { version = "0.6", features = ["wasm"] }
 console_error_panic_hook = "0.1"
 # getrandom is a transitive dependency that needs "js"/"wasm_js" feature for WASM
 getrandom_02 = { package = "getrandom", version = "0.2", features = ["js"] }
-getrandom_03 = { package = "getrandom", version = "0.3", features = ["wasm_js"] }
+getrandom_03 = { package = "getrandom", version = "0.3", features = [
+    "wasm_js",
+] }
 getrandom = { version = "0.4", features = ["wasm_js"] }
 
 # =============================================================================
@@ -62,7 +67,7 @@ getrandom = { version = "0.4", features = ["wasm_js"] }
 
 [profile.wasm-release]
 inherits = "release"
-opt-level = "z"       # Optimize aggressively for size
-lto = true             # Fat LTO for maximum dead-code elimination
-codegen-units = 1      # Single codegen unit for best optimization
-strip = true           # Strip all symbols from the WASM binary
+opt-level = "z"      # Optimize aggressively for size
+lto = true           # Fat LTO for maximum dead-code elimination
+codegen-units = 1    # Single codegen unit for best optimization
+strip = true         # Strip all symbols from the WASM binary
