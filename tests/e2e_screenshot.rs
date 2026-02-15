@@ -41,7 +41,7 @@ fn temp_capture_dir() -> PathBuf {
 /// The first time this runs, it creates the baseline image and fails with a
 /// review prompt. Commit the baseline PNG in `tests/baselines/` and re-run.
 #[test]
-#[skip]
+#[ignore]
 fn level1_spawn_screenshot_matches_baseline() {
     suppress_backtrace();
 
