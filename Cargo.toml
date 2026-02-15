@@ -6,8 +6,29 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bevy = "0.18"
-bevy_lunex = "0.6"
+bevy = { version = "0.18", default-features = false, features = [
+    # Minimal 2D stack: render pipeline + sprites + UI.
+    "2d_bevy_render",
+    "ui_bevy_render",
+
+    # Gizmos for trail / gravity-grid / launch-arc rendering.
+    "bevy_gizmos",
+    "bevy_gizmos_render",
+
+    # Core systems the game uses directly.
+    "bevy_state",          # AppState / GameState machines
+    "bevy_picking",        # Pickable::IGNORE on fade overlay
+    "bevy_asset",          # Asset loading
+    "bevy_winit",          # Window backend
+    "bevy_log",            # Tracing/logging
+
+    # Image format for sprites.
+    "png",
+
+    # Include default font for text rendering.
+    "default_font",
+] }
+bevy_lunex = { version = "0.6", default-features = false }
 bevy_trauma_shake = "0.7"
 uom = "0.37"
 nalgebra-spacetime = "0.5"
@@ -18,9 +39,16 @@ approx = "0.5"
 image = { version = "0.25", default-features = false, features = ["png"] }
 proptest = "1"
 
-# WASM support: webgl2 feature for browser compatibility
+# Native-only features: threading + display server.
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+bevy = { version = "0.18", default-features = false, features = [
+    "multi_threaded",
+    "x11",
+] }
+
+# WASM support: webgl2 feature for browser compatibility.
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-bevy = { version = "0.18", features = ["webgl2"] }
+bevy = { version = "0.18", default-features = false, features = ["webgl2", "web"] }
 bevy_lunex = { version = "0.6", features = ["wasm"] }
 console_error_panic_hook = "0.1"
 # getrandom is a transitive dependency that needs "js"/"wasm_js" feature for WASM
@@ -34,7 +62,7 @@ getrandom = { version = "0.4", features = ["wasm_js"] }
 
 [profile.wasm-release]
 inherits = "release"
-opt-level = "z"       # Optimize for size (smaller download, fast enough)
-lto = "thin"           # Link-time optimization for cross-crate inlining
-codegen-units = 1      # Maximum optimization (single codegen unit)
-strip = "debuginfo"    # Strip debug info from the WASM binary
+opt-level = "z"       # Optimize aggressively for size
+lto = true             # Fat LTO for maximum dead-code elimination
+codegen-units = 1      # Single codegen unit for best optimization
+strip = true           # Strip all symbols from the WASM binary

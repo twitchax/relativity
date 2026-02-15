@@ -167,14 +167,14 @@ cwd = "."
 workspace = false
 dependencies = ["install-trunk"]
 command = "trunk"
-args = ["build", "--release"]
+args = ["build", "--cargo-profile", "wasm-release"]
 
 [tasks.serve-web]
 cwd = "."
 workspace = false
 dependencies = ["install-trunk"]
 command = "trunk"
-args = ["serve", "--release", "--public-url", "/"]
+args = ["serve", "--cargo-profile", "wasm-release", "--public-url", "/"]
 
 [tasks.serve-web-dev]
 # Fast iteration: debug build, no wasm-opt, no LTO.

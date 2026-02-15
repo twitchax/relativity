@@ -1,4 +1,5 @@
 use bevy::camera::ScalingMode;
+use bevy::core_pipeline::tonemapping::Tonemapping;
 use bevy::prelude::*;
 use bevy_lunex::prelude::UiSourceCamera;
 use bevy_trauma_shake::Shake;
@@ -19,5 +20,7 @@ pub fn spawn_camera(mut commands: Commands) {
         ..OrthographicProjection::default_2d()
     });
 
-    commands.spawn((Camera2d, projection, transform, Shake::default(), UiSourceCamera::<0>));
+    // Explicit Tonemapping::None avoids needing the `tonemapping_luts` feature,
+    // which embeds ~15-20 MB of LUT data into the binary.
+    commands.spawn((Camera2d, projection, transform, Tonemapping::None, Shake::default(), UiSourceCamera::<0>));
 }

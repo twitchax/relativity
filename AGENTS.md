@@ -47,7 +47,7 @@ All dev/CI workflows route through `cargo make`. Key tasks:
 | `build-linux`    | Cross-compile for `x86_64-unknown-linux-gnu`         |
 | `build-windows`  | Cross-compile for `x86_64-pc-windows-gnu`            |
 | `build-macos`    | Build for `aarch64-apple-darwin`                     |
-| `build-web`      | Build WASM via Trunk                                 |
+| `build-web`      | Build WASM via Trunk (`wasm-release` profile)        |
 | `changelog`      | Generate CHANGELOG.md via git-cliff                  |
 | `release`        | Full release pipeline (CI → changelog → bump → push) |
 | `github-release` | Create GitHub release with artifacts                 |
@@ -82,8 +82,17 @@ Strict clippy denies are enforced in `src/main.rs`:
 ### UI Architecture
 
 - In-game HUD uses **bevy_lunex** (v0.6) for layout and rendering (`src/game/hud/mod.rs`). Menu and outcome screens use native `bevy_ui`.
+- `bevy_lunex` is configured with `default-features = false` to avoid pulling in `bevy_pbr` via its `text3d` default feature.
 - `UiLunexPlugins` is registered in `src/main.rs` (not inside `GamePlugin`) because it requires `DefaultPlugins` resources. This avoids panics in headless tests that use `MinimalPlugins`.
 - HUD text labels use individual marker components (`HudPlayerTime`, `HudVelocityGamma`, etc.) for targeted queries rather than a single concatenated text entity.
+
+### WASM / Binary Size
+
+- Bevy is configured with `default-features = false` using granular feature collections (`2d_bevy_render`, `ui_bevy_render`) instead of the broad `default` profile. This drops 3D/PBR/glTF/scene and avoids embedding tonemapping LUTs (~15-20 MB).
+- The camera explicitly uses `Tonemapping::None` so the `tonemapping_luts` feature is not needed.
+- The WASM build uses the `wasm-release` Cargo profile (fat LTO, `opt-level = "z"`, `codegen-units = 1`, full strip) via `trunk build --cargo-profile wasm-release`.
+- Native-only features (`multi_threaded`, `x11`) are added via target-specific dependency sections to avoid unnecessary WASM bloat.
+- `bevy_lunex` hard-depends on `bevy_pbr` (non-optional), so PBR is still compiled but mostly dead-code-eliminated by fat LTO.
 
 ### CI / Workflow Patterns
 
