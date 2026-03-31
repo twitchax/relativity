@@ -1,10 +1,18 @@
 use super::{
-    constants::{PLANET_SPRITE_WIDTH_PX, ROCKET_SPRITE_WIDTH_PX, SCREEN_HEIGHT_UOM, SCREEN_WIDTH_UOM},
+    constants::{SCREEN_HEIGHT_UOM, SCREEN_WIDTH_UOM},
     types::{Position, Radius},
 };
 use crate::shared::{SCREEN_HEIGHT_PX, SCREEN_WIDTH_PX};
 use bevy::prelude::*;
 use uom::si::f64::Length as UomLength;
+
+/// Normalize a Lorentz gamma value to a 0–1 range: γ=1 → 0, γ≥3 → 1.
+///
+/// Used by trail and other visual systems to map relativistic intensity to a blend factor.
+#[must_use]
+pub fn normalize_gamma(gamma: f64) -> f64 {
+    ((gamma - 1.0) / 2.0).clamp(0.0, 1.0)
+}
 
 #[must_use]
 pub fn has_collided(a: (&Position, &Radius), b: (&Position, &Radius)) -> bool {
@@ -56,20 +64,15 @@ pub fn length_to_pixel(length: UomLength) -> f64 {
 
 #[must_use]
 #[allow(clippy::cast_possible_truncation)]
-pub fn planet_sprite_pixel_radius_to_scale(pixels: f64) -> Vec3 {
-    Vec3::splat((2.0 * pixels / PLANET_SPRITE_WIDTH_PX) as f32)
-}
-
-#[must_use]
-#[allow(clippy::cast_possible_truncation)]
-pub fn rocket_sprite_pixel_radius_to_scale(pixels: f64) -> Vec3 {
-    Vec3::splat((2.0 * pixels / ROCKET_SPRITE_WIDTH_PX) as f32)
+pub fn pixel_radius_to_scale(pixels: f64, sprite_width_px: f64) -> Vec3 {
+    Vec3::splat((2.0 * pixels / sprite_width_px) as f32)
 }
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
     use super::*;
+    use crate::game::shared::constants::{PLANET_SPRITE_WIDTH_PX, ROCKET_SPRITE_WIDTH_PX};
     use approx::assert_relative_eq;
     use uom::si::length::kilometer;
 
@@ -256,55 +259,67 @@ mod tests {
         assert_relative_eq!(result, SCREEN_WIDTH_PX * 0.5, epsilon = 1e-6);
     }
 
-    // --- planet_sprite_pixel_radius_to_scale ---
+    // --- pixel_radius_to_scale ---
 
     #[test]
-    fn planet_sprite_scale_at_half_sprite_width() {
+    fn pixel_radius_to_scale_at_half_planet_sprite_width() {
         // pixels = PLANET_SPRITE_WIDTH_PX / 2 => scale = 1.0
-        let result = planet_sprite_pixel_radius_to_scale(PLANET_SPRITE_WIDTH_PX / 2.0);
+        let result = pixel_radius_to_scale(PLANET_SPRITE_WIDTH_PX / 2.0, PLANET_SPRITE_WIDTH_PX);
         assert_relative_eq!(result.x, 1.0, epsilon = 1e-6);
         assert_relative_eq!(result.y, 1.0, epsilon = 1e-6);
         assert_relative_eq!(result.z, 1.0, epsilon = 1e-6);
     }
 
     #[test]
-    fn planet_sprite_scale_zero() {
-        let result = planet_sprite_pixel_radius_to_scale(0.0);
-        assert_relative_eq!(result.x, 0.0, epsilon = 1e-6);
-    }
-
-    #[test]
-    fn planet_sprite_scale_proportional() {
-        let scale_a = planet_sprite_pixel_radius_to_scale(100.0);
-        let scale_b = planet_sprite_pixel_radius_to_scale(200.0);
-        assert_relative_eq!(f64::from(scale_b.x) / f64::from(scale_a.x), 2.0, epsilon = 1e-4);
-    }
-
-    // --- rocket_sprite_pixel_radius_to_scale ---
-
-    #[test]
-    fn rocket_sprite_scale_at_half_sprite_width() {
+    fn pixel_radius_to_scale_at_half_rocket_sprite_width() {
         // pixels = ROCKET_SPRITE_WIDTH_PX / 2 => scale = 1.0
-        let result = rocket_sprite_pixel_radius_to_scale(ROCKET_SPRITE_WIDTH_PX / 2.0);
+        let result = pixel_radius_to_scale(ROCKET_SPRITE_WIDTH_PX / 2.0, ROCKET_SPRITE_WIDTH_PX);
         assert_relative_eq!(result.x, 1.0, epsilon = 1e-6);
         assert_relative_eq!(result.y, 1.0, epsilon = 1e-6);
         assert_relative_eq!(result.z, 1.0, epsilon = 1e-6);
     }
 
     #[test]
-    fn rocket_sprite_scale_zero() {
-        let result = rocket_sprite_pixel_radius_to_scale(0.0);
+    fn pixel_radius_to_scale_zero() {
+        let result = pixel_radius_to_scale(0.0, PLANET_SPRITE_WIDTH_PX);
         assert_relative_eq!(result.x, 0.0, epsilon = 1e-6);
     }
 
     #[test]
-    fn rocket_sprite_scale_proportional() {
-        let scale_a = rocket_sprite_pixel_radius_to_scale(50.0);
-        let scale_b = rocket_sprite_pixel_radius_to_scale(100.0);
+    fn pixel_radius_to_scale_proportional() {
+        let scale_a = pixel_radius_to_scale(100.0, PLANET_SPRITE_WIDTH_PX);
+        let scale_b = pixel_radius_to_scale(200.0, PLANET_SPRITE_WIDTH_PX);
         assert_relative_eq!(f64::from(scale_b.x) / f64::from(scale_a.x), 2.0, epsilon = 1e-4);
     }
 
     // --- proptest property-based tests ---
+
+    // --- normalize_gamma ---
+
+    #[test]
+    fn normalize_gamma_at_one_returns_zero() {
+        assert_relative_eq!(normalize_gamma(1.0), 0.0);
+    }
+
+    #[test]
+    fn normalize_gamma_at_three_returns_one() {
+        assert_relative_eq!(normalize_gamma(3.0), 1.0);
+    }
+
+    #[test]
+    fn normalize_gamma_at_two_returns_half() {
+        assert_relative_eq!(normalize_gamma(2.0), 0.5);
+    }
+
+    #[test]
+    fn normalize_gamma_below_one_clamps_to_zero() {
+        assert_relative_eq!(normalize_gamma(0.5), 0.0);
+    }
+
+    #[test]
+    fn normalize_gamma_above_three_clamps_to_one() {
+        assert_relative_eq!(normalize_gamma(100.0), 1.0);
+    }
 
     mod proptests {
         use super::*;

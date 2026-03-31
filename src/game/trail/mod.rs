@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::game::{
     player::shared::Player,
     shared::{
-        helpers::get_translation_from_position,
+        helpers::{get_translation_from_position, normalize_gamma},
         types::{GravitationalGamma, Position, TrailBuffer, VelocityGamma},
     },
 };
@@ -21,9 +21,8 @@ const MAX_TRAIL_POINTS: usize = 2000;
 /// Interpolates linearly between cold and hot colors.
 #[must_use]
 pub(crate) fn gamma_to_color(total_gamma: f64) -> Color {
-    // Normalize gamma to a 0–1 range: γ=1 → t=0, γ≥3 → t=1.
     #[allow(clippy::cast_possible_truncation)]
-    let blend = ((total_gamma - 1.0) / 2.0).clamp(0.0, 1.0) as f32;
+    let blend = normalize_gamma(total_gamma) as f32;
 
     // Cold: blue/cyan (0.2, 0.6, 1.0) → Hot: red/orange (1.0, 0.3, 0.0).
     let red = 0.2 + blend * 0.8;

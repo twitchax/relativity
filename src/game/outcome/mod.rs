@@ -9,71 +9,84 @@ use crate::{
 use bevy::prelude::*;
 use bevy_trauma_shake::Shake;
 
-// Systems.
+// Helpers.
 
-/// Spawn the success overlay when entering `GameState::Finished`.
-pub fn spawn_success_overlay(mut commands: Commands, asset_server: Res<AssetServer>, current_level: Res<CurrentLevel>) {
-    let font = asset_server.load("fonts/HackNerdFontMono-Regular.ttf");
-    let has_next = current_level.next().is_some();
+/// Spawn a full-screen overlay with centered text.
+///
+/// Returns the entity ID and font handle so callers can add extra children.
+fn spawn_overlay(commands: &mut Commands, asset_server: &AssetServer, marker: impl Component, text: &str, text_color: Color, extra_node: impl FnOnce(&mut Node)) -> (Entity, Handle<Font>) {
+    let font: Handle<Font> = asset_server.load("fonts/HackNerdFontMono-Regular.ttf");
 
-    commands
-        .spawn((
-            SuccessOverlay,
-            Node {
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                flex_direction: FlexDirection::Column,
-                align_items: AlignItems::Center,
-                justify_content: JustifyContent::Center,
-                row_gap: Val::Px(24.0),
-                position_type: PositionType::Absolute,
-                ..Default::default()
-            },
-            GlobalZIndex(100),
-            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.6)),
-        ))
+    let mut node = Node {
+        width: Val::Percent(100.0),
+        height: Val::Percent(100.0),
+        flex_direction: FlexDirection::Column,
+        align_items: AlignItems::Center,
+        justify_content: JustifyContent::Center,
+        position_type: PositionType::Absolute,
+        ..Default::default()
+    };
+    extra_node(&mut node);
+
+    let entity = commands
+        .spawn((marker, node, GlobalZIndex(100), BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.6))))
         .with_children(|parent| {
-            // SUCCESS text.
             parent.spawn((
-                Text::new("SUCCESS"),
+                Text::new(text),
                 TextFont {
                     font: font.clone(),
                     font_size: 72.0,
                     ..Default::default()
                 },
-                TextColor(Color::srgba(0.2, 1.0, 0.2, 1.0)),
+                TextColor(text_color),
             ));
+        })
+        .id();
 
-            // Next Level / Return to Menu button.
-            let button_text = if has_next { "Next Level" } else { "Menu" };
+    (entity, font)
+}
 
-            parent
-                .spawn((
-                    NextLevelButton,
-                    Button,
-                    Node {
-                        width: Val::Px(300.0),
-                        height: Val::Px(60.0),
-                        justify_content: JustifyContent::Center,
-                        align_items: AlignItems::Center,
-                        border: UiRect::all(Val::Px(2.0)),
+// Systems.
+
+/// Spawn the success overlay when entering `GameState::Finished`.
+pub fn spawn_success_overlay(mut commands: Commands, asset_server: Res<AssetServer>, current_level: Res<CurrentLevel>) {
+    let has_next = current_level.next().is_some();
+
+    let (entity, font) = spawn_overlay(&mut commands, &asset_server, SuccessOverlay, "SUCCESS", Color::srgba(0.2, 1.0, 0.2, 1.0), |node| {
+        node.row_gap = Val::Px(24.0);
+    });
+
+    // Next Level / Return to Menu button.
+    let button_text = if has_next { "Next Level" } else { "Menu" };
+
+    commands.entity(entity).with_children(|parent| {
+        parent
+            .spawn((
+                NextLevelButton,
+                Button,
+                Node {
+                    width: Val::Px(300.0),
+                    height: Val::Px(60.0),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    border: UiRect::all(Val::Px(2.0)),
+                    ..Default::default()
+                },
+                BorderColor::all(Color::WHITE),
+                BackgroundColor(Color::srgba(0.15, 0.15, 0.15, 0.9)),
+            ))
+            .with_children(|btn| {
+                btn.spawn((
+                    Text::new(button_text),
+                    TextFont {
+                        font,
+                        font_size: 32.0,
                         ..Default::default()
                     },
-                    BorderColor::all(Color::WHITE),
-                    BackgroundColor(Color::srgba(0.15, 0.15, 0.15, 0.9)),
-                ))
-                .with_children(|btn| {
-                    btn.spawn((
-                        Text::new(button_text),
-                        TextFont {
-                            font,
-                            font_size: 32.0,
-                            ..Default::default()
-                        },
-                        TextColor(Color::WHITE),
-                    ));
-                });
-        });
+                    TextColor(Color::WHITE),
+                ));
+            });
+    });
 }
 
 /// Despawn the success overlay when leaving `GameState::Finished`.
@@ -129,36 +142,8 @@ pub fn apply_collision_shake(mut shakes: Query<&mut Shake>) {
 
 /// Spawn the failure overlay and insert the auto-reset timer when entering `GameState::Failed`.
 pub fn spawn_failure_overlay(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let font = asset_server.load("fonts/HackNerdFontMono-Regular.ttf");
-
     commands.insert_resource(FailureTimer(Timer::from_seconds(1.5, TimerMode::Once)));
-
-    commands
-        .spawn((
-            FailureOverlay,
-            Node {
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                flex_direction: FlexDirection::Column,
-                align_items: AlignItems::Center,
-                justify_content: JustifyContent::Center,
-                position_type: PositionType::Absolute,
-                ..Default::default()
-            },
-            GlobalZIndex(100),
-            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.6)),
-        ))
-        .with_children(|parent| {
-            parent.spawn((
-                Text::new("FAILURE"),
-                TextFont {
-                    font,
-                    font_size: 72.0,
-                    ..Default::default()
-                },
-                TextColor(Color::srgba(1.0, 0.2, 0.2, 1.0)),
-            ));
-        });
+    spawn_overlay(&mut commands, &asset_server, FailureOverlay, "FAILURE", Color::srgba(1.0, 0.2, 0.2, 1.0), |_| {});
 }
 
 /// Despawn the failure overlay and remove the timer when leaving `GameState::Failed`.

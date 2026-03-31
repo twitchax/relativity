@@ -102,11 +102,15 @@ pub fn reset_level_on_pending(
 
 // Levels.
 
+fn spawn_level_common(commands: &mut Commands) {
+    spawn_player_clock(commands);
+    spawn_observer_clock(commands);
+}
+
 pub fn level1(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Spawn clocks.
 
-    spawn_player_clock(&mut commands);
-    spawn_observer_clock(&mut commands);
+    spawn_level_common(&mut commands);
 
     // Spawn player.
 
@@ -179,8 +183,7 @@ pub fn level_time_warp(mut commands: Commands, asset_server: Res<AssetServer>) {
     use uom::si::{f64::Velocity as UomVelocity, velocity::kilometer_per_second};
 
     // Spawn clocks.
-    spawn_player_clock(&mut commands);
-    spawn_observer_clock(&mut commands);
+    spawn_level_common(&mut commands);
 
     // Spawn player at slingshot starting position.
     // Position: 0.125 (12.5%) of screen width, 0.5 (50%) of screen height
@@ -237,15 +240,6 @@ pub fn level_time_warp(mut commands: Commands, asset_server: Res<AssetServer>) {
         ..Default::default()
     });
 
-    // TODO: Implement time-dilation system
-    // The time-dilation zone should:
-    // 1. Track distance from player to the moving gravity well
-    // 2. Adjust player's effective time_scale between 0.5 and 1.0 based on distance
-    // 3. Closer to the well = slower time (0.5x), farther = normal time (1.0x)
-    // This will require:
-    // - A custom component to mark entities affected by time dilation
-    // - A system that runs in Update to calculate and apply time scaling
-    // - Modification of velocity_update and position_update to respect time scaling
 }
 
 #[cfg(test)]

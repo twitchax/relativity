@@ -76,11 +76,60 @@ const HEADER_COLOR: Color = Color::srgba(0.45, 0.82, 1.00, 1.0);
 /// Dim cyan for decorative divider lines.
 const DIVIDER_COLOR: Color = Color::srgba(0.25, 0.50, 0.70, 0.50);
 
+/// Decorative horizontal divider text shared across panels.
+const DIVIDER: &str = "──────────────────────────────────";
+
 /// Cyan border glow tint (matches panel sprite outer glow).
 const PANEL_BORDER_GLOW: Color = Color::srgba(0.30, 0.70, 1.00, 1.0);
 
 /// Accent color for small corner and decorative flourish elements.
 const ACCENT_COLOR: Color = Color::srgba(0.35, 0.65, 0.90, 0.60);
+
+// Panel layout bounds (percentage-based via `Rl`).
+
+/// Player panel left edge (%).
+const PLAYER_PANEL_LEFT: f32 = 1.0;
+/// Player panel top edge (%).
+const PLAYER_PANEL_TOP: f32 = 4.0;
+/// Player panel right edge (%).
+const PLAYER_PANEL_RIGHT: f32 = 59.0;
+/// Player panel bottom edge (%).
+const PLAYER_PANEL_BOTTOM: f32 = 96.0;
+
+/// Observer panel left edge (%).
+const OBSERVER_PANEL_LEFT: f32 = 64.0;
+/// Observer panel top edge (%).
+const OBSERVER_PANEL_TOP: f32 = 4.0;
+/// Observer panel right edge (%).
+const OBSERVER_PANEL_RIGHT: f32 = 99.0;
+/// Observer panel bottom edge (%).
+const OBSERVER_PANEL_BOTTOM: f32 = 96.0;
+
+/// Depth offset applied to glow overlays (behind the main panels).
+const GLOW_DEPTH_OFFSET: f32 = -0.5;
+
+/// Speed of the breathing glow pulse animation.
+const GLOW_PULSE_SPEED: f32 = 0.8;
+
+// Font / text sizes (percentage of panel height via `Rh`).
+
+/// Base font size shared by all `TextFont` instances in the HUD.
+const BASE_FONT_SIZE: f32 = 64.0;
+
+/// Text size for panel title headers (e.g. "FLIGHT DATA", "OBSERVER").
+const HEADER_FONT_SIZE: f32 = 14.0;
+
+/// Text size for section labels (e.g. "TIME", "GAMMA", "VELOCITY").
+const SECTION_LABEL_FONT_SIZE: f32 = 11.0;
+
+/// Text size for small decorative elements (bullets, gauge dots, corner accents).
+const DECORATION_FONT_SIZE: f32 = 9.0;
+
+/// Text size for value readouts (e.g. "`t_p` = 0.00", "`γ_v` = 1.00").
+const VALUE_FONT_SIZE: f32 = 22.0;
+
+/// Text size for divider lines.
+const DIVIDER_FONT_SIZE: f32 = 8.0;
 
 // Dynamic color-shift anchors (γ → readout text color).
 
@@ -112,6 +161,89 @@ fn gamma_to_hud_color(gamma: f64) -> Color {
         from.blue + local_t * (to.blue - from.blue),
         1.0,
     )
+}
+
+/// Small bullet indicator (monospace font) placed before section labels.
+fn bullet(x_pct: f32, y_pct: f32, text_font: &TextFont) -> (UiLayout, UiTextSize, Text2d, TextFont, UiColor) {
+    (
+        UiLayout::window().pos(Rl((x_pct, y_pct))).anchor(Anchor::CENTER_LEFT).pack(),
+        UiTextSize::from(Rh(DECORATION_FONT_SIZE)),
+        Text2d::new("▸"),
+        text_font.clone(),
+        UiColor::from(ACCENT_COLOR),
+    )
+}
+
+/// Gauge dot indicator placed beside value readouts.
+fn gauge_dot(x_pct: f32, y_pct: f32, text_font: &TextFont) -> (UiLayout, UiTextSize, Text2d, TextFont, UiColor) {
+    (
+        UiLayout::window().pos(Rl((x_pct, y_pct))).anchor(Anchor::CENTER_LEFT).pack(),
+        UiTextSize::from(Rh(DECORATION_FONT_SIZE)),
+        Text2d::new("◦"),
+        text_font.clone(),
+        UiColor::from(ACCENT_COLOR),
+    )
+}
+
+/// Diamond corner accent flourish.
+fn corner_accent(x_pct: f32, y_pct: f32, anchor: Anchor, text_font: &TextFont) -> (UiLayout, UiTextSize, Text2d, TextFont, UiColor) {
+    (
+        UiLayout::window().pos(Rl((x_pct, y_pct))).anchor(anchor).pack(),
+        UiTextSize::from(Rh(DECORATION_FONT_SIZE)),
+        Text2d::new("◇"),
+        text_font.clone(),
+        UiColor::from(ACCENT_COLOR),
+    )
+}
+
+/// Horizontal divider line at the given position.
+fn divider_line(x_pct: f32, y_pct: f32, content: &str, text_font: &TextFont) -> (UiLayout, UiTextSize, Text2d, TextFont, UiColor) {
+    (
+        UiLayout::window().pos(Rl((x_pct, y_pct))).anchor(Anchor::CENTER_LEFT).pack(),
+        UiTextSize::from(Rh(DIVIDER_FONT_SIZE)),
+        Text2d::new(content),
+        text_font.clone(),
+        UiColor::from(DIVIDER_COLOR),
+    )
+}
+
+/// Section label in display font (e.g. "TIME", "GAMMA", "VELOCITY").
+fn section_label(x_pct: f32, y_pct: f32, label: &str, section_font: &TextFont) -> (UiLayout, UiTextSize, Text2d, TextFont, UiColor) {
+    (
+        UiLayout::window().pos(Rl((x_pct, y_pct))).anchor(Anchor::CENTER_LEFT).pack(),
+        UiTextSize::from(Rh(SECTION_LABEL_FONT_SIZE)),
+        Text2d::new(label),
+        section_font.clone(),
+        UiColor::from(LABEL_COLOR),
+    )
+}
+
+/// Value readout text (large monospace) at the given position.
+fn value_readout(x_pct: f32, y_pct: f32, label: &str, text_font: &TextFont) -> (UiLayout, UiTextSize, Text2d, TextFont, UiColor) {
+    (
+        UiLayout::window().pos(Rl((x_pct, y_pct))).anchor(Anchor::CENTER_LEFT).pack(),
+        UiTextSize::from(Rh(VALUE_FONT_SIZE)),
+        Text2d::new(label),
+        text_font.clone(),
+        UiColor::from(TEXT_COLOR),
+    )
+}
+
+/// Spawns the panel header block: title text, top-right corner accent, and horizontal divider.
+fn spawn_panel_header(panel: &mut ChildSpawnerCommands, title: &str, title_y: f32, divider_y: f32, display_font: &Handle<Font>, text_font: &TextFont) {
+    panel.spawn((
+        UiLayout::window().pos(Rl((5.0, title_y))).anchor(Anchor::CENTER_LEFT).pack(),
+        UiTextSize::from(Rh(HEADER_FONT_SIZE)),
+        Text2d::new(title),
+        TextFont {
+            font: display_font.clone(),
+            font_size: BASE_FONT_SIZE,
+            ..Default::default()
+        },
+        UiColor::from(HEADER_COLOR),
+    ));
+    panel.spawn(corner_accent(93.0, title_y, Anchor::CENTER_RIGHT, text_font));
+    panel.spawn(divider_line(5.0, divider_y, DIVIDER, text_font));
 }
 
 // Marker components.
@@ -261,11 +393,11 @@ fn spawn_hud_root(mut commands: Commands, asset_server: Res<AssetServer>) {
                         color: PANEL_BORDER_GLOW,
                         base_alpha: 0.10,
                         amplitude: 0.05,
-                        speed: 0.8,
+                        speed: GLOW_PULSE_SPEED,
                         offset: 0.0,
                     },
                     UiLayout::boundary().pos1(Rl((-0.5, 0.0))).pos2(Rl((61.0, 100.0))).pack(),
-                    UiDepth::Add(-0.5),
+                    UiDepth::Add(GLOW_DEPTH_OFFSET),
                     Sprite {
                         image: player_panel_image.clone(),
                         image_mode: SpriteImageMode::Sliced(TextureSlicer {
@@ -282,11 +414,11 @@ fn spawn_hud_root(mut commands: Commands, asset_server: Res<AssetServer>) {
                         color: Color::srgba(0.25, 0.65, 0.85, 1.0),
                         base_alpha: 0.08,
                         amplitude: 0.04,
-                        speed: 0.8,
+                        speed: GLOW_PULSE_SPEED,
                         offset: std::f32::consts::PI,
                     },
                     UiLayout::boundary().pos1(Rl((62.0, 0.0))).pos2(Rl((100.5, 100.0))).pack(),
-                    UiDepth::Add(-0.5),
+                    UiDepth::Add(GLOW_DEPTH_OFFSET),
                     Sprite {
                         image: observer_panel_image.clone(),
                         image_mode: SpriteImageMode::Sliced(TextureSlicer {
@@ -299,13 +431,13 @@ fn spawn_hud_root(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ));
 
                 // Left panel — player stats (left 60%, with margin).
-                bar.spawn((PlayerPanel, UiLayout::boundary().pos1(Rl((1.0, 4.0))).pos2(Rl((59.0, 96.0))).pack(), player_panel_sprite()))
+                bar.spawn((PlayerPanel, UiLayout::boundary().pos1(Rl((PLAYER_PANEL_LEFT, PLAYER_PANEL_TOP))).pos2(Rl((PLAYER_PANEL_RIGHT, PLAYER_PANEL_BOTTOM))).pack(), player_panel_sprite()))
                     .with_children(|panel| {
                         spawn_player_labels(panel, &font, &display_font);
                     });
 
                 // Right panel — observer clock (right 35%, with margin).
-                bar.spawn((ObserverPanel, UiLayout::boundary().pos1(Rl((64.0, 4.0))).pos2(Rl((99.0, 96.0))).pack(), observer_panel_sprite()))
+                bar.spawn((ObserverPanel, UiLayout::boundary().pos1(Rl((OBSERVER_PANEL_LEFT, OBSERVER_PANEL_TOP))).pos2(Rl((OBSERVER_PANEL_RIGHT, OBSERVER_PANEL_BOTTOM))).pack(), observer_panel_sprite()))
                     .with_children(|panel| {
                         spawn_observer_labels(panel, &font, &display_font);
                     });
@@ -318,315 +450,115 @@ fn spawn_hud_root(mut commands: Commands, asset_server: Res<AssetServer>) {
 /// Layout: two-column grid with section headers (display font) and grouped values.
 /// Left column: TIME (`t_p`) and VELOCITY (v). Right column: GAMMA (`γ_v`, `γ_g`).
 /// Decorative elements: bullet indicators, gauge dots, corner accents, sub-dividers, vertical/bottom dividers.
-#[allow(clippy::too_many_lines)]
 fn spawn_player_labels(panel: &mut ChildSpawnerCommands, font: &Handle<Font>, display_font: &Handle<Font>) {
     let text_font = TextFont {
         font: font.clone(),
-        font_size: 64.0,
+        font_size: BASE_FONT_SIZE,
         ..Default::default()
     };
 
     let section_font = TextFont {
         font: display_font.clone(),
-        font_size: 64.0,
+        font_size: BASE_FONT_SIZE,
         ..Default::default()
     };
 
-    // Helper: small bullet indicator (monospace font) placed before section labels.
-    let bullet = |x_pct: f32, y_pct: f32| {
-        (
-            UiLayout::window().pos(Rl((x_pct, y_pct))).anchor(Anchor::CENTER_LEFT).pack(),
-            UiTextSize::from(Rh(9.0)),
-            Text2d::new("▸"),
-            text_font.clone(),
-            UiColor::from(ACCENT_COLOR),
-        )
-    };
+    spawn_panel_header(panel, "FLIGHT DATA", 3.0, 16.0, display_font, &text_font);
+    spawn_player_decorations(panel, &text_font, &section_font);
+    spawn_player_values(panel, &text_font);
+}
 
-    // Panel header in display font.
-    panel.spawn((
-        UiLayout::window().pos(Rl((5.0, 3.0))).anchor(Anchor::CENTER_LEFT).pack(),
-        UiTextSize::from(Rh(14.0)),
-        Text2d::new("FLIGHT DATA"),
-        TextFont {
-            font: display_font.clone(),
-            font_size: 64.0,
-            ..Default::default()
-        },
-        UiColor::from(HEADER_COLOR),
-    ));
-
-    // Corner accent — top-right flourish.
-    panel.spawn((
-        UiLayout::window().pos(Rl((93.0, 3.0))).anchor(Anchor::CENTER_RIGHT).pack(),
-        UiTextSize::from(Rh(9.0)),
-        Text2d::new("◇"),
-        text_font.clone(),
-        UiColor::from(ACCENT_COLOR),
-    ));
-
-    // Horizontal divider under header.
-    panel.spawn((
-        UiLayout::window().pos(Rl((5.0, 16.0))).anchor(Anchor::CENTER_LEFT).pack(),
-        UiTextSize::from(Rh(8.0)),
-        Text2d::new("──────────────────────────────────"),
-        text_font.clone(),
-        UiColor::from(DIVIDER_COLOR),
-    ));
-
+/// Spawns decorative elements for the player panel: section labels, bullets, dividers, and gauge dots.
+fn spawn_player_decorations(panel: &mut ChildSpawnerCommands, text_font: &TextFont, section_font: &TextFont) {
     // Bullet indicators before section labels.
-    panel.spawn(bullet(2.0, 26.0));
-    panel.spawn(bullet(2.0, 60.0));
-    panel.spawn(bullet(52.0, 26.0));
+    panel.spawn(bullet(2.0, 26.0, text_font));
+    panel.spawn(bullet(2.0, 60.0, text_font));
+    panel.spawn(bullet(52.0, 26.0, text_font));
 
-    // Left column — section label: TIME.
-    panel.spawn((
-        UiLayout::window().pos(Rl((5.0, 26.0))).anchor(Anchor::CENTER_LEFT).pack(),
-        UiTextSize::from(Rh(11.0)),
-        Text2d::new("TIME"),
-        section_font.clone(),
-        UiColor::from(LABEL_COLOR),
-    ));
-
-    // Left column — section label: VELOCITY.
-    panel.spawn((
-        UiLayout::window().pos(Rl((5.0, 60.0))).anchor(Anchor::CENTER_LEFT).pack(),
-        UiTextSize::from(Rh(11.0)),
-        Text2d::new("VELOCITY"),
-        section_font.clone(),
-        UiColor::from(LABEL_COLOR),
-    ));
-
-    // Right column — section label: GAMMA.
-    panel.spawn((
-        UiLayout::window().pos(Rl((55.0, 26.0))).anchor(Anchor::CENTER_LEFT).pack(),
-        UiTextSize::from(Rh(11.0)),
-        Text2d::new("GAMMA"),
-        section_font,
-        UiColor::from(LABEL_COLOR),
-    ));
+    // Section labels: TIME (left), VELOCITY (left), GAMMA (right).
+    panel.spawn(section_label(5.0, 26.0, "TIME", section_font));
+    panel.spawn(section_label(5.0, 60.0, "VELOCITY", section_font));
+    panel.spawn(section_label(55.0, 26.0, "GAMMA", section_font));
 
     // Thin vertical divider between left and right columns.
     panel.spawn((
         UiLayout::window().pos(Rl((50.0, 24.0))).anchor(Anchor::TOP_CENTER).pack(),
-        UiTextSize::from(Rh(8.0)),
+        UiTextSize::from(Rh(DIVIDER_FONT_SIZE)),
         Text2d::new("│\n│\n│\n│\n│"),
         text_font.clone(),
         UiColor::from(DIVIDER_COLOR),
     ));
 
     // Sub-divider between grouped gamma readouts.
-    panel.spawn((
-        UiLayout::window().pos(Rl((55.0, 55.0))).anchor(Anchor::CENTER_LEFT).pack(),
-        UiTextSize::from(Rh(8.0)),
-        Text2d::new("── ── ── ── ──"),
-        text_font.clone(),
-        UiColor::from(DIVIDER_COLOR),
-    ));
+    panel.spawn(divider_line(55.0, 55.0, "── ── ── ── ──", text_font));
 
-    // Bottom accent divider line.
-    panel.spawn((
-        UiLayout::window().pos(Rl((5.0, 92.0))).anchor(Anchor::CENTER_LEFT).pack(),
-        UiTextSize::from(Rh(8.0)),
-        Text2d::new("──────────────────────────────────"),
-        text_font.clone(),
-        UiColor::from(DIVIDER_COLOR),
-    ));
-
-    // Corner accent: bottom-left flourish (mirrors top-right).
-    panel.spawn((
-        UiLayout::window().pos(Rl((5.0, 97.0))).anchor(Anchor::CENTER_LEFT).pack(),
-        UiTextSize::from(Rh(9.0)),
-        Text2d::new("◇"),
-        text_font.clone(),
-        UiColor::from(ACCENT_COLOR),
-    ));
+    // Bottom accent divider and corner flourish.
+    panel.spawn(divider_line(5.0, 92.0, DIVIDER, text_font));
+    panel.spawn(corner_accent(5.0, 97.0, Anchor::CENTER_LEFT, text_font));
 
     // Gauge dot indicators beside value readouts.
-    panel.spawn((
-        UiLayout::window().pos(Rl((2.0, 42.0))).anchor(Anchor::CENTER_LEFT).pack(),
-        UiTextSize::from(Rh(9.0)),
-        Text2d::new("◦"),
-        text_font.clone(),
-        UiColor::from(ACCENT_COLOR),
-    ));
-    panel.spawn((
-        UiLayout::window().pos(Rl((2.0, 76.0))).anchor(Anchor::CENTER_LEFT).pack(),
-        UiTextSize::from(Rh(9.0)),
-        Text2d::new("◦"),
-        text_font.clone(),
-        UiColor::from(ACCENT_COLOR),
-    ));
-    panel.spawn((
-        UiLayout::window().pos(Rl((52.0, 42.0))).anchor(Anchor::CENTER_LEFT).pack(),
-        UiTextSize::from(Rh(9.0)),
-        Text2d::new("◦"),
-        text_font.clone(),
-        UiColor::from(ACCENT_COLOR),
-    ));
-    panel.spawn((
-        UiLayout::window().pos(Rl((52.0, 66.0))).anchor(Anchor::CENTER_LEFT).pack(),
-        UiTextSize::from(Rh(9.0)),
-        Text2d::new("◦"),
-        text_font.clone(),
-        UiColor::from(ACCENT_COLOR),
-    ));
+    panel.spawn(gauge_dot(2.0, 42.0, text_font));
+    panel.spawn(gauge_dot(2.0, 76.0, text_font));
+    panel.spawn(gauge_dot(52.0, 42.0, text_font));
+    panel.spawn(gauge_dot(52.0, 66.0, text_font));
+}
 
-    // Value readouts with marker components for targeted text updates.
-    let value = |x_pct: f32, y_pct: f32, label: &str| {
-        (
-            UiLayout::window().pos(Rl((x_pct, y_pct))).anchor(Anchor::CENTER_LEFT).pack(),
-            UiTextSize::from(Rh(22.0)),
-            Text2d::new(label),
-            text_font.clone(),
-            UiColor::from(TEXT_COLOR),
-        )
-    };
-
+/// Spawns the four value readouts for the player panel with their marker components.
+fn spawn_player_values(panel: &mut ChildSpawnerCommands, text_font: &TextFont) {
     // Left column values.
-    panel.spawn((value(5.0, 42.0, "t_p = 0.00"), HudPlayerTime, HudFlash::new(TEXT_COLOR)));
-    panel.spawn((value(5.0, 76.0, "v = 0.00c"), HudVelocityFraction, HudFlash::new(TEXT_COLOR)));
+    panel.spawn((value_readout(5.0, 42.0, "t_p = 0.00", text_font), HudPlayerTime, HudFlash::new(TEXT_COLOR)));
+    panel.spawn((value_readout(5.0, 76.0, "v = 0.00c", text_font), HudVelocityFraction, HudFlash::new(TEXT_COLOR)));
 
     // Right column values (gamma grouped together).
-    panel.spawn((value(55.0, 42.0, "γ_v = 1.00"), HudVelocityGamma, HudFlash::new(TEXT_COLOR)));
-    panel.spawn((value(55.0, 66.0, "γ_g = 1.00"), HudGravGamma, HudFlash::new(TEXT_COLOR)));
+    panel.spawn((value_readout(55.0, 42.0, "γ_v = 1.00", text_font), HudVelocityGamma, HudFlash::new(TEXT_COLOR)));
+    panel.spawn((value_readout(55.0, 66.0, "γ_g = 1.00", text_font), HudGravGamma, HudFlash::new(TEXT_COLOR)));
 }
 
 /// Spawns labels for the observer clock panel with visual hierarchy.
 ///
 /// Layout: two-column grid with section headers. Left: TIME (`t_o`). Right: RATE (r).
 /// Decorative elements: bullet indicators, gauge dots, corner accents, and bottom divider.
-#[allow(clippy::too_many_lines)]
 fn spawn_observer_labels(panel: &mut ChildSpawnerCommands, font: &Handle<Font>, display_font: &Handle<Font>) {
     let text_font = TextFont {
         font: font.clone(),
-        font_size: 64.0,
+        font_size: BASE_FONT_SIZE,
         ..Default::default()
     };
 
     let section_font = TextFont {
         font: display_font.clone(),
-        font_size: 64.0,
+        font_size: BASE_FONT_SIZE,
         ..Default::default()
     };
 
-    // Helper: small bullet indicator (monospace font) placed before section labels.
-    let bullet = |x_pct: f32, y_pct: f32| {
-        (
-            UiLayout::window().pos(Rl((x_pct, y_pct))).anchor(Anchor::CENTER_LEFT).pack(),
-            UiTextSize::from(Rh(9.0)),
-            Text2d::new("▸"),
-            text_font.clone(),
-            UiColor::from(ACCENT_COLOR),
-        )
-    };
+    spawn_panel_header(panel, "OBSERVER", 5.0, 20.0, display_font, &text_font);
+    spawn_observer_decorations(panel, &text_font, &section_font);
+    spawn_observer_values(panel, &text_font);
+}
 
-    // Panel header in display font.
-    panel.spawn((
-        UiLayout::window().pos(Rl((5.0, 5.0))).anchor(Anchor::CENTER_LEFT).pack(),
-        UiTextSize::from(Rh(14.0)),
-        Text2d::new("OBSERVER"),
-        TextFont {
-            font: display_font.clone(),
-            font_size: 64.0,
-            ..Default::default()
-        },
-        UiColor::from(HEADER_COLOR),
-    ));
-
-    // Corner accent — top-right flourish.
-    panel.spawn((
-        UiLayout::window().pos(Rl((93.0, 5.0))).anchor(Anchor::CENTER_RIGHT).pack(),
-        UiTextSize::from(Rh(9.0)),
-        Text2d::new("◇"),
-        text_font.clone(),
-        UiColor::from(ACCENT_COLOR),
-    ));
-
-    // Horizontal divider under header.
-    panel.spawn((
-        UiLayout::window().pos(Rl((5.0, 20.0))).anchor(Anchor::CENTER_LEFT).pack(),
-        UiTextSize::from(Rh(8.0)),
-        Text2d::new("──────────────────────────────────"),
-        text_font.clone(),
-        UiColor::from(DIVIDER_COLOR),
-    ));
-
+/// Spawns decorative elements for the observer panel: section labels, bullets, dividers, and gauge dots.
+fn spawn_observer_decorations(panel: &mut ChildSpawnerCommands, text_font: &TextFont, section_font: &TextFont) {
     // Bullet indicators before section labels.
-    panel.spawn(bullet(2.0, 32.0));
-    panel.spawn(bullet(52.0, 32.0));
+    panel.spawn(bullet(2.0, 32.0, text_font));
+    panel.spawn(bullet(52.0, 32.0, text_font));
 
-    // Section labels.
-    panel.spawn((
-        UiLayout::window().pos(Rl((5.0, 32.0))).anchor(Anchor::CENTER_LEFT).pack(),
-        UiTextSize::from(Rh(11.0)),
-        Text2d::new("TIME"),
-        section_font.clone(),
-        UiColor::from(LABEL_COLOR),
-    ));
+    // Section labels: TIME (left), RATE (right).
+    panel.spawn(section_label(5.0, 32.0, "TIME", section_font));
+    panel.spawn(section_label(55.0, 32.0, "RATE", section_font));
 
-    panel.spawn((
-        UiLayout::window().pos(Rl((55.0, 32.0))).anchor(Anchor::CENTER_LEFT).pack(),
-        UiTextSize::from(Rh(11.0)),
-        Text2d::new("RATE"),
-        section_font,
-        UiColor::from(LABEL_COLOR),
-    ));
-
-    // Bottom accent divider line.
-    panel.spawn((
-        UiLayout::window().pos(Rl((5.0, 85.0))).anchor(Anchor::CENTER_LEFT).pack(),
-        UiTextSize::from(Rh(8.0)),
-        Text2d::new("──────────────────────────────────"),
-        text_font.clone(),
-        UiColor::from(DIVIDER_COLOR),
-    ));
-
-    // Corner accent: bottom-left flourish (mirrors top-right).
-    panel.spawn((
-        UiLayout::window().pos(Rl((5.0, 92.0))).anchor(Anchor::CENTER_LEFT).pack(),
-        UiTextSize::from(Rh(9.0)),
-        Text2d::new("◇"),
-        text_font.clone(),
-        UiColor::from(ACCENT_COLOR),
-    ));
+    // Bottom accent divider and corner flourish.
+    panel.spawn(divider_line(5.0, 85.0, DIVIDER, text_font));
+    panel.spawn(corner_accent(5.0, 92.0, Anchor::CENTER_LEFT, text_font));
 
     // Gauge dot indicators beside value readouts.
-    panel.spawn((
-        UiLayout::window().pos(Rl((2.0, 58.0))).anchor(Anchor::CENTER_LEFT).pack(),
-        UiTextSize::from(Rh(9.0)),
-        Text2d::new("◦"),
-        text_font.clone(),
-        UiColor::from(ACCENT_COLOR),
-    ));
-    panel.spawn((
-        UiLayout::window().pos(Rl((52.0, 58.0))).anchor(Anchor::CENTER_LEFT).pack(),
-        UiTextSize::from(Rh(9.0)),
-        Text2d::new("◦"),
-        text_font.clone(),
-        UiColor::from(ACCENT_COLOR),
-    ));
+    panel.spawn(gauge_dot(2.0, 58.0, text_font));
+    panel.spawn(gauge_dot(52.0, 58.0, text_font));
+}
 
-    // Value readouts.
-    panel.spawn((
-        HudObserverTime,
-        HudFlash::new(TEXT_COLOR),
-        UiLayout::window().pos(Rl((5.0, 58.0))).anchor(Anchor::CENTER_LEFT).pack(),
-        UiTextSize::from(Rh(22.0)),
-        Text2d::new("t_o = 0.00"),
-        text_font.clone(),
-        UiColor::from(TEXT_COLOR),
-    ));
-
-    panel.spawn((
-        HudSimRate,
-        HudFlash::new(TEXT_COLOR),
-        UiLayout::window().pos(Rl((55.0, 58.0))).anchor(Anchor::CENTER_LEFT).pack(),
-        UiTextSize::from(Rh(22.0)),
-        Text2d::new("r = 1.00×"),
-        text_font,
-        UiColor::from(TEXT_COLOR),
-    ));
+/// Spawns the two value readouts for the observer panel with their marker components.
+fn spawn_observer_values(panel: &mut ChildSpawnerCommands, text_font: &TextFont) {
+    panel.spawn((value_readout(5.0, 58.0, "t_o = 0.00", text_font), HudObserverTime, HudFlash::new(TEXT_COLOR)));
+    panel.spawn((value_readout(55.0, 58.0, "r = 1.00×", text_font), HudSimRate, HudFlash::new(TEXT_COLOR)));
 }
 
 /// Updates the individual player stat labels in the HUD with live data.

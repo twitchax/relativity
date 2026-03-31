@@ -10,6 +10,31 @@ use uom::si::{
 
 use crate::shared::{SCREEN_HEIGHT_PX, SCREEN_WIDTH_PX};
 
+/// Quantity type for the gravitational constant G: L³·M⁻¹·T⁻² (m³·kg⁻¹·s⁻²).
+type GravitationalConstantQuantity = uom::si::Quantity<
+    dyn uom::si::Dimension<
+        I = uom::typenum::Z0,
+        J = uom::typenum::Z0,
+        Kind = dyn uom::Kind + 'static,
+        L = uom::typenum::PInt<uom::typenum::UInt<uom::typenum::UInt<uom::typenum::UTerm, uom::typenum::B1>, uom::typenum::B1>>,
+        M = uom::typenum::NInt<uom::typenum::UInt<uom::typenum::UTerm, uom::typenum::B1>>,
+        N = uom::typenum::Z0,
+        T = uom::typenum::NInt<uom::typenum::UInt<uom::typenum::UInt<uom::typenum::UTerm, uom::typenum::B1>, uom::typenum::B0>>,
+        Th = uom::typenum::Z0,
+    > + 'static,
+    dyn uom::si::Units<
+        f64,
+        amount_of_substance = uom::si::amount_of_substance::mole,
+        electric_current = uom::si::electric_current::ampere,
+        length = uom::si::length::meter,
+        luminous_intensity = uom::si::luminous_intensity::candela,
+        mass = uom::si::mass::kilogram,
+        thermodynamic_temperature = uom::si::thermodynamic_temperature::kelvin,
+        time = uom::si::time::second,
+    >,
+    f64,
+>;
+
 pub const PLANET_SPRITE_WIDTH_PX: f64 = 1280.0f64;
 pub const ROCKET_SPRITE_WIDTH_PX: f64 = 234.0f64;
 
@@ -23,7 +48,9 @@ const MASS_OF_EARTH_KG: f64 = MASS_FACTOR * 5.972e24f64;
 const SCREEN_WIDTH_KM: f64 = 6_000_000_000.0f64;
 const SCREEN_HEIGHT_KM: f64 = SCREEN_WIDTH_KM * SCREEN_HEIGHT_PX / SCREEN_WIDTH_PX;
 const C_KMS: f64 = 299_792.0f64; // Speed of light in km/s.
-const MAX_PLAYER_VELOCITY_KMS: f64 = 0.99 * C_KMS; // 99% of c.
+pub const MAX_VELOCITY_FRACTION: f64 = 0.99;
+pub const VELOCITY_CLAMP_FRACTION: f64 = 0.9999;
+const MAX_PLAYER_VELOCITY_KMS: f64 = MAX_VELOCITY_FRACTION * C_KMS;
 
 /// Gravitational softening length (km).
 ///
@@ -46,33 +73,7 @@ pub static SCREEN_HEIGHT_UOM: LazyLock<UomLength> = LazyLock::new(|| UomLength::
 pub static C: LazyLock<UomVelocity> = LazyLock::new(|| UomVelocity::new::<kilometer_per_second>(C_KMS));
 pub static SOFTENING_LENGTH: LazyLock<UomLength> = LazyLock::new(|| UomLength::new::<kilometer>(SOFTENING_LENGTH_KM));
 
-// TODO: Fix this insanity, lol.
-#[allow(clippy::type_complexity)]
-pub static G: LazyLock<
-    uom::si::Quantity<
-        dyn uom::si::Dimension<
-                I = uom::typenum::Z0,
-                J = uom::typenum::Z0,
-                Kind = dyn uom::Kind + 'static,
-                L = uom::typenum::PInt<uom::typenum::UInt<uom::typenum::UInt<uom::typenum::UTerm, uom::typenum::B1>, uom::typenum::B1>>,
-                M = uom::typenum::NInt<uom::typenum::UInt<uom::typenum::UTerm, uom::typenum::B1>>,
-                N = uom::typenum::Z0,
-                T = uom::typenum::NInt<uom::typenum::UInt<uom::typenum::UInt<uom::typenum::UTerm, uom::typenum::B1>, uom::typenum::B0>>,
-                Th = uom::typenum::Z0,
-            > + 'static,
-        dyn uom::si::Units<
-            f64,
-            amount_of_substance = uom::si::amount_of_substance::mole,
-            electric_current = uom::si::electric_current::ampere,
-            length = uom::si::length::meter,
-            luminous_intensity = uom::si::luminous_intensity::candela,
-            mass = uom::si::mass::kilogram,
-            thermodynamic_temperature = uom::si::thermodynamic_temperature::kelvin,
-            time = uom::si::time::second,
-        >,
-        f64,
-    >,
-> = LazyLock::new(|| {
+pub static G: LazyLock<GravitationalConstantQuantity> = LazyLock::new(|| {
     GRAVITATIONAL_CONSTANT * UomForce::new::<newton>(1.0) * UomLength::new::<meter>(1.0) * UomLength::new::<meter>(1.0) / (UomMass::new::<kilogram>(1.0) * UomMass::new::<kilogram>(1.0))
 });
 

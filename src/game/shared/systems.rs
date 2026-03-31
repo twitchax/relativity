@@ -1,6 +1,6 @@
 use super::{
-    constants::{C, DAYS_PER_SECOND_UOM, G, SOFTENING_LENGTH},
-    helpers::{get_translation_from_position, has_collided, length_to_pixel, planet_sprite_pixel_radius_to_scale, rocket_sprite_pixel_radius_to_scale},
+    constants::{C, DAYS_PER_SECOND_UOM, G, PLANET_SPRITE_WIDTH_PX, ROCKET_SPRITE_WIDTH_PX, SOFTENING_LENGTH, VELOCITY_CLAMP_FRACTION},
+    helpers::{get_translation_from_position, has_collided, length_to_pixel, pixel_radius_to_scale},
     types::{GridVisible, LaunchState, Mass, PlanetSprite, Position, Radius, RocketSprite, SimRate, Velocity},
 };
 use crate::{
@@ -68,15 +68,13 @@ pub fn reset_grid_visible(mut grid_visible: ResMut<GridVisible>) {
 
 pub fn planet_scale_update(mut query: Query<(&mut Transform, &Radius), With<PlanetSprite>>) {
     for (mut transform, radius) in &mut query {
-        let scale = planet_sprite_pixel_radius_to_scale(length_to_pixel(radius.value));
-        transform.scale = scale;
+        transform.scale = pixel_radius_to_scale(length_to_pixel(radius.value), PLANET_SPRITE_WIDTH_PX);
     }
 }
 
 pub fn rocket_scale_update(mut query: Query<(&mut Transform, &Radius), With<RocketSprite>>) {
     for (mut transform, radius) in &mut query {
-        let scale = rocket_sprite_pixel_radius_to_scale(length_to_pixel(radius.value));
-        transform.scale = scale;
+        transform.scale = pixel_radius_to_scale(length_to_pixel(radius.value), ROCKET_SPRITE_WIDTH_PX);
     }
 }
 
@@ -155,7 +153,7 @@ pub fn velocity_update(mut query: Query<(&mut Velocity, Entity, &Position)>, mas
     let time_elapsed = *DAYS_PER_SECOND_UOM * f64::from(time.delta_secs()) * sim_rate.0;
 
     for (mut velocity, entity, position) in &mut query {
-        if velocity.x.value == 0.0 || velocity.y.value == 0.0 {
+        if velocity.x.value == 0.0 && velocity.y.value == 0.0 {
             continue;
         }
 
@@ -175,12 +173,16 @@ pub fn velocity_update(mut query: Query<(&mut Velocity, Entity, &Position)>, mas
 
         velocity.x += total_gravitational_acceleration_x * time_elapsed;
         velocity.y += total_gravitational_acceleration_y * time_elapsed;
+    }
+}
 
-        // Clamp velocity to just below the speed of light to prevent NaN in
-        // Lorentz gamma calculations and preserve relativistic consistency.
+/// Clamp velocity to just below the speed of light to prevent NaN in
+/// Lorentz gamma calculations and preserve relativistic consistency.
+pub fn velocity_clamp_system(mut query: Query<&mut Velocity>) {
+    for mut velocity in &mut query {
         let speed = velocity.scalar();
         if speed > *C {
-            let scale = (*C * 0.9999 / speed).value;
+            let scale = (*C * VELOCITY_CLAMP_FRACTION / speed).value;
             velocity.x = scale * velocity.x;
             velocity.y = scale * velocity.y;
         }
@@ -423,5 +425,58 @@ mod tests {
         #[allow(clippy::cast_possible_truncation)]
         let expected = (4.0_f64.atan2(3.0) - std::f64::consts::FRAC_PI_2) as f32;
         assert_relative_eq!(rot, expected, epsilon = 1e-6);
+    }
+
+    // --- velocity_clamp_system ---
+
+    use crate::game::test_helpers::{minimal_test_app, spawn_test_entity};
+    use uom::si::velocity::kilometer_per_second;
+
+    /// Speed of light in km/s, for building test velocities.
+    const C_KMS: f64 = 299_792.0;
+
+    #[test]
+    fn velocity_clamp_reduces_superluminal_speed() {
+        let mut app = minimal_test_app();
+        // Spawn entity moving faster than light along x.
+        let entity = spawn_test_entity(app.world_mut(), 0.0, 0.0, C_KMS * 1.5, 0.0, 0.0, 0.0);
+        app.add_systems(Update, velocity_clamp_system);
+        app.update();
+
+        let vel = app.world().get::<Velocity>(entity).unwrap();
+        let speed = vel.scalar().get::<kilometer_per_second>();
+        assert!(speed < C_KMS, "speed should be clamped below c, got {speed}");
+    }
+
+    #[test]
+    fn velocity_clamp_preserves_subluminal_speed() {
+        let mut app = minimal_test_app();
+        let sub_c = C_KMS * 0.5;
+        let entity = spawn_test_entity(app.world_mut(), 0.0, 0.0, sub_c, 0.0, 0.0, 0.0);
+        app.add_systems(Update, velocity_clamp_system);
+        app.update();
+
+        let vel = app.world().get::<Velocity>(entity).unwrap();
+        let speed = vel.scalar().get::<kilometer_per_second>();
+        assert_relative_eq!(speed, sub_c, max_relative = 1e-10);
+    }
+
+    #[test]
+    fn velocity_clamp_preserves_direction() {
+        let mut app = minimal_test_app();
+        // Superluminal velocity at 45°.
+        let component = C_KMS * 1.5 / std::f64::consts::SQRT_2;
+        let entity = spawn_test_entity(app.world_mut(), 0.0, 0.0, component, component, 0.0, 0.0);
+        app.add_systems(Update, velocity_clamp_system);
+        app.update();
+
+        let vel = app.world().get::<Velocity>(entity).unwrap();
+        let vx = vel.x.get::<kilometer_per_second>();
+        let vy = vel.y.get::<kilometer_per_second>();
+        // Direction should remain 45° (equal components).
+        assert_relative_eq!(vx, vy, max_relative = 1e-10);
+        // Speed should be clamped.
+        let speed = vel.scalar().get::<kilometer_per_second>();
+        assert!(speed < C_KMS, "speed should be clamped below c, got {speed}");
     }
 }

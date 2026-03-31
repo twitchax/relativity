@@ -31,7 +31,7 @@ use self::{
     shared::{
         systems::{
             collision_check, exit_level_check, grid_toggle, planet_scale_update, position_update, reset_grid_visible, rocket_rotation_update, rocket_scale_update, sim_pause_toggle, sim_rate_adjust,
-            translation_update, velocity_update,
+            translation_update, velocity_clamp_system, velocity_update,
         },
         types::{GridVisible, LaunchState, SimRate},
     },
@@ -109,6 +109,7 @@ impl Plugin for GamePlugin {
                 (
                     rocket_rotation_update,
                     velocity_update,
+                    velocity_clamp_system.after(velocity_update).before(position_update),
                     position_update.after(velocity_update),
                     translation_update.after(position_update),
                     trail_record_system.after(player_clock_update),

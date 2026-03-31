@@ -1,7 +1,7 @@
 use super::shared::Player;
 use crate::{
     game::shared::{
-        constants::MAX_PLAYER_LAUNCH_VELOCITY,
+        constants::{MAX_PLAYER_LAUNCH_VELOCITY, MAX_VELOCITY_FRACTION},
         types::{GameItem, LaunchState, Position, Radius, RocketSprite, TrailBuffer, Velocity, VelocityReadout},
     },
     shared::{state::GameState, SCREEN_WIDTH_PX},
@@ -51,7 +51,8 @@ const TICK_HALF_LENGTH: f32 = 6.0;
 pub const TICK_VELOCITY_FRACTIONS: [f32; 4] = [0.25, 0.5, 0.75, 0.9];
 
 /// Minimum velocity fraction (of `max_velocity`) at zero raw power.
-const MIN_POWER_FRACTION: f32 = 0.1 / 0.99;
+#[allow(clippy::cast_possible_truncation)]
+const MIN_POWER_FRACTION: f32 = 0.1 / MAX_VELOCITY_FRACTION as f32;
 
 /// Offset beyond the arc radius at which the velocity readout text is placed.
 const READOUT_OFFSET: f32 = 18.0;
@@ -80,7 +81,8 @@ pub fn map_power_nonlinear(raw_power: f32) -> f32 {
 fn draw_arc_ticks(gizmos: &mut Gizmos, center: Vec2, arc_rotation_rad: f32) {
     for &frac in &TICK_VELOCITY_FRACTIONS {
         // Mapped power corresponding to this velocity fraction.
-        let tick_power = frac / 0.99;
+        #[allow(clippy::cast_possible_truncation)]
+        let tick_power = frac / MAX_VELOCITY_FRACTION as f32;
         // Position along the arc sweep: fraction of MAX_ARC_ANGLE, offset from centre.
         let local_angle = MAX_ARC_ANGLE * (tick_power - 0.5);
         let world_angle = arc_rotation_rad + local_angle;
@@ -90,6 +92,23 @@ fn draw_arc_ticks(gizmos: &mut Gizmos, center: Vec2, arc_rotation_rad: f32) {
         let outer = center + radial * (ARC_RADIUS + TICK_HALF_LENGTH);
         gizmos.line_2d(inner, outer, Color::srgba(1.0, 1.0, 1.0, 0.5));
     }
+}
+
+/// Extracts the player world position and cursor world position from the
+/// standard camera / window / player queries. Returns `None` when any query
+/// fails or the cursor is off-screen.
+fn cursor_and_player_world_pos(
+    player_query: &Query<&Transform, With<Player>>,
+    window_query: &Query<&Window, With<PrimaryWindow>>,
+    camera_query: &Query<(&Camera, &GlobalTransform), With<Camera2d>>,
+) -> Option<(Vec2, Vec2)> {
+    let player_transform = player_query.single().ok()?;
+    let window = window_query.single().ok()?;
+    let cursor_position = window.cursor_position()?;
+    let (camera, camera_transform) = camera_query.single().ok()?;
+    let cursor_world = camera.viewport_to_world_2d(camera_transform, cursor_position).ok()?;
+    let player_pos = player_transform.translation.truncate();
+    Some((player_pos, cursor_world))
 }
 
 /// Draws a dashed line from `start` along `direction` for `length` pixels.
@@ -123,15 +142,10 @@ pub fn launch_preview_system(
         return;
     }
 
-    let Ok(player_transform) = player_query.single() else { return };
-    let Ok(window) = window_query.single() else { return };
-    let Some(cursor_position) = window.cursor_position() else { return };
-    let Ok((camera, camera_transform)) = camera_query.single() else { return };
-    let Ok(cursor_world) = camera.viewport_to_world_2d(camera_transform, cursor_position) else {
+    let Some((player_pos, cursor_world)) = cursor_and_player_world_pos(&player_query, &window_query, &camera_query) else {
         return;
     };
 
-    let player_pos = player_transform.translation.truncate();
     let direction = (cursor_world - player_pos).normalize_or_zero();
 
     if direction == Vec2::ZERO {
@@ -168,15 +182,9 @@ pub fn launch_aim_system(
         return;
     }
 
-    let Ok(player_transform) = player_query.single() else { return };
-    let Ok(window) = window_query.single() else { return };
-    let Some(cursor_position): Option<Vec2> = window.cursor_position() else { return };
-    let Ok((camera, camera_transform)) = camera_query.single() else { return };
-    let Ok(cursor_world) = camera.viewport_to_world_2d(camera_transform, cursor_position) else {
+    let Some((player_pos, cursor_world)) = cursor_and_player_world_pos(&player_query, &window_query, &camera_query) else {
         return;
     };
-
-    let player_pos = player_transform.translation.truncate();
 
     let direction = cursor_world - player_pos;
     let angle = direction.y.atan2(direction.x);
@@ -200,15 +208,9 @@ pub fn launch_power_system(
         return;
     };
 
-    let Ok(player_transform) = player_query.single() else { return };
-    let Ok(window) = window_query.single() else { return };
-    let Some(cursor_position): Option<Vec2> = window.cursor_position() else { return };
-    let Ok((camera, camera_transform)) = camera_query.single() else { return };
-    let Ok(cursor_world) = camera.viewport_to_world_2d(camera_transform, cursor_position) else {
+    let Some((player_pos, cursor_world)) = cursor_and_player_world_pos(&player_query, &window_query, &camera_query) else {
         return;
     };
-
-    let player_pos = player_transform.translation.truncate();
 
     let drag_distance = (cursor_world - player_pos).length();
 
@@ -351,7 +353,8 @@ pub fn launch_readout_system(
     let Ok(player_transform) = player_query.single() else { return };
     let player_pos = player_transform.translation.truncate();
 
-    let velocity_fraction = map_power_nonlinear(power) * 0.99;
+    #[allow(clippy::cast_possible_truncation)]
+    let velocity_fraction = map_power_nonlinear(power) * MAX_VELOCITY_FRACTION as f32;
     let text = format!("{velocity_fraction:.2}c");
 
     // Position the readout at the tip of the filled arc, just outside.

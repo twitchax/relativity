@@ -157,11 +157,35 @@ fn heavier_mass_produces_greater_acceleration() {
 }
 
 #[test]
-fn zero_velocity_axis_skips_gravity() {
+fn single_zero_velocity_axis_still_receives_gravity() {
     let mut app = build_velocity_test_app();
 
-    // velocity.x == 0.0, so the system skips this entity (guard clause uses ||).
-    let player = spawn_player(app.world_mut(), 0.0, 0.0, 0.0, 1.0);
+    // vx=100, vy=0: only one axis is zero, so gravity should still apply.
+    let player = spawn_player(app.world_mut(), 0.0, 0.0, 100.0, 0.0);
+    spawn_mass(app.world_mut(), 0.0, TEST_DISTANCE, TEST_MASS);
+
+    for _ in 0..5 {
+        app.update();
+    }
+
+    let initial_vy = app.world().get::<Velocity>(player).unwrap().y.get::<kilometer_per_second>();
+
+    for _ in 0..20 {
+        app.update();
+    }
+
+    let final_vy = app.world().get::<Velocity>(player).unwrap().y.get::<kilometer_per_second>();
+
+    // Gravity should pull the player toward the mass (positive y direction).
+    assert!(final_vy > initial_vy, "object with one zero velocity component should receive gravity: initial vy={initial_vy}, final vy={final_vy}");
+}
+
+#[test]
+fn both_zero_velocity_axes_skips_gravity() {
+    let mut app = build_velocity_test_app();
+
+    // Both axes zero: truly stationary, guard clause should skip.
+    let player = spawn_player(app.world_mut(), 0.0, 0.0, 0.0, 0.0);
     spawn_mass(app.world_mut(), TEST_DISTANCE, 0.0, TEST_MASS);
 
     for _ in 0..20 {
@@ -169,7 +193,8 @@ fn zero_velocity_axis_skips_gravity() {
     }
 
     let final_vx = app.world().get::<Velocity>(player).unwrap().x.get::<kilometer_per_second>();
+    let final_vy = app.world().get::<Velocity>(player).unwrap().y.get::<kilometer_per_second>();
 
-    // Should remain at zero — the guard clause prevents gravity from applying.
     approx::assert_relative_eq!(final_vx, 0.0, epsilon = 1e-15);
+    approx::assert_relative_eq!(final_vy, 0.0, epsilon = 1e-15);
 }
