@@ -431,16 +431,30 @@ fn spawn_hud_root(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ));
 
                 // Left panel — player stats (left 60%, with margin).
-                bar.spawn((PlayerPanel, UiLayout::boundary().pos1(Rl((PLAYER_PANEL_LEFT, PLAYER_PANEL_TOP))).pos2(Rl((PLAYER_PANEL_RIGHT, PLAYER_PANEL_BOTTOM))).pack(), player_panel_sprite()))
-                    .with_children(|panel| {
-                        spawn_player_labels(panel, &font, &display_font);
-                    });
+                bar.spawn((
+                    PlayerPanel,
+                    UiLayout::boundary()
+                        .pos1(Rl((PLAYER_PANEL_LEFT, PLAYER_PANEL_TOP)))
+                        .pos2(Rl((PLAYER_PANEL_RIGHT, PLAYER_PANEL_BOTTOM)))
+                        .pack(),
+                    player_panel_sprite(),
+                ))
+                .with_children(|panel| {
+                    spawn_player_labels(panel, &font, &display_font);
+                });
 
                 // Right panel — observer clock (right 35%, with margin).
-                bar.spawn((ObserverPanel, UiLayout::boundary().pos1(Rl((OBSERVER_PANEL_LEFT, OBSERVER_PANEL_TOP))).pos2(Rl((OBSERVER_PANEL_RIGHT, OBSERVER_PANEL_BOTTOM))).pack(), observer_panel_sprite()))
-                    .with_children(|panel| {
-                        spawn_observer_labels(panel, &font, &display_font);
-                    });
+                bar.spawn((
+                    ObserverPanel,
+                    UiLayout::boundary()
+                        .pos1(Rl((OBSERVER_PANEL_LEFT, OBSERVER_PANEL_TOP)))
+                        .pos2(Rl((OBSERVER_PANEL_RIGHT, OBSERVER_PANEL_BOTTOM)))
+                        .pack(),
+                    observer_panel_sprite(),
+                ))
+                .with_children(|panel| {
+                    spawn_observer_labels(panel, &font, &display_font);
+                });
             });
     });
 }

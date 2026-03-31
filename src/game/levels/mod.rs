@@ -239,7 +239,6 @@ pub fn level_time_warp(mut commands: Commands, asset_server: Res<AssetServer>) {
         },
         ..Default::default()
     });
-
 }
 
 #[cfg(test)]

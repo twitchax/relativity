@@ -177,7 +177,10 @@ fn single_zero_velocity_axis_still_receives_gravity() {
     let final_vy = app.world().get::<Velocity>(player).unwrap().y.get::<kilometer_per_second>();
 
     // Gravity should pull the player toward the mass (positive y direction).
-    assert!(final_vy > initial_vy, "object with one zero velocity component should receive gravity: initial vy={initial_vy}, final vy={final_vy}");
+    assert!(
+        final_vy > initial_vy,
+        "object with one zero velocity component should receive gravity: initial vy={initial_vy}, final vy={final_vy}"
+    );
 }
 
 #[test]

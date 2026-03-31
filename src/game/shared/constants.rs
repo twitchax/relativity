@@ -13,15 +13,15 @@ use crate::shared::{SCREEN_HEIGHT_PX, SCREEN_WIDTH_PX};
 /// Quantity type for the gravitational constant G: L³·M⁻¹·T⁻² (m³·kg⁻¹·s⁻²).
 type GravitationalConstantQuantity = uom::si::Quantity<
     dyn uom::si::Dimension<
-        I = uom::typenum::Z0,
-        J = uom::typenum::Z0,
-        Kind = dyn uom::Kind + 'static,
-        L = uom::typenum::PInt<uom::typenum::UInt<uom::typenum::UInt<uom::typenum::UTerm, uom::typenum::B1>, uom::typenum::B1>>,
-        M = uom::typenum::NInt<uom::typenum::UInt<uom::typenum::UTerm, uom::typenum::B1>>,
-        N = uom::typenum::Z0,
-        T = uom::typenum::NInt<uom::typenum::UInt<uom::typenum::UInt<uom::typenum::UTerm, uom::typenum::B1>, uom::typenum::B0>>,
-        Th = uom::typenum::Z0,
-    > + 'static,
+            I = uom::typenum::Z0,
+            J = uom::typenum::Z0,
+            Kind = dyn uom::Kind + 'static,
+            L = uom::typenum::PInt<uom::typenum::UInt<uom::typenum::UInt<uom::typenum::UTerm, uom::typenum::B1>, uom::typenum::B1>>,
+            M = uom::typenum::NInt<uom::typenum::UInt<uom::typenum::UTerm, uom::typenum::B1>>,
+            N = uom::typenum::Z0,
+            T = uom::typenum::NInt<uom::typenum::UInt<uom::typenum::UInt<uom::typenum::UTerm, uom::typenum::B1>, uom::typenum::B0>>,
+            Th = uom::typenum::Z0,
+        > + 'static,
     dyn uom::si::Units<
         f64,
         amount_of_substance = uom::si::amount_of_substance::mole,
